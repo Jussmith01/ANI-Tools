@@ -83,12 +83,10 @@ class anidataloader(object):
     def group_size(self):
         return len(self.get_group_list())
 
-    ''' Returns the number of groups '''
     def size(self):
         count = 0
         for g in self.store.values():
-            for e in g.items():
-                count = count + 1
+            count = count + len(g.items())
         return count
 
     ''' Close the HDF5 file '''
