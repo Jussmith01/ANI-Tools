@@ -1,15 +1,21 @@
-from pyNeuroChem import pyAniTrainer as pyani
-from pyNeuroChem import cachegenerator as cg
-import pyNeuroChem as pync
-import pyanitools as pyt
-
-import hdnntools as hdn
+# Python libs
 import random as rn
 import numpy as np
 import time as tm
 import os
 
+# NeuroChem Libs
+from pyNeuroChem import pyAniTrainer as pyani
+from pyNeuroChem import cachegenerator as cg
+import pyNeuroChem as pync
+import pyanitools as pyt
+import hdnntools as hdn
+
 class anitrainer(object):
+    #-----------------------------
+    #         Constructor
+    # Declare ANI and build layers
+    #-----------------------------
     def __init__(self, build_dict, layers):
         # Declare the trainer class
         self.ani = pyani(build_dict)
@@ -162,6 +168,7 @@ class anitester (object):
             Na = len(spc)
 
             bad_l = []
+            god_l = []
 
             if Na < mNa:
                 mNa = Na
@@ -186,10 +193,11 @@ class anitester (object):
 
                 deltas = hdn.hatokcal * np.abs(Ecmp_t - np.array(Eact_t, dtype=float))
                 deltas = deltas/float(Na)
-                bad_l = [ n for n,i in zip(index,deltas) if i>Emax ]
+                bad_l = [ n for n, i in zip(index, deltas) if i > Emax ]
+                god_l = [ n for n, i in zip(index, deltas) if i <= Emax ]
 
-            return np.array(bad_l),Nm, deltas
-        return np.array([]), 0
+            return np.array(bad_l), np.array(god_l), Nm, deltas
+        return np.array([]),np.array([]), 0,np.array([])
 
 class ActiveANI (object):
 
@@ -199,6 +207,7 @@ class ActiveANI (object):
         self.Eqm = []
         self.spc = []
         self.idx = []
+        self.gid = []
         self.prt = []
 
         self.kid = [] # list to track data kept
@@ -234,6 +243,7 @@ class ActiveANI (object):
 
                 self.idx.append( np.arange(Nd) )
                 self.kid.append( np.array([], dtype=np.int) )
+                self.gid.append( np.array([], dtype=np.int))
 
                 self.tf = self.tf + Nd
 
@@ -344,20 +354,40 @@ class ActiveANI (object):
         Nidx = 0
         Nbad = 0
         Nadd = 0
+        Ngwd = 0
+        Ngto = 0
 
         for i, (X, E, S) in enumerate(zip(self.xyz, self.Eqm, self.spc)):
 
             if self.idx[i].size != 0:
-                Nidx = Nidx + self.idx[i].size
-                self.idx[i],m,diff = atest.test_for_bad(X,E,S,self.idx[i],M)
+                # Check if any "Good" milk went sour
+                tmp_idx1, self.gid[i], mt, difft = atest.test_for_bad(X,E,S,self.gid[i],M)
 
+                # Add the soured milk to the pot
+                self.idx[i] = np.array(np.concatenate([tmp_idx1,self.idx[i]]),dtype=np.int32)
+
+                # Count total in the pot
+                Nidx = Nidx + self.idx[i].size
+
+                # Test the pot for good and bad
+                self.idx[i],god_idx,m,diff = atest.test_for_bad(X,E,S,self.idx[i],M)
+
+                # Add good to good index
+                self.gid[i] = np.array(np.concatenate([self.gid[i],god_idx]),dtype=np.int32)
+
+                # Add to size of good, good went bad, and total bad
+                Ngto = Ngto + self.gid[i].size
+                Ngwd = Ngwd + tmp_idx1.size
                 Nbad = Nbad + self.idx[i].shape[0]
 
+                # Store a random subset of the bad for training
                 self.idx[i], kat, Nt = self.store_random(cachet, X, E, S, self.idx[i], P, T)
                 self.idx[i], kav, Nv = self.store_random(cachev, X, E, S, self.idx[i], P, V)
 
+                # Add the training data to kid
                 self.kid[i] = np.array(np.concatenate([self.kid[i],kat]),dtype=np.int)
 
+                # Increment training and validation size
                 self.ts = self.ts + Nt
                 self.vs = self.vs + Nv
 
@@ -369,7 +399,8 @@ class ActiveANI (object):
 
         print('\n--------Data health intformation---------')
         print('   -Full: ', self.tf, 'Percent of full used:',"{:.2f}".format(100.0*(self.ts+self.vs)/float(self.tf))+'%')
-        print('   -Used: ', self.ts,':',self.vs, ':', self.ts+self.vs)
+        print('   -Used: ', self.ts,':',self.vs, ':', self.ts+self.vs,' Ngwd:',Ngwd)
+        print('   -Skip: Ngwd:', Ngwd,'of',Ngto)
         print('   -Added:', Nadd,' bad:',Nbad,'of',Nidx,'('+"{:.1f}".format(self.get_percent_bad())+'%)')
         print('-----------------------------------------\n')
 
@@ -405,128 +436,3 @@ class ActiveANI (object):
         for k,X,E,S in zip(self.kid,self.xyz,self.Eqm,self.spc):
             index, m, diff = atest.test_for_bad(X, E, S, k, M)
             yield diff
-
-
-
-# Network 1 Files
-wkdir = '/home/jujuman/Research/DataReductionMethods/models/train_c08f/'
-cnstf = 'rHCNO-4.6A_16-3.1A_a4-8.params'
-saenf = 'sae_6-31gd.dat'
-nfdir = 'networks/'
-
-# Data Dir
-datadir = '/home/jujuman/Research/DataReductionMethods/models/cache/'
-testdata = datadir + 'testset/testset.h5'
-trainh5 = wkdir + 'ani_red_c08f.h5'
-
-# Test data
-test_files = ["/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c08f.h5",
-              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c02.h5",
-              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c03.h5",
-              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c04.h5",
-              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c05.h5",
-              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c06.h5",
-              ]
-
-#---- Parameters ----
-GPU = 0
-LR  = 0.001
-LA  = 0.25
-CV  = 1.0e-6
-ST  = 100
-M   = 0.05 # Max error per atom in kcal/mol
-P   = 0.025
-ps  = 25
-#--------------------
-
-# Training varibles
-d = dict({'wkdir'         : wkdir,
-          'sflparamsfile' : cnstf,
-          'ntwkStoreDir'  : wkdir+'networks/',
-          'atomEnergyFile': saenf,
-          'datadir'       : datadir,
-          'tbtchsz'       : '512',
-          'vbtchsz'       : '1024',
-          'gpuid'         : str(GPU),
-          'ntwshr'        : '1',
-          'nkde'          : '2',
-          'runtype'       : 'ANNP_CREATE_HDNN_AND_TRAIN',
-          'adptlrn'       : 'OFF',
-          'moment'        : 'ADAM',})
-
-l1 = dict({'nodes'      : '256',
-           'activation' : '5',
-           'maxnorm'    : '1',
-           'norm'       : '3.0',
-           'btchnorm'   : '0',})
-
-l2 = dict({'nodes'      : '128',
-           'activation' : '5',
-           'maxnorm'    : '1',
-           'norm'       : '3.0',
-           'btchnorm'   : '0',})
-
-l3 = dict({'nodes'      : '64',
-           'activation' : '5',
-           'maxnorm'    : '1',
-           'norm'       : '3.0',
-           'btchnorm'   : '0',})
-
-l4 = dict({'nodes'      : '1',
-           'activation' : '6',})
-
-layers = [l1, l2, l3, l4]
-
-aani = ActiveANI(test_files, wkdir+saenf, datadir, testdata)
-aani.init_dataset(P)
-
-inc = 0
-while aani.get_percent_bad() > 1.0:
-    # Remove existing network
-    network_files = os.listdir(wkdir + 'networks/')
-    for f in network_files:
-        os.remove(wkdir + 'networks/' + f)
-
-    # Setup trainer
-    tr = anitrainer(d,layers)
-
-    # Train network
-    tr.train_network(LR, LA, CV, ST, ps)
-
-    # Write the learning curve
-    tr.write_learning_curve(wkdir+'learning_curve_'+str(inc)+'.dat')
-
-    # Test network
-    ant = anitester(wkdir+cnstf, wkdir+saenf, wkdir+nfdir, GPU, True)
-    test_rmse = ant.compute_test(testdata)
-    print('Test RMSE:',"{:.3f}".format(test_rmse),'kcal/mol')
-
-    # Check for and add bad data
-    aani.add_bad_data(wkdir+cnstf, wkdir+saenf, wkdir+nfdir, GPU, True, P=0.05 + inc * 0.025, M=M)
-
-    inc = inc + 1
-
-aani.add_bad_data(wkdir + cnstf, wkdir + saenf, wkdir + nfdir, GPU, True, P=1.0, M=M)
-aani.store_train_h5(trainh5)
-
-# Remove existing network
-network_files = os.listdir(wkdir + 'networks/')
-for f in network_files:
-    os.remove(wkdir + 'networks/' + f)
-
-# Setup trainer
-tr = anitrainer(d, layers)
-
-# Train network
-tr.train_network(LR, LA, CV, ST, ps)
-
-o = open(wkdir + 'keep_info.dat', 'w')
-for k in aani.get_keep_info():
-    o.write(str(int(k[1])) + ' : ' + str(k[0]) + '\n')
-
-f = open(wkdir + 'diffs.dat', 'w')
-for K in aani.get_diff_kept (wkdir + cnstf, wkdir + saenf, wkdir + nfdir, GPU, True, M=M):
-    string = ""
-    for k in K:
-        string = string + "{:.7f}".format(k) + ','
-    f.write(string[:-1] + '\n')
