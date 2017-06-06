@@ -280,13 +280,15 @@ class anitester (object):
 class ActiveANI (object):
 
     '''' -----------Constructor------------ '''
-    def __init__(self, hdf5files, saef, output,storecac, storetest):
+    def __init__(self, hdf5files, saef, output,storecac, storetest, Naev):
         self.xyz = []
         self.Eqm = []
         self.spc = []
         self.idx = []
         self.gid = []
         self.prt = []
+
+        self.Naev = Naev
 
         self.kid = [] # list to track data kept
 
@@ -405,7 +407,7 @@ class ActiveANI (object):
     def store_diverse(self, cache, atest, X, E, S, index, P, T):
         #print(index.shape, index.size)
         if index.size != 0:
-            cur_index, new_index = atest.compute_diverse(X, S, index, P * T, 388)
+            cur_index, new_index = atest.compute_diverse(X, S, index, P * T, self.Naev)
 
             if cur_index.shape[0] != 0:
                 # Get the new index

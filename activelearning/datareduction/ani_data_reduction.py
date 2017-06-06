@@ -18,9 +18,9 @@ trainh5 = wkdir + 'ani_red_c08f.h5'
 # Test data
 test_files = [#"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c08f.h5",
               "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c01.h5",
-              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c02.h5",
-              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c03.h5",
-              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c04.h5",
+              "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c02.h5",
+              "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c03.h5",
+              "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c04.h5",
               #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c05.h5",
               #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c06.h5",
               ]
@@ -34,6 +34,7 @@ ST  = 100
 M   = 0.08 # Max error per atom in kcal/mol
 P   = 0.025
 ps  = 25
+Naev = 388
 #--------------------
 
 # Training varibles
@@ -42,8 +43,8 @@ d = dict({'wkdir'         : wkdir,
           'ntwkStoreDir'  : wkdir+'networks/',
           'atomEnergyFile': saenf,
           'datadir'       : datadir,
-          'tbtchsz'       : '128',
-          'vbtchsz'       : '32',
+          'tbtchsz'       : '512',
+          'vbtchsz'       : '512',
           'gpuid'         : str(GPU),
           'ntwshr'        : '1',
           'nkde'          : '2',
@@ -68,7 +69,7 @@ l3 = dict({'nodes'      : '1',
 
 layers = [l1, l2, l3,]
 
-aani = atr.ActiveANI(test_files, wkdir+saenf, wkdir+opt, datadir, testdata)
+aani = atr.ActiveANI(test_files, wkdir+saenf, wkdir+opt, datadir, testdata, Naev)
 aani.init_dataset(P)
 
 inc = 0
