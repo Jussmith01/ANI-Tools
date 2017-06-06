@@ -29,7 +29,7 @@ LR  = 0.001
 LA  = 0.25
 CV  = 1.0e-6
 ST  = 100
-M   = 0.05 # Max error per atom in kcal/mol
+M   = 0.08 # Max error per atom in kcal/mol
 P   = 0.025
 ps  = 25
 #--------------------
@@ -40,7 +40,7 @@ d = dict({'wkdir'         : wkdir,
           'ntwkStoreDir'  : wkdir+'networks/',
           'atomEnergyFile': saenf,
           'datadir'       : datadir,
-          'tbtchsz'       : '256',
+          'tbtchsz'       : '512',
           'vbtchsz'       : '128',
           'gpuid'         : str(GPU),
           'ntwshr'        : '1',
@@ -49,13 +49,13 @@ d = dict({'wkdir'         : wkdir,
           'adptlrn'       : 'OFF',
           'moment'        : 'ADAM',})
 
-l1 = dict({'nodes'      : '16',
+l1 = dict({'nodes'      : '32',
            'activation' : '5',
            'maxnorm'    : '1',
            'norm'       : '3.0',
            'btchnorm'   : '0',})
 
-l2 = dict({'nodes'      : '16',
+l2 = dict({'nodes'      : '32',
            'activation' : '5',
            'maxnorm'    : '1',
            'norm'       : '3.0',
@@ -70,7 +70,7 @@ aani = atr.ActiveANI(test_files, wkdir+saenf, datadir, testdata)
 aani.init_dataset(P)
 
 inc = 0
-while aani.get_percent_bad() > 1.0:
+while aani.get_percent_bad() > 2.0:
     # Remove existing network
     network_files = os.listdir(wkdir + 'networks/')
     for f in network_files:
