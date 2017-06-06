@@ -8,6 +8,8 @@ cnstf = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saenf = 'sae_6-31gd.dat'
 nfdir = 'networks/'
 
+opt = 'active_output.opt'
+
 # Data Dir
 datadir = '/home/jujuman/Research/DataReductionMethods/models/cachetest/'
 testdata = datadir + 'testset/testset.h5'
@@ -16,7 +18,7 @@ trainh5 = wkdir + 'ani_red_c08f.h5'
 # Test data
 test_files = [#"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c08f.h5",
               "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c01.h5",
-              "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c02.h5",
+              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c02.h5",
               #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c03.h5",
               #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c04.h5",
               #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c05.h5",
@@ -40,8 +42,8 @@ d = dict({'wkdir'         : wkdir,
           'ntwkStoreDir'  : wkdir+'networks/',
           'atomEnergyFile': saenf,
           'datadir'       : datadir,
-          'tbtchsz'       : '512',
-          'vbtchsz'       : '128',
+          'tbtchsz'       : '128',
+          'vbtchsz'       : '32',
           'gpuid'         : str(GPU),
           'ntwshr'        : '1',
           'nkde'          : '2',
@@ -66,7 +68,7 @@ l3 = dict({'nodes'      : '1',
 
 layers = [l1, l2, l3,]
 
-aani = atr.ActiveANI(test_files, wkdir+saenf, datadir, testdata)
+aani = atr.ActiveANI(test_files, wkdir+saenf, wkdir+opt, datadir, testdata)
 aani.init_dataset(P)
 
 inc = 0
@@ -108,6 +110,11 @@ tr = atr.anitrainer(d, layers)
 
 # Train network
 tr.train_network(LR, LA, CV, ST, ps)
+
+# Test network
+ant = atr.anitester(wkdir + cnstf, wkdir + saenf, wkdir + nfdir, GPU, True)
+test_rmse = ant.compute_test(testdata)
+print('Final Test RMSE:', "{:.3f}".format(test_rmse), 'kcal/mol')
 
 o = open(wkdir + 'keep_info.dat', 'w')
 for k in aani.get_keep_info():

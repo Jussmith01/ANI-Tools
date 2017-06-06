@@ -280,7 +280,7 @@ class anitester (object):
 class ActiveANI (object):
 
     '''' -----------Constructor------------ '''
-    def __init__(self, hdf5files, saef, storecac, storetest):
+    def __init__(self, hdf5files, saef, output,storecac, storetest):
         self.xyz = []
         self.Eqm = []
         self.spc = []
@@ -292,6 +292,8 @@ class ActiveANI (object):
 
         self.nt = [] # total conformers
         self.nc = [] # total kept
+
+        self.of = open(output,'w')
 
         self.tf = 0
 
@@ -501,13 +503,16 @@ class ActiveANI (object):
 
         self.Nbad = Nbad
 
-        print('\n--------Data health intformation---------')
-        print('   -Full: ', self.tf, 'Percent of full used:',"{:.2f}".format(100.0*(self.ts+self.vs)/float(self.tf))+'%')
-        print('   -Used: ', self.ts,':',self.vs, ':', self.ts+self.vs,' Ngwd:',Ngwd)
-        print('   -Skip: Ngwd:', Ngwd,'of',Ngto)
-        print('   -Size: ', Nkid, ':', Nidx, ':', Ngid, ':', Nkid+Nidx+Ngid)
-        print('   -Added:', Nadd,' bad:',Nbad,'of',Nidx,'('+"{:.1f}".format(self.get_percent_bad())+'%)')
-        print('-----------------------------------------\n')
+        output = '\n--------Data health intformation---------\n' +\
+                 '   -Full: ' + str(self.tf) + ' Percent of full used: ' + "{:.2f}".format(100.0*(self.ts+self.vs)/float(self.tf)) + '%\n' +\
+                 '   -Used: ' + str(self.ts) + ' : ' + str(self.vs) + ' : ' + str(self.ts+self.vs) + ' Ngwd: ' + str(Ngwd) + '\n' +\
+                 '   -Skip: Ngwd: ' +  str(Ngwd) + ' of ' + str(Ngto) + '\n' +\
+                 '   -Size: ' + str(Nkid) + ' : ' + str(Nidx) + ' : ' + str(Ngid) + ' : ' + str(Nkid+Nidx+Ngid) + '\n' +\
+                 '   -Added: ' + str(Nadd) + ' bad: ' +str(Nbad) + ' of ' + str(Nidx) + ' ('+"{:.1f}".format(self.get_percent_bad())+'%)' + '\n' +\
+                 '-----------------------------------------\n\n'
+
+        print(output)
+        self.of.write(output)
 
         # Make meta data file for caches
         cachet.makemetadata()
