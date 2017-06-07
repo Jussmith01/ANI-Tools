@@ -21,7 +21,7 @@ test_files = [#"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c08f.h5",
               "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c02.h5",
               "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c03.h5",
               "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c04.h5",
-              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c05.h5",
+              "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c05.h5",
               #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c06.h5",
               ]
 
@@ -34,7 +34,8 @@ ST  = 100
 M   = 0.08 # Max error per atom in kcal/mol
 P   = 0.025
 ps  = 25
-Naev = 388
+Naev = 384
+SINet= False
 #--------------------
 
 # Training varibles
@@ -46,7 +47,7 @@ d = dict({'wkdir'         : wkdir,
           'tbtchsz'       : '512',
           'vbtchsz'       : '512',
           'gpuid'         : str(GPU),
-          'ntwshr'        : '1',
+          'ntwshr'        : '0',
           'nkde'          : '2',
           'runtype'       : 'ANNP_CREATE_HDNN_AND_TRAIN',
           'adptlrn'       : 'OFF',
@@ -89,16 +90,16 @@ while aani.get_percent_bad() > 2.0:
     tr.write_learning_curve(wkdir+'learning_curve_'+str(inc)+'.dat')
 
     # Test network
-    ant = atr.anitester(wkdir+cnstf, wkdir+saenf, wkdir+nfdir, GPU, True)
+    ant = atr.anitester(wkdir+cnstf, wkdir+saenf, wkdir+nfdir, GPU, sinet)
     test_rmse = ant.compute_test(testdata)
     print('Test RMSE:',"{:.3f}".format(test_rmse),'kcal/mol')
 
     # Check for and add bad data
-    aani.add_bad_data(wkdir+cnstf, wkdir+saenf, wkdir+nfdir, GPU, True, P=0.05 + inc * 0.025, M=M)
+    aani.add_bad_data(wkdir+cnstf, wkdir+saenf, wkdir+nfdir, GPU, sinet, P=0.05 + inc * 0.025, M=M)
 
     inc = inc + 1
 
-aani.add_bad_data(wkdir + cnstf, wkdir + saenf, wkdir + nfdir, GPU, True, P=1.0, M=M)
+aani.add_bad_data(wkdir + cnstf, wkdir + saenf, wkdir + nfdir, GPU, sinet, P=1.0, M=M)
 aani.store_train_h5(trainh5)
 
 # Remove existing network
@@ -113,7 +114,7 @@ tr = atr.anitrainer(d, layers)
 tr.train_network(LR, LA, CV, ST, ps)
 
 # Test network
-ant = atr.anitester(wkdir + cnstf, wkdir + saenf, wkdir + nfdir, GPU, True)
+ant = atr.anitester(wkdir + cnstf, wkdir + saenf, wkdir + nfdir, GPU, sinet)
 test_rmse = ant.compute_test(testdata)
 print('Final Test RMSE:', "{:.3f}".format(test_rmse), 'kcal/mol')
 
