@@ -204,7 +204,34 @@ def readxyz2 (file):
 
     return xyz,typ[0:Na],Na
 
+def readrcdbstruct (file):
+    xyz = []
+    typ = []
+    Na  = []
 
+    fd = open(file, 'r').read()
+
+    ro = re.compile('optimize=\s*?(\d+?)\s*?[!|\n]')
+    o = ro.findall(fd)
+    opt = bool(int(o[0]))
+
+    ra = re.compile('\$coordinates\s*?\n([\s\S]+?)&')
+    rb = re.compile('([A-Z][a-z]?)\s+?[A-Z][a-z]?\s+?([+,-]?\d+?\.\d+?)\s+?([+,-]?\d+?\.\d+?)\s+?([+,-]?\d+?\.\d+?)\s*?(\n|$)')
+
+    s = ra.findall(fd)[0]
+    c = rb.findall(s)
+
+    Na = len(c)
+    for l in c:
+        typ.append(l[0])
+        xyz.append(float(l[1]))
+        xyz.append(float(l[2]))
+        xyz.append(float(l[3]))
+
+    xyz = np.asarray(xyz,dtype=np.float32)
+    xyz = xyz.reshape((Na,3))
+
+    return xyz,typ[0:Na],Na,opt
 
 def writexyzfile (fn,xyz,typ):
     f = open(fn, 'w')
@@ -253,6 +280,10 @@ def readncdatwforce (file,N = 0):
             frc.append(list(map(float,sd[3*Na+1:2*3*Na+1])))
             if cnt >= N and N > 0:
                 break
+
+    Eact = np.array(Eact, dtype = np.float64)
+    xyz = np.array(xyz,dtype=np.float32).reshape(Eact.size,Na,3)
+    frc = np.array(frc,dtype=np.float32).reshape(Eact.size,Na,3)
 
 
     return xyz,frc,typ,Eact,readf
@@ -470,6 +501,10 @@ def calculaterootmeansqrerror(data1, data2):
     data = np.power(data1 - data2, 2)
     return np.sqrt(np.mean(data))
 
+def calculatemeanabserror(data1, data2):
+    data = np.abs(data1 - data2)
+    return np.mean(data)
+
 # ----------------------------
 # Calculate Mean Squared Diff
 # ----------------------------
@@ -638,9 +673,9 @@ def to_precision(x,p):
 
     return "".join(out)
 
-def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1'):
+def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1',fill=1,comment=""):
 
-    f = open(wkdir + 'inputs/' + fpf + '-' + str(Nc).zfill(4) + '.ipt', 'w')
+    f = open(wkdir + 'inputs/' + fpf + '-' + str(Nc).zfill(fill) + '.ipt', 'w')
 
     Na = len(typ)
 
@@ -669,6 +704,8 @@ def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmra
     f.write('edfname=' + edfname + ' \n')
     f.write('optimize='+ opt + ' \n')
     f.write('frequency='+ freq + ' \n')
+
+    f.write('\n#'+comment+'\n')
 
     f.write('\n\n')
     f.write('$coordinates\n')
