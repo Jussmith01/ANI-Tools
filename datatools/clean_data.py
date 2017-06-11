@@ -17,9 +17,9 @@ def get_smiles(file):
     s = r.search(f)
     return s.group(1).strip()
 
-dtdir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_06/data/'
-indir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_06/'
-h5dir = '/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s06.h5'
+dtdir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_07/data/'
+indir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_07/inputs/'
+h5dir = '/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s07.h5'
 
 if os.path.exists(h5dir):
     os.remove(h5dir)
