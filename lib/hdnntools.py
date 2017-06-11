@@ -204,7 +204,34 @@ def readxyz2 (file):
 
     return xyz,typ[0:Na],Na
 
+def readrcdbstruct (file):
+    xyz = []
+    typ = []
+    Na  = []
 
+    fd = open(file, 'r').read()
+
+    ro = re.compile('optimize=\s*?(\d+?)\s*?[!|\n]')
+    o = ro.findall(fd)
+    opt = bool(int(o[0]))
+
+    ra = re.compile('\$coordinates\s*?\n([\s\S]+?)&')
+    rb = re.compile('([A-Z][a-z]?)\s+?[A-Z][a-z]?\s+?([+,-]?\d+?\.\d+?)\s+?([+,-]?\d+?\.\d+?)\s+?([+,-]?\d+?\.\d+?)\s*?(\n|$)')
+
+    s = ra.findall(fd)[0]
+    c = rb.findall(s)
+
+    Na = len(c)
+    for l in c:
+        typ.append(l[0])
+        xyz.append(float(l[1]))
+        xyz.append(float(l[2]))
+        xyz.append(float(l[3]))
+
+    xyz = np.asarray(xyz,dtype=np.float32)
+    xyz = xyz.reshape((Na,3))
+
+    return xyz,typ[0:Na],Na,opt
 
 def writexyzfile (fn,xyz,typ):
     f = open(fn, 'w')
@@ -253,6 +280,10 @@ def readncdatwforce (file,N = 0):
             frc.append(list(map(float,sd[3*Na+1:2*3*Na+1])))
             if cnt >= N and N > 0:
                 break
+
+    Eact = np.array(Eact, dtype = np.float64)
+    xyz = np.array(xyz,dtype=np.float32).reshape(Eact.size,Na,3)
+    frc = np.array(frc,dtype=np.float32).reshape(Eact.size,Na,3)
 
 
     return xyz,frc,typ,Eact,readf
@@ -440,7 +471,9 @@ def generatedmatsd3(crds):
         for i in range(0,Na):
             for j in range(i+1, Na):
                 a[count] = np.linalg.norm(crds[s,i]-crds[s,j])
+                #print(a[count],crds[s,i],crds[s,i],crds[s,i]-crds[s,j])
                 count += 1
+
 
     return dmat
 
@@ -469,6 +502,10 @@ def calculatemeansqrerror(data1, data2):
 def calculaterootmeansqrerror(data1, data2):
     data = np.power(data1 - data2, 2)
     return np.sqrt(np.mean(data))
+
+def calculatemeanabserror(data1, data2):
+    data = np.abs(data1 - data2)
+    return np.mean(data)
 
 # ----------------------------
 # Calculate Mean Squared Diff
@@ -638,9 +675,42 @@ def to_precision(x,p):
 
     return "".join(out)
 
-def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1'):
+def read_rcdb_coordsandnm(file):
+    f = open(file,'r').read()
 
-    f = open(wkdir + 'inputs/' + fpf + '-' + str(Nc).zfill(4) + '.ipt', 'w')
+    rc = re.compile("(?:\$coordinates)\s*?\n([\s\S]+?)&")
+    S = rc.search(f)
+
+    output = dict()
+    if S:
+        elements = np.vstack([np.array(list(filter(None,i.split(" ")))) for i in S.group(1).split("\n")][0:-1])
+        spc = [str(e) for e in elements[:, 0]]
+        xyz = np.array(elements[:,2:5],dtype=np.float32)
+        output.update({"coordinates":xyz,"species":spc})
+
+    rn = re.compile("FREQUEN=(.+)\nREDMASS=(.+)\nFRCCNST=(.+)\s*?{\s*?\n([\s\S]+?)}")
+    M = rn.findall(f)
+
+    if M:
+        freq = np.empty(len(M) ,dtype=np.float32)
+        rmas = np.empty(len(M), dtype=np.float32)
+        frcn = np.empty(len(M), dtype=np.float32)
+
+        nmcd = []
+        for i,m in enumerate(M):
+            freq[i] = float(m[0])
+            rmas[i] = float(m[1])
+            frcn[i] = float(m[2])
+            nmcd.append(np.vstack([np.array(list(filter(None, x.split(" "))),dtype=np.float32) for x in [s for s in m[3].split("\n") if s != '']]))
+
+        nmcd = np.stack(nmcd)
+        output.update({"frequency":freq,"reducedmass":rmas,"forceconstant":frcn,"nmdisplacements":nmcd})
+
+    return output
+
+def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1',fill=1,comment=""):
+
+    f = open(wkdir + 'inputs/' + fpf + '-' + str(Nc).zfill(fill) + '.ipt', 'w')
 
     Na = len(typ)
 
@@ -662,13 +732,15 @@ def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmra
     f.write('rdm=' + rdm + '\n')
     f.write('type=' + type + '\n')
     f.write('Temp=' + Temp + '\n')
-    f.write('mem=' + '1024' + '\n')
+    f.write('mem=' + '2048' + '\n')
     f.write('SCF=' + SCF + '\n')
     f.write('dfname=' + dfname + ' \n')
     f.write('vdfname=' + vdfname + ' \n')
     f.write('edfname=' + edfname + ' \n')
     f.write('optimize='+ opt + ' \n')
     f.write('frequency='+ freq + ' \n')
+
+    f.write('\n#'+comment+'\n')
 
     f.write('\n\n')
     f.write('$coordinates\n')

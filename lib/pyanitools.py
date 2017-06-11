@@ -22,8 +22,10 @@ class datapacker(object):
             #print(type(v[0]))
 
             #print(k)
-            if type(v[0]) is np.str_ or type(v[0]) is str:
-                v = [a.encode('utf8') for a in v]
+            if type(v) == list:
+                if len(v) != 0:
+                    if type(v[0]) is np.str_ or type(v[0]) is str:
+                        v = [a.encode('utf8') for a in v]
 
             g.create_dataset(k, data=v, compression=self.clib, compression_opts=self.clev)
 

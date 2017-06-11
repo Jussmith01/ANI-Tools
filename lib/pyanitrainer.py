@@ -11,6 +11,11 @@ import pyNeuroChem as pync
 import pyanitools as pyt
 import hdnntools as hdn
 
+# Scipy
+import scipy.spatial as scispc
+
+from rdkit.SimDivFilters import rdSimDivPickers
+
 class anitrainer(object):
     #-----------------------------
     #         Constructor
@@ -193,16 +198,89 @@ class anitester (object):
 
                 deltas = hdn.hatokcal * np.abs(Ecmp_t - np.array(Eact_t, dtype=float))
                 deltas = deltas/float(Na)
-                bad_l = [ n for n, i in zip(index, deltas) if i > Emax ]
-                god_l = [ n for n, i in zip(index, deltas) if i <= Emax ]
+                bad_l.extend([ n for n, i in zip(index, deltas) if i > Emax ])
+                god_l.extend([ n for n, i in zip(index, deltas) if i <= Emax ])
+
+            #print(index.size,len(bad_l),len(god_l),len(bad_l)+len(god_l))
 
             return np.array(bad_l), np.array(god_l), Nm, deltas
         return np.array([]),np.array([]), 0,np.array([])
 
+    def compute_diverse(self, xyz, spc, index, P, aevsize):
+        mNa = 100
+        Nk = int(np.floor(P*float(index.size)))
+        Nk = Nk if Nk < 500 else 500
+
+        #print('Ndiv:',Nk,'Ni:',index.size)
+        if Nk > 4 and index.size > 8:
+            # Array of random floats from 0 to 1
+            selection = np.random.uniform(low=0.0, high=1.0, size=index.size)
+
+            Pt = 1.0 if index.size < 1000 else 1000 / float(index.size)
+
+            # Obtain the sample
+            div_idx = np.array([n for n, i in enumerate(selection) if i <= Pt])
+            pas_idx = np.array([n for n, i in enumerate(selection) if i > Pt])
+
+            #print(Nk, div_idx.size, index.size, Pt)
+
+            Inh = [i for i,s in enumerate(spc) if s != 'H']
+
+            Nm = div_idx.size
+            Na = len(spc)
+
+            div_l = []
+
+            if Na < mNa:
+                mNa = Na
+
+            Nat = Na * Nm
+
+            Nit = int(np.ceil(Nat / 65000.0))
+            Nmo = int(65000 / Na)
+            Nmx = Nm
+
+            aevs = np.empty([Nm,len(Inh)*aevsize])
+
+            for j in range(0, Nit):
+                # Setup idicies
+                i1 = j * Nmo
+                i2 = min(j * Nmo + Nmo, Nm)
+
+                self.nc.setConformers(confs=xyz[div_idx[i1:i2]], types=list(spc))
+                Ecmp_t = self.nc.energy()
+
+                for i,a in enumerate(Inh):
+                    for m in range(i1, i2):
+                        aevs[m,i*aevsize:(i+1)*aevsize] = self.nc.atomicenvironments(a, m).copy()
+
+            dm = scispc.distance.pdist(aevs, 'cosine')
+            picker = rdSimDivPickers.MaxMinPicker()
+            ids = list(picker.Pick(dm, aevs.shape[0], Nk))
+
+            cur_index = np.array(div_idx[ids])
+            new_index = np.array([k for k in range(div_idx.size) if k not in ids])
+
+
+
+            #print(cur_index.size,new_index.size,index.size)
+
+            return cur_index, np.concatenate([new_index, pas_idx])
+        elif index.size > 0:
+            # Array of random floats from 0 to 1
+            selection = np.random.uniform(low=0.0, high=1.0, size=index.size)
+
+            # Obtain the sample
+            new_index = np.array([n for n, i in enumerate(selection) if i > P ])
+            cur_index = np.array([n for n, i in enumerate(selection) if i <= P ])
+            return cur_index, new_index
+        else:
+            return np.array([]),np.array([])
+
 class ActiveANI (object):
 
     '''' -----------Constructor------------ '''
-    def __init__(self, hdf5files, saef, storecac, storetest):
+    def __init__(self, hdf5files, saef, output,storecac, storetest, Naev):
         self.xyz = []
         self.Eqm = []
         self.spc = []
@@ -210,10 +288,14 @@ class ActiveANI (object):
         self.gid = []
         self.prt = []
 
+        self.Naev = Naev
+
         self.kid = [] # list to track data kept
 
         self.nt = [] # total conformers
         self.nc = [] # total kept
+
+        self.of = open(output,'w')
 
         self.tf = 0
 
@@ -285,6 +367,7 @@ class ActiveANI (object):
         cachev = cg('_valid', self.saef, self.storecac, False)
 
         for i,(X,E,S) in enumerate(zip(self.xyz,self.Eqm,self.spc)):
+
             N = E.shape[0]
 
             Tp = int(float(T)*float(P)*float(N))
@@ -297,7 +380,7 @@ class ActiveANI (object):
             idxt = self.idx[i][0:Tp].copy()
             idxv = self.idx[i][Tp+1:Tp+Vp].copy()
 
-            self.kid[i] = np.concatenate([self.kid[i], idxt])
+            self.kid[i] = np.concatenate([self.kid[i], idxt, idxv])
 
             self.nc[i] = self.nc[i] + idxt.shape[0] + idxv.shape[0]
 
@@ -320,6 +403,25 @@ class ActiveANI (object):
         # Make meta data file for caches
         cachet.makemetadata()
         cachev.makemetadata()
+
+    def store_diverse(self, cache, atest, X, E, S, index, P, T):
+        #print(index.shape, index.size)
+        if index.size != 0:
+            cur_index, new_index = atest.compute_diverse(X, S, index, P * T, self.Naev)
+
+            if cur_index.shape[0] != 0:
+                # Get the new index
+                #cur_index = index[cur_index]
+
+                # Add data to the cache
+                cache.insertdata(X[cur_index], E[cur_index], list(S))
+
+            if new_index.size != 0:
+                return np.array(new_index), np.array(cur_index), cur_index.size
+            else:
+                return np.array([]), np.array([]), cur_index.size
+        return np.array([]), np.array([]), 0
+
 
     def store_random(self, cache, X, E, S, index, P, T):
         #print(index, index.shape, index.size)
@@ -351,23 +453,24 @@ class ActiveANI (object):
         cachet = cg('_train', self.saef, self.storecac, True)
         cachev = cg('_valid', self.saef, self.storecac, True)
 
-        Nidx = 0
         Nbad = 0
         Nadd = 0
         Ngwd = 0
         Ngto = 0
 
+        Nidx = 0
+        Nkid = 0
+        Ngid = 0
+
         for i, (X, E, S) in enumerate(zip(self.xyz, self.Eqm, self.spc)):
 
             if self.idx[i].size != 0:
+                #print('Parent:', self.prt[i])
                 # Check if any "Good" milk went sour
                 tmp_idx1, self.gid[i], mt, difft = atest.test_for_bad(X,E,S,self.gid[i],M)
 
                 # Add the soured milk to the pot
                 self.idx[i] = np.array(np.concatenate([tmp_idx1,self.idx[i]]),dtype=np.int32)
-
-                # Count total in the pot
-                Nidx = Nidx + self.idx[i].size
 
                 # Test the pot for good and bad
                 self.idx[i],god_idx,m,diff = atest.test_for_bad(X,E,S,self.idx[i],M)
@@ -378,14 +481,19 @@ class ActiveANI (object):
                 # Add to size of good, good went bad, and total bad
                 Ngto = Ngto + self.gid[i].size
                 Ngwd = Ngwd + tmp_idx1.size
-                Nbad = Nbad + self.idx[i].shape[0]
+                Nbad = Nbad + self.idx[i].size
 
                 # Store a random subset of the bad for training
-                self.idx[i], kat, Nt = self.store_random(cachet, X, E, S, self.idx[i], P, T)
-                self.idx[i], kav, Nv = self.store_random(cachev, X, E, S, self.idx[i], P, V)
+                self.idx[i], kat, Nt = self.store_diverse(cachet, atest, X, E, S, self.idx[i], P, T)
+                self.idx[i], kav, Nv = self.store_diverse(cachev, atest, X, E, S, self.idx[i], P, V)
 
                 # Add the training data to kid
-                self.kid[i] = np.array(np.concatenate([self.kid[i],kat]),dtype=np.int)
+                self.kid[i] = np.array(np.concatenate([self.kid[i],kat,kav]),dtype=np.int)
+
+                # Count total in the pot
+                Nidx = Nidx + self.idx[i].size
+                Nkid = Nkid + self.kid[i].size
+                Ngid = Ngid + self.gid[i].size
 
                 # Increment training and validation size
                 self.ts = self.ts + Nt
@@ -397,12 +505,16 @@ class ActiveANI (object):
 
         self.Nbad = Nbad
 
-        print('\n--------Data health intformation---------')
-        print('   -Full: ', self.tf, 'Percent of full used:',"{:.2f}".format(100.0*(self.ts+self.vs)/float(self.tf))+'%')
-        print('   -Used: ', self.ts,':',self.vs, ':', self.ts+self.vs,' Ngwd:',Ngwd)
-        print('   -Skip: Ngwd:', Ngwd,'of',Ngto)
-        print('   -Added:', Nadd,' bad:',Nbad,'of',Nidx,'('+"{:.1f}".format(self.get_percent_bad())+'%)')
-        print('-----------------------------------------\n')
+        output = '\n--------Data health intformation---------\n' +\
+                 '   -Full: ' + str(self.tf) + ' Percent of full used: ' + "{:.2f}".format(100.0*(self.ts+self.vs)/float(self.tf)) + '%\n' +\
+                 '   -Used: ' + str(self.ts) + ' : ' + str(self.vs) + ' : ' + str(self.ts+self.vs) + ' Ngwd: ' + str(Ngwd) + '\n' +\
+                 '   -Skip: Ngwd: ' +  str(Ngwd) + ' of ' + str(Ngto) + '\n' +\
+                 '   -Size: ' + str(Nkid) + ' : ' + str(Nidx) + ' : ' + str(Ngid) + ' : ' + str(Nkid+Nidx+Ngid) + '\n' +\
+                 '   -Added: ' + str(Nadd) + ' bad: ' +str(Nbad) + ' of ' + str(Nidx) + ' ('+"{:.1f}".format(self.get_percent_bad())+'%)' + '\n' +\
+                 '-----------------------------------------\n\n'
+
+        print(output)
+        self.of.write(output)
 
         # Make meta data file for caches
         cachet.makemetadata()
@@ -434,5 +546,5 @@ class ActiveANI (object):
     def get_diff_kept(self, cnstfile, saefile, nnfdir, gpuid, sinet, M):
         atest = anitester(cnstfile, saefile, nnfdir, gpuid, sinet)
         for k,X,E,S in zip(self.kid,self.xyz,self.Eqm,self.spc):
-            index, m, diff = atest.test_for_bad(X, E, S, k, M)
+            index, index2, m, diff = atest.test_for_bad(X, E, S, k, M)
             yield diff
