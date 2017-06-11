@@ -471,7 +471,9 @@ def generatedmatsd3(crds):
         for i in range(0,Na):
             for j in range(i+1, Na):
                 a[count] = np.linalg.norm(crds[s,i]-crds[s,j])
+                #print(a[count],crds[s,i],crds[s,i],crds[s,i]-crds[s,j])
                 count += 1
+
 
     return dmat
 
@@ -673,6 +675,39 @@ def to_precision(x,p):
 
     return "".join(out)
 
+def read_rcdb_coordsandnm(file):
+    f = open(file,'r').read()
+
+    rc = re.compile("(?:\$coordinates)\s*?\n([\s\S]+?)&")
+    S = rc.search(f)
+
+    output = dict()
+    if S:
+        elements = np.vstack([np.array(list(filter(None,i.split(" ")))) for i in S.group(1).split("\n")][0:-1])
+        spc = [str(e) for e in elements[:, 0]]
+        xyz = np.array(elements[:,2:5],dtype=np.float32)
+        output.update({"coordinates":xyz,"species":spc})
+
+    rn = re.compile("FREQUEN=(.+)\nREDMASS=(.+)\nFRCCNST=(.+)\s*?{\s*?\n([\s\S]+?)}")
+    M = rn.findall(f)
+
+    if M:
+        freq = np.empty(len(M) ,dtype=np.float32)
+        rmas = np.empty(len(M), dtype=np.float32)
+        frcn = np.empty(len(M), dtype=np.float32)
+
+        nmcd = []
+        for i,m in enumerate(M):
+            freq[i] = float(m[0])
+            rmas[i] = float(m[1])
+            frcn[i] = float(m[2])
+            nmcd.append(np.vstack([np.array(list(filter(None, x.split(" "))),dtype=np.float32) for x in [s for s in m[3].split("\n") if s != '']]))
+
+        nmcd = np.stack(nmcd)
+        output.update({"frequency":freq,"reducedmass":rmas,"forceconstant":frcn,"nmdisplacements":nmcd})
+
+    return output
+
 def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1',fill=1,comment=""):
 
     f = open(wkdir + 'inputs/' + fpf + '-' + str(Nc).zfill(fill) + '.ipt', 'w')
@@ -697,7 +732,7 @@ def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmra
     f.write('rdm=' + rdm + '\n')
     f.write('type=' + type + '\n')
     f.write('Temp=' + Temp + '\n')
-    f.write('mem=' + '1024' + '\n')
+    f.write('mem=' + '2048' + '\n')
     f.write('SCF=' + SCF + '\n')
     f.write('dfname=' + dfname + ' \n')
     f.write('vdfname=' + vdfname + ' \n')

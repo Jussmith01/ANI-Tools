@@ -13,7 +13,7 @@ opt = 'active_output.opt'
 # Data Dir
 datadir = '/home/jujuman/Research/DataReductionMethods/models/cachetest/'
 testdata = datadir + 'testset/testset.h5'
-trainh5 = wkdir + 'ani_red_c08f.h5'
+trainh5 = wkdir + 'ani_red_c06f.h5'
 
 # Test data
 test_files = [#"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c08f.h5",
@@ -22,7 +22,7 @@ test_files = [#"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c08f.h5",
               "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c03.h5",
               "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c04.h5",
               "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c05.h5",
-              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c06.h5",
+              "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c06.h5",
               ]
 
 #---- Parameters ----
@@ -35,7 +35,7 @@ M   = 0.08 # Max error per atom in kcal/mol
 P   = 0.025
 ps  = 25
 Naev = 384
-SINet= False
+sinet= False
 #--------------------
 
 # Training varibles
@@ -44,8 +44,8 @@ d = dict({'wkdir'         : wkdir,
           'ntwkStoreDir'  : wkdir+'networks/',
           'atomEnergyFile': saenf,
           'datadir'       : datadir,
-          'tbtchsz'       : '512',
-          'vbtchsz'       : '512',
+          'tbtchsz'       : '1024',
+          'vbtchsz'       : '1024',
           'gpuid'         : str(GPU),
           'ntwshr'        : '0',
           'nkde'          : '2',

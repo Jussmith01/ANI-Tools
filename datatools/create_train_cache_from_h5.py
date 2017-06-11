@@ -1,15 +1,16 @@
 import numpy as np
-
+import os
 # Store test split
 import pyanitools as pyt
 from pyNeuroChem import cachegenerator as cg
 
 # Set the HDF5 file containing the data
-hdf5files = [#'/home/jujuman/Research/ANI-DATASET/RXN1_TNET/rxn_h5_data/ani_benz_rxn_test_1.h5',
-             #'/home/jujuman/Research/ANI-DATASET/RXN1_TNET/rxn_h5_data/ani_benz_rxn_test_2.h5',
-             #'/home/jujuman/Research/ANI-DATASET/RXN1_TNET/rxn_h5_data/ani_benz_rxn_test_3.h5',
-             #'/home/jujuman/Research/ANI-DATASET/RXN1_TNET/rxn_h5_data/ani_benz_rxn_test_4.h5',
-             #'/home/jujuman/Research/ANI-DATASET/RXN1_TNET/rxn_h5_data/ani_benz_rxn_test_5.h5',
+hdf5files = ['/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s01.h5',
+             #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s02.h5',
+             #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s03.h5',
+             #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s04.h5',
+             #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s05.h5',
+             #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s06.h5',
              #'/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c01.h5',
              #'/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c02.h5',
              #'/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c03.h5',
@@ -17,14 +18,17 @@ hdf5files = [#'/home/jujuman/Research/ANI-DATASET/RXN1_TNET/rxn_h5_data/ani_benz
              #'/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c05.h5',
              #'/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c06.h5',
              #'/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c08f.h5',
-             '/home/jujuman/Research/ANI-DATASET/h5data/ani-begdb_h2o.h5',
+             #'/home/jujuman/Research/ANI-DATASET/h5data/ani-begdb_h2o.h5',
              #'/home/jujuman/Research/SingleNetworkTest/datah5/ani-homo_water.h5',
              ]
 
 #hdf5file = '/home/jujuman/Research/ANI-DATASET/ani-1_data_c03.h5'
-storecac = '/home/jujuman/Research/SingleNetworkTest/cache06/'
-saef   = "/home/jujuman/Research/SingleNetworkTest/sae_6-31gd.dat"
-path = "/home/jujuman/Research/SingleNetworkTest/cache06/testset/testset.h5"
+storecac = '/home/jujuman/Research/DataReductionMethods/model6/cache/'
+saef   = "/home/jujuman/Research/DataReductionMethods/model6/train/sae_6-31gd.dat"
+path = "/home/jujuman/Research/DataReductionMethods/model6/cache/testset/testset.h5"
+
+if os.path.exists(path):
+    os.remove(path)
 
 # Declare data cache
 cachet = cg('_train', saef, storecac, False)
