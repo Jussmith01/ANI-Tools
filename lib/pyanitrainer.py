@@ -515,7 +515,7 @@ class ActiveANI (object):
 
         print(output)
         self.of.write(output)
-	self.of.flush()
+        self.of.flush()
         # Make meta data file for caches
         cachet.makemetadata()
         cachev.makemetadata()
