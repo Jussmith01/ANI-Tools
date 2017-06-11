@@ -3,20 +3,20 @@ import pyanitrainer as atr
 import os
 
 # Network 1 Files
-wkdir = '/home/jujuman/Research/DataReductionMethods/models/train_test/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/models/train_c08f/'
 cnstf = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saenf = 'sae_6-31gd.dat'
 nfdir = 'networks/'
 
 # Data Dir
-datadir = '/home/jujuman/Research/DataReductionMethods/models/cachetest/'
+datadir = '/home/jujuman/Research/DataReductionMethods/models/cache/'
 testdata = datadir + 'testset/testset.h5'
 trainh5 = wkdir + 'ani_red_c08f.h5'
 
 # Test data
-test_files = [#"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c08f.h5",
-              "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c01.h5",
-              "/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c02.h5",
+test_files = ["/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c08f.h5",
+              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c01.h5",
+              #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c02.h5",
               #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c03.h5",
               #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c04.h5",
               #"/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c05.h5",
@@ -40,8 +40,8 @@ d = dict({'wkdir'         : wkdir,
           'ntwkStoreDir'  : wkdir+'networks/',
           'atomEnergyFile': saenf,
           'datadir'       : datadir,
-          'tbtchsz'       : '256',
-          'vbtchsz'       : '128',
+          'tbtchsz'       : '768',
+          'vbtchsz'       : '1024',
           'gpuid'         : str(GPU),
           'ntwshr'        : '1',
           'nkde'          : '2',
@@ -49,22 +49,28 @@ d = dict({'wkdir'         : wkdir,
           'adptlrn'       : 'OFF',
           'moment'        : 'ADAM',})
 
-l1 = dict({'nodes'      : '16',
+l1 = dict({'nodes'      : '196',
            'activation' : '5',
            'maxnorm'    : '1',
            'norm'       : '3.0',
            'btchnorm'   : '0',})
 
-l2 = dict({'nodes'      : '16',
+l2 = dict({'nodes'      : '128',
            'activation' : '5',
            'maxnorm'    : '1',
            'norm'       : '3.0',
            'btchnorm'   : '0',})
 
-l3 = dict({'nodes'      : '1',
+l3 = dict({'nodes'      : '96',
+           'activation' : '5',
+           'maxnorm'    : '1',
+           'norm'       : '3.0',
+           'btchnorm'   : '0',})
+
+l4 = dict({'nodes'      : '1',
            'activation' : '6',})
 
-layers = [l1, l2, l3,]
+layers = [l1, l2, l3, l4,]
 
 aani = atr.ActiveANI(test_files, wkdir+saenf, datadir, testdata)
 aani.init_dataset(P)
