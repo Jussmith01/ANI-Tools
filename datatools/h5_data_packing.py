@@ -38,9 +38,9 @@ dtdirs = [#"/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_rxns/scans_double_b
           #"/home/jujuman/Research/SingleNetworkTest/testdata/",
          ]
 
-namelist = ["_train.dat", "_valid.dat", "_test.dat"]
+#namelist = ["_train.dat", "_valid.dat", "_test.dat"]
 #namelist = ["_train.dat", ]
-#namelist = [".dat",]
+namelist = [".dat",]
 
 if os.path.exists(path):
     os.remove(path)

@@ -129,7 +129,7 @@ for k in aani.get_keep_info():
     o.write(str(int(k[1])) + ' : ' + str(k[0]) + '\n')
 
 f = open(wkdir + 'diffs.dat', 'w')
-for K in aani.get_diff_kept (wkdir + cnstf, wkdir + saenf, wkdir + nfdir, GPU, True, M=M):
+for K in aani.get_diff_kept (wkdir + cnstf, wkdir + saenf, wkdir + nfdir, GPU, sinet, M=M):
     string = ""
     for k in K:
         string = string + "{:.7f}".format(k) + ','

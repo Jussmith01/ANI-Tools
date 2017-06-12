@@ -56,7 +56,7 @@ class nmsgenerator():
             Ki = mDynetoMet * self.fcc[i]
             ci = rdt[i+1]-rdt[i]
             Sn = -1.0 if np.random.binomial(1,0.5,1) else 1.0
-            Ri = Sn * MtoA * np.sqrt((3.0 * ci * float(self.Na) * Kb * self.T)/Ki)
+            Ri = Sn * MtoA * np.sqrt((3.0 * ci * Kb * float(self.Nf) * self.T)/(Ki))
             oxyz = oxyz + Ri * self.nmo[i]
         return oxyz
 

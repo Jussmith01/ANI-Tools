@@ -5,7 +5,8 @@ import pyanitools as pyt
 from pyNeuroChem import cachegenerator as cg
 
 # Set the HDF5 file containing the data
-hdf5files = ['/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s01.h5',
+hdf5files = ['/home/jujuman/Research/GDB-11-test-LOT/ani-gdb-c02.h5',
+             #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s01.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s02.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s03.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s04.h5',
@@ -23,9 +24,9 @@ hdf5files = ['/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s01.h5',
              ]
 
 #hdf5file = '/home/jujuman/Research/ANI-DATASET/ani-1_data_c03.h5'
-storecac = '/home/jujuman/Research/DataReductionMethods/model6/cache/'
-saef   = "/home/jujuman/Research/DataReductionMethods/model6/train/sae_6-31gd.dat"
-path = "/home/jujuman/Research/DataReductionMethods/model6/cache/testset/testset.h5"
+storecac = '/home/jujuman/Research/GDB-11-test-LOT/test_cache/'
+saef   = "/home/jujuman/Research/GDB-11-test-LOT/test_train/sae-MP2-6-311++gdd.dat"
+path = "/home/jujuman/Research/GDB-11-test-LOT/test_cache/testset/testset.h5"
 
 if os.path.exists(path):
     os.remove(path)
