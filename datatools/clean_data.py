@@ -17,9 +17,9 @@ def get_smiles(file):
     s = r.search(f)
     return s.group(1).strip()
 
-dtdir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_07/data/'
-indir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_07/inputs/'
-h5dir = '/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s07.h5'
+dtdir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_08/data/'
+indir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_08/inputs/'
+h5dir = '/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s08.h5'
 
 if os.path.exists(h5dir):
     os.remove(h5dir)
@@ -55,10 +55,10 @@ for f in files:
 
     dp.store_data(f.split("-")[0]+'/' + f,coordinates=X[gid],
                                           energies=E[gid],
-                                          #coordinatesHE=X[bid],
-                                          #energiesHE=E[bid],
+                                          coordinatesHE=X[bid],
+                                          energiesHE=E[bid],
                                           species=list(S),
-                                          #smiles=list(smiles),
+                                          smiles=list(smiles),
                                           )
 
     print(f.split("-")[0]+'/' + f, smiles, "{:.3f}".format(100.0*len(bid[0])/float(E.shape[0])) )
