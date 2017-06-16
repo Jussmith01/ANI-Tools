@@ -3,9 +3,10 @@ import os
 # Store test split
 import pyanitools as pyt
 from pyNeuroChem import cachegenerator as cg
+import hdnntools as hdn
 
 # Set the HDF5 file containing the data
-hdf5files = ['/home/jujuman/Research/GDB-11-test-LOT/ani-gdb-c02.h5',
+hdf5files = ['/home/jujuman/Research/GDB-11-test-LOT/ani-gdb-c03.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s01.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s02.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s03.h5',
@@ -52,7 +53,9 @@ for f in hdf5files:
         xyz = np.array_split(data['coordinates'], 10)
         eng = np.array_split(data['energies'], 10)
         spc = data['species']
-        nme = data['parent']
+        ds_path = data['path']
+
+        print('Delta:',hdn.hatokcal*abs(data['energies'].min()-data['energies'].max()))
 
         #print('Parent: ', nme, eng)
         dc = dc + np.concatenate(eng[0:8]).shape[0]
@@ -65,7 +68,7 @@ for f in hdf5files:
         if xyz[9].shape[0] != 0:
             #print(xyz[9].shape)
             t_xyz = xyz[9].reshape(xyz[9].shape[0],xyz[9].shape[1]*xyz[9].shape[2])
-            dpack.store_data(nme + '/mol' + str(i), coordinates=t_xyz, energies=np.array(eng[9]), species=spc)
+            dpack.store_data(ds_path, coordinates=t_xyz, energies=np.array(eng[9]), species=spc)
     print('Count: ',dc)
 
     adl.cleanup()

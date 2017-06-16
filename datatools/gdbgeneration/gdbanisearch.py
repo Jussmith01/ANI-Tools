@@ -9,9 +9,9 @@ import numpy as np
 
 import os
 
-fpf = 'gdb11_s03' #Filename prefix
-wdir = '/home/jujuman/Research/GDB-11-test-LOT/dnntsgdb11_03/' #working directory
-smfile = '/home/jujuman/Research/RawGDB11Database/gdb11_size03.smi' # Smiles file
+fpf = 'gdb11_s04' #Filename prefix
+wdir = '/home/jujuman/Research/GDB-11-test-LOT/dnntsgdb11_04/' #working directory
+smfile = '/home/jujuman/Research/RawGDB11Database/gdb11_size04.smi' # Smiles file
 
 Nc = 10
 
@@ -70,6 +70,7 @@ for n,m in enumerate(molecules):
         for i,x in enumerate(X):
             id = int(str(n)+str(i))
             hdn.write_rcdb_input(x,S,id,wdir,fpf,100,LOT,'500.0',fill=8,comment='smiles: '+Chem.MolToSmiles(m))
+            hdn.writexyzfile(wdir+fpf+'-'+str(id).zfill(8)+'.xyz',x.reshape(1,x.shape[0],x.shape[1]),S)
             print(str(id).zfill(8))
 
 

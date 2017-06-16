@@ -2,6 +2,7 @@ import numpy as np
 import pyanitools as pyt
 from pyNeuroChem import cachegenerator as cg
 import sys
+import os
 
 def interval(v,S):
     ps = 0.0
@@ -11,22 +12,26 @@ def interval(v,S):
             return s
         ps = ps + ds
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/models/cv'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6/model0.05me/cv/'
 
 saef   = wkdir + "/sae_6-31gd.dat"
 
-h5files = ['/home/jujuman/Research/WaterData/ani-water_fix_1.h5',
-           '/home/jujuman/Research/ReactionGeneration/DataGen/ani-DA_rxn.h5',
-           '/home/jujuman/Research/DataReductionMethods/models/datasets/ani_red_cnl_c08f.h5',
+h5files = ['/home/jujuman/Research/DataReductionMethods/model6/model0.05me/ani_red_c06.h5',
+           #'/home/jujuman/Research/WaterData/ani-water_fix_1.h5',
+           #'/home/jujuman/Research/ReactionGeneration/DataGen/ani-DA_rxn.h5',
+           #'/home/jujuman/Research/DataReductionMethods/models/datasets/ani_red_cnl_c08f.h5',
            #'/home/jujuman/Research/DataReductionMethods/models/train_c08f/ani_red_c08f.h5',
            #'/home/jujuman/Research/ANI-DATASET/h5data/ani-begdb_h2o.h5',
            #wkdir + "/h5data/gdb9-2500-div_new.h5",
            #wkdir + "/h5data/ani-gdb-c08e.h5",
            ]
 
-store_dir = wkdir + "/cache-data-"
+store_dir = wkdir + "cache-data-"
 
 N = 5
+
+for i in range(5):
+    os.mkdir(store_dir + str(i))
 
 cachet = [cg('_train', saef, store_dir + str(r) + '/',False) for r in range(N)]
 cachev = [cg('_valid', saef, store_dir + str(r) + '/',False) for r in range(N)]

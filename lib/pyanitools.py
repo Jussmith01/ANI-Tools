@@ -42,21 +42,30 @@ class anidataloader(object):
         self.store = h5py.File(store_file)
 
     ''' Default class iterator (iterate through all data) '''
+    def h5py_dataset_iterator(self,g, prefix=''):
+        for key in g.keys():
+            item = g[key]
+            path = '{}/{}'.format(prefix, key)
+            keys = [i for i in item.keys()]
+            if isinstance(item[keys[0]], h5py.Dataset): # test for dataset
+                data = {'path':path}
+                #print(path)
+                for k in keys:
+                    if not isinstance(item[k], h5py.Group):
+                        dataset = item[k].value
+                        #print(dataset)
+                        if type(dataset[0]) is np.bytes_:
+                            dataset = [a.decode('ascii') for a in dataset]
+                        data.update({k:dataset})
+
+                yield data
+            else: # test for group (go down)
+                yield from self.h5py_dataset_iterator(item, path)
+
+    ''' Default class iterator (iterate through all data) '''
     def __iter__(self):
-        for g in self.store.values():
-            dt = dict()
-            for e in g.items():
-                dt['name'] = e[0]
-                dt['parent'] = g.name
-                for k in e[1]:
-                    v = e[1][k].value
-
-                    if type(v[0]) is np.bytes_:
-                        v = [a.decode('ascii') for a in v]
-                    dt[k]=v
-                yield dt
-
-    getnextdata = __iter__
+        for data in self.h5py_dataset_iterator(self.store):
+            yield data
 
     ''' Iterates through a file stored as roman stores it '''
     def get_roman_data(self):
@@ -69,17 +78,8 @@ class anidataloader(object):
 
     ''' Allows interation through the data in a given group '''
     def iter_group(self,g):
-        for e in g.items():
-            dt = dict()
-            dt['name'] = e[0]
-            dt['parent'] = g.name
-            for k in e[1]:
-                v = e[1][k].value
-
-                if type(v[0]) is np.bytes_:
-                    v = [a.decode('ascii') for a in v]
-                dt[k] = v
-            yield dt
+        for data in self.h5py_dataset_iterator(g):
+            yield data
 
     ''' Returns the number of groups '''
     def group_size(self):

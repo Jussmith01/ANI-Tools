@@ -2,10 +2,12 @@ import hdnntools as hdn
 import pyanitools as pyt
 import os
 
-path = '/home/jujuman/Research/GDB-11-test-LOT/ani-gdb-c02.h5'
+path = '/home/jujuman/Research/GDB-11-test-LOT/ani-gdb-c01.h5'
 
 dtdirs = ["/home/jujuman/Research/GDB-11-test-LOT/dnntsgdb11_01/confs/data/",
-          "/home/jujuman/Research/GDB-11-test-LOT/dnntsgdb11_02/confs/data/"]
+          #"/home/jujuman/Research/GDB-11-test-LOT/dnntsgdb11_02/confs/data/",
+          #"/home/jujuman/Research/GDB-11-test-LOT/dnntsgdb11_03/confs/data/",
+          ]
 
 if os.path.exists(path):
     os.remove(path)
