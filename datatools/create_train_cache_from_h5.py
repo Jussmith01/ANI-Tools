@@ -6,13 +6,9 @@ from pyNeuroChem import cachegenerator as cg
 import hdnntools as hdn
 
 # Set the HDF5 file containing the data
-<<<<<<< HEAD
 hdf5files = ['/home/jujuman/Research/Non-bonded/dimer_C1-test.h5',
              #'/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_red/ani_correct.h5',
              #'/home/jujuman/Research/DataReductionMethods/model6/model0.05me/ani_red_c06.h5',
-=======
-hdf5files = ['/home/jujuman/Research/GDB-11-test-LOT/ani-gdb-c02.h5',
->>>>>>> 78d7b18b8841b3d3735cbb5f6f7c1d02acb69808
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s01.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s02.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s03.h5',
@@ -31,15 +27,9 @@ hdf5files = ['/home/jujuman/Research/GDB-11-test-LOT/ani-gdb-c02.h5',
              ]
 
 #hdf5file = '/home/jujuman/Research/ANI-DATASET/ani-1_data_c03.h5'
-<<<<<<< HEAD
 storecac = '/home/jujuman/Research/Non-bonded/traintest/cache/'
 saef   = "/home/jujuman/Research/Non-bonded/traintest/train/sae_6-31gd.dat"
 path = "/home/jujuman/Research/Non-bonded/traintest/cache/testset/testset.h5"
-=======
-storecac = '/home/jujuman/Research/GDB-11-test-LOT/test_cache/'
-saef   = "/home/jujuman/Research/GDB-11-test-LOT/test_train/sae-MP2-6-311++gdd.dat"
-path = "/home/jujuman/Research/GDB-11-test-LOT/test_cache/testset/testset.h5"
->>>>>>> 78d7b18b8841b3d3735cbb5f6f7c1d02acb69808
 
 if os.path.exists(path):
     os.remove(path)

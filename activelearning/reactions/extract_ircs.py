@@ -7,12 +7,12 @@ import numpy as np
 
 os.environ["PYTHONPATH"] = "../../lib"
 
-d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/IRC/'
-c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/XYZ/'
-r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/DataGen/'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/DataGen/'
 fp = 'DA_IRC'
 
-wkdir1 = '/home/jujuman/Dropbox/ChemSciencePaper.AER/networks/ANI-c08f-ntwk-cv/'
+wkdir1 = '/home/jujuman/Research/ReactionGeneration/cv_multip/'
 cnstfile = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile = 'sae_6-31gd.dat'
 
@@ -20,13 +20,13 @@ saefile = 'sae_6-31gd.dat'
 #cnstfile = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 #saefile = 'sae_6-31gd.dat'
 
-Nnc = 5
+Nnc = 2
 
 files = os.listdir(d)
 files.sort()
 #print(files)
 # Construct pyNeuroChem classes
-nc1 =  [pync.conformers(wkdir1 + cnstfile, wkdir1 + saefile, wkdir1 + 'cv_train_' + str(l) + '/networks/', 0, False) for l in range(Nnc)]
+nc1 =  [pync.conformers(wkdir1 + cnstfile, wkdir1 + saefile, wkdir1 + 'train' + str(l) + '/networks/', 0, False) for l in range(Nnc)]
 
 comp_xyz = []
 
@@ -58,9 +58,9 @@ for f in files:
                     bad_xyz.append(X)
                     bad_idx.append(i)
 
-        for j,(X,i) in enumerate(zip(bad_xyz,bad_idx)):
-            idx = s_idx + str(j).zfill(3)
-            hdt.write_rcdb_input(X, spc, int(idx), r, fp, 5, 'wb97x/6-31g*', '500.0', freq='1', opt='0', fill=6, comment=' index: '+ str(i))
+        #for j,(X,i) in enumerate(zip(bad_xyz,bad_idx)):
+        #    idx = s_idx + str(j).zfill(3)
+        #    hdt.write_rcdb_input(X, spc, int(idx), r, fp, 5, 'wb97x/6-31g*', '500.0', freq='1', opt='0', fill=6, comment=' index: '+ str(i))
 
         print(s_idx,' ',bad_cnt,'of',modl_std.shape[0],' Bad kept: ', len(bad_xyz))
 
@@ -77,4 +77,4 @@ for f in files:
 
         #plt.legend(bbox_to_anchor=(0.01, 0.99), loc=2, borderaxespad=0., fontsize=14)
 
-#plt.show()
+        #plt.show()
