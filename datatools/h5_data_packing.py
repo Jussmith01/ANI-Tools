@@ -39,8 +39,13 @@ dtdirs = [#"/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_rxns/scans_double_b
          ]
 
 #namelist = ["_train.dat", "_valid.dat", "_test.dat"]
+<<<<<<< HEAD
 namelist = ["_train.dat", ]
 #namelist = [".dat",]
+=======
+#namelist = ["_train.dat", ]
+namelist = [".dat",]
+>>>>>>> 78d7b18b8841b3d3735cbb5f6f7c1d02acb69808
 
 if os.path.exists(path):
     os.remove(path)

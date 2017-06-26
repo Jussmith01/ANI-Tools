@@ -220,6 +220,7 @@ def show2dcontradialgraph (ShfR,eta,Rc,func,title):
 #         Set Parameters
 #--------------------------------
 #File name
+<<<<<<< HEAD
 pf = '/home/jujuman/Research/DataReductionMethods/model6r/model-6-extend/model-6e1/rHCNO-3.9A_16-3.0A_a4-8.params' # Output filename
 
 Nrr = 16 # Number of shifting radial functions
@@ -230,14 +231,32 @@ Nzt = 8 # Number of angular shifting parameters
 TM = 1
 Rcr = 3.9 # radial cutoff
 Rca = 3.0 # Angular cutoff
+=======
+pf = '/home/jujuman/Scratch/Research/GDB-11-test-LOT/test_train/rHCNO-4.6A_4-3.1A_a2-2.params' # Output filename
+
+Nrr = 4 # Number of shifting radial functions
+Na = 4 # Number of atom types
+Nar = 2 # Number of shifting angular/radial parameters
+Nzt = 2 # Number of angular shifting parameters
+
+TM = 1
+Rcr = 3.5 # radial cutoff
+Rca = 2.5 # Angular cutoff
+>>>>>>> 78d7b18b8841b3d3735cbb5f6f7c1d02acb69808
 
 xs = 1.3
 
 #Atyp = '[H,C,O,N]'
 Atyp = '[H,C,N,O]'
+<<<<<<< HEAD
 EtaR = np.array([12.0]) # Radial eta parameters
 EtaA = np.array([8.0]) # Angular/Radial eta parameters
 Zeta = np.array([8.0]) # Angular zeta parameters
+=======
+EtaR = np.array([10.0]) # Radial eta parameters
+EtaA = np.array([8.0]) # Angular/Radial eta parameters
+Zeta = np.array([1.0]) # Angular zeta parameters
+>>>>>>> 78d7b18b8841b3d3735cbb5f6f7c1d02acb69808
 
 # ****************************************************
 cmap = mpl.cm.brg

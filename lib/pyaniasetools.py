@@ -8,6 +8,7 @@ import numpy as np
 from ase_interface import ANI
 import pyNeuroChem as pync
 
+<<<<<<< HEAD
 import hdnntools as hdt
 
 # RDKit
@@ -20,11 +21,17 @@ from rdkit.SimDivFilters import rdSimDivPickers
 # Scipy
 import scipy.spatial as scispc
 
+=======
+from rdkit import Chem
+from rdkit.Chem import AllChem
+
+>>>>>>> 78d7b18b8841b3d3735cbb5f6f7c1d02acb69808
 import  ase
 from ase import Atoms
 from ase.optimize import LBFGS
 from ase.calculators.calculator import Calculator, all_changes
 
+<<<<<<< HEAD
 ## Converts an rdkit mol class conformer to a 2D numpy array
 def __convert_rdkitmol_to_nparr__(mrdk, confId=-1):
     xyz = np.zeros((mrdk.GetNumAtoms(), 3), dtype=np.float32)
@@ -98,6 +105,36 @@ class anicomputetool(object):
 
     def optimize_rdkit_molecule(self, mrdk, cid, fmax=0.0001, steps=500, logger='opt.out'):
         mol = __convert_rdkitmol_to_aseatoms__(mrdk,cid)
+=======
+class anicomputetool(object):
+    def __init__(self,cnstfile,saefile,nnfdir,gpuid=0, sinet=False):
+        # Construct pyNeuroChem class
+        self.nc = pync.molecule(cnstfile, saefile, nnfdir, gpuid, sinet)
+
+    def __convert_rdkitmol_to_aseatoms__(self,mrdk,confId=-1):
+        X, S = self.__convert_rdkitmol_to_nparr__(mrdk,confId)
+        mol = Atoms(symbols=S, positions=X)
+        return mol
+
+    def __convert_rdkitmol_to_nparr__(self,mrdk,confId=-1):
+        xyz = np.zeros((mrdk.GetNumAtoms(), 3), dtype=np.float32)
+        spc = []
+
+        Na = mrdk.GetNumAtoms()
+        for i in range(0, Na):
+            pos = mrdk.GetConformer(confId).GetAtomPosition(i)
+            sym = mrdk.GetAtomWithIdx(i).GetSymbol()
+
+            spc.append(sym)
+            xyz[i, 0] = pos.x
+            xyz[i, 1] = pos.y
+            xyz[i, 2] = pos.z
+
+        return xyz,spc
+
+    def optimize_rdkit_molecule(self, mrdk, cid, fmax=0.0001, steps=500, logger='opt.out'):
+        mol = self.__convert_rdkitmol_to_aseatoms__(mrdk,cid)
+>>>>>>> 78d7b18b8841b3d3735cbb5f6f7c1d02acb69808
         mol.set_calculator(ANI(False))
         mol.calc.setnc(self.nc)
         dyn = LBFGS(mol,logfile=logger)
@@ -124,6 +161,7 @@ class anicomputetool(object):
                 return True
         return False
 
+<<<<<<< HEAD
     def detect_unique_rdkitconfs(self, mol, cids, eps=1.0E-6):
         E = []
         for cid in cids:
@@ -164,3 +202,16 @@ class diverseconformers():
         ids = list(picker.Pick(dm, Ngen, Nkep, firstPicks=list(seed_list[0:5])))
         ids.sort()
         return ids
+=======
+    def detect_unique_rdkitconfs(self, mol, cids):
+        E = []
+        for cid in cids:
+            X, S = self.__convert_rdkitmol_to_nparr__(mol, confId=cid)
+            self.nc.setMolecule(coords=X, types=list(S))
+            e = self.nc.energy().copy()
+            if self.__in_list_within_eps__(e,E,1.0E-6):
+                mol.RemoveConformer(cid)
+            else:
+                E.append(e)
+        return np.concatenate(E)
+>>>>>>> 78d7b18b8841b3d3735cbb5f6f7c1d02acb69808
