@@ -52,7 +52,7 @@ for f in files:
         bad_xyz = []
         bad_idx = []
         for i,(X,s) in enumerate(zip(xyz,modl_std)):
-            if s > 0.05:
+            if s > 0.06:
                 bad_cnt = bad_cnt + 1
                 if i%3 == 0:
                     bad_xyz.append(X)

@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
 import platform
+import os
 
 PY_VERSION = int(platform.python_version().split('.')[0]) > 3
 
@@ -39,9 +40,11 @@ class anidataloader(object):
 
     ''' Contructor '''
     def __init__(self, store_file):
+        if not os.path.exists(store_file):
+            exit('Error: file not found - '+store_file)
         self.store = h5py.File(store_file)
 
-    ''' Default class iterator (iterate through all data) '''
+    ''' Group recursive iterator (iterate through all groups in all branches and return datasets in dicts) '''
     def h5py_dataset_iterator(self,g, prefix=''):
         for key in g.keys():
             item = g[key]
@@ -52,10 +55,13 @@ class anidataloader(object):
                 #print(path)
                 for k in keys:
                     if not isinstance(item[k], h5py.Group):
-                        dataset = item[k].value
-                        #print(dataset)
-                        if type(dataset[0]) is np.bytes_:
-                            dataset = [a.decode('ascii') for a in dataset]
+                        dataset = np.array(item[k].value)
+
+                        if type(dataset) is np.ndarray:
+                            if dataset.size != 0:
+                                if type(dataset[0]) is np.bytes_:
+                                    dataset = [a.decode('ascii') for a in dataset]
+
                         data.update({k:dataset})
 
                 yield data
