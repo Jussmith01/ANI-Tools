@@ -99,7 +99,7 @@ for n,m in enumerate(molecules):
         print('    -kept', len(X),'of',Nu)
 
         if len(X) > 0:
-        S = gdb.get_symbols_rdkitmol(m)
+            S = gdb.get_symbols_rdkitmol(m)
 
         for i,x in enumerate(X):
             id = int(str(n)+str(i))

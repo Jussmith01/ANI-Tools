@@ -80,7 +80,7 @@ class anicrossvalidationconformer(object):
         deltas = np.zeros((self.Nn,X.shape[0]),dtype=np.float64)
         for i,nc in enumerate(self.ncl):
             nc.setConformers(confs=X,types=list(S))
-            deltas[i] = np.abs(nc.energy().copy()-Ea)
+            deltas[i] = nc.energy().copy()-Ea
         deltas = hdt.hatokcal*deltas
         return deltas
 
