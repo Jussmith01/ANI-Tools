@@ -4,11 +4,12 @@ import os
 
 #path = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-06_rs2.h5'
 #path = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-06_rs4.h5'
-#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs3.h5'
-path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/gdb11_S01_06r.h5'
+path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs4.h5'
+#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/mdal.h5'
 
-dtdirs = ['/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/data/',
-          #'/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_3/data/',
+dtdirs = [#'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/aminoacids/mdal1/data/',
+          #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/h2o/mdal1/data/',
+          '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_4/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_4/data/',
           #"/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_3/data/",
           #"/home/jujuman/Scratch/Research/GDB-11-wB97X-6-31gd/dnnts_nms_resample/confs_cv_gdb01-03_red03-05/data_cv_1/",
@@ -20,7 +21,7 @@ dtdirs = ['/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/data/',
 
 if os.path.exists(path):
     os.remove(path)
-s
+
 #open an HDF5 for compressed storage.
 #Note that if the path exists, it will open whatever is there.
 dpack = pyt.datapacker(path)
@@ -40,7 +41,7 @@ for d in dtdirs:
         Ne = data['energies'].size
         Nd += Ne
 
-        f = f.split("-")
+        f = f.rsplit("-",1)
 
         #print(f)
         fn = f[0] + "/mol" + f[1].split(".")[0]

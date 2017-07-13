@@ -260,7 +260,7 @@ class moldynactivelearning(object):
         self.X = []
         fsteps = []
         for r in range(Nr):
-            found, steps = self.__run_rand_dyn__(mid=0, T=T, dt=dt, Nc=Nc, Ns=Ns, dS=dS)
+            found, steps = self.__run_rand_dyn__(mid=r, T=T, dt=dt, Nc=Nc, Ns=Ns, dS=dS)
             fsteps.append(steps)
             if found:
                 Ng += 1
