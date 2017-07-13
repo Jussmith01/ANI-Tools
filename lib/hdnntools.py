@@ -6,6 +6,7 @@ import re
 import os.path
 import math
 import time as tm
+import linecache
 import pandas as pd
 
 hatokcal = 627.509469
@@ -183,15 +184,20 @@ def readxyz2 (file):
 
     fd = open(file, 'r').read()
 
+    print(fd)
+
     #rb = re.compile('\s*?\n?\s*?(\d+?)\s*?\n((?:\s*?[A-Z][a-z]?.+(?:\n|))+)')
-    rb = re.compile('((?:[A-Z][a-z]? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+?\s*?(?:\n|$))+)')
+    #rb = re.compile('((?:[A-Z][a-z]? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+?\s*?(?:\n|$))+)')
+    rb = re.compile('(\d+?)\n(.+?)\n((?:[A-Z][a-z]? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+?\s*?(?:\n|$))+)')
     ra = re.compile('([A-Z][a-z]?) +?([-+]?\d+?\.\S+?) +?([-+]?\d+?\.\S+?) +?([-+]?\d+?\.\S+?)\s*?(?:\n|$)')
 
     s = rb.findall(fd)
+    print(s)
     Nc = len(s)
     for i in s:
+        print(i[1])
 
-        c = ra.findall(i)
+        c = ra.findall(i[2])
         Na = len(c)
         for j in c:
             typ.append(j[0])
@@ -280,6 +286,8 @@ def readncdatall(file,N = 0):
             C2.append(np.array(data[nat*3+nat*3+(nat+1)+1:nat*3+nat*3+2*(nat+1)+1],dtype=np.float32))
             SD.append(np.array(data[nat*3+nat*3+2*(nat+1)+1:nat*3+nat*3+3*(nat+1)+1],dtype=np.float32))
             DP.append(np.array(data[nat*3+nat*3+3*(nat+1)+1:nat*3+nat*3+4*(nat+1)+(nat+1)*3+1],dtype=np.float32).reshape(nat+1,3))
+    else:
+        exit(FileNotFoundError)
 
     Xi = np.stack(Xi)
     Ei = np.array(Ei,dtype=np.float64)
@@ -551,13 +559,13 @@ def calculatemeansqrerror(data1, data2):
     data = np.power(data1 - data2, 2)
     return np.mean(data)
 
-def calculaterootmeansqrerror(data1, data2):
+def calculaterootmeansqrerror(data1, data2, axis=0):
     data = np.power(data1 - data2, 2)
-    return np.sqrt(np.mean(data))
+    return np.sqrt(np.mean(data, axis=axis))
 
-def calculatemeanabserror(data1, data2):
+def calculatemeanabserror(data1, data2, axis=0):
     data = np.abs(data1 - data2)
-    return np.mean(data)
+    return np.mean(data,axis=axis)
 
 # ----------------------------
 # Calculate Mean Squared Diff
@@ -646,6 +654,38 @@ def calculateabsdiff(data1):
         data[i,1] = data1[i*2+1] - data1[i*2]
 
     return data
+
+def nsum(n):
+    return int(( n * ( n - 1 ) ) / 2)
+
+def index_triangle(i, j, n):
+    if j < i:
+        return int(nsum(n) - nsum(n-j) + i - j - 1)
+    else:
+        return int(nsum(n) - nsum(n-i) + j - i - 1)
+
+def calculatedmat(data):
+    N = data.size
+    d = np.empty(nsum(N))
+
+    for i in range(N):
+        for j in range(i+1,N):
+            idx = index_triangle(i,j,N)
+            d[idx] = data[i] - data[j]
+
+    return d
+
+def calculateKdmat(K, data):
+    N = data.shape[1]
+    d = np.empty((K, nsum(N)))
+
+    for k in range(K):
+        for i in range(N):
+            for j in range(i+1,N):
+                idx = index_triangle(i,j,N)
+                d[k,idx] = data[k,i] - data[k,j]
+
+    return d
 
 # -----------------------
 
@@ -784,7 +824,7 @@ def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmra
     f.write('rdm=' + rdm + '\n')
     f.write('type=' + type + '\n')
     f.write('Temp=' + Temp + '\n')
-    f.write('mem=' + '2048' + '\n')
+    f.write('mem=' + '16000' + '\n')
     f.write('SCF=' + SCF + '\n')
     f.write('dfname=' + dfname + ' \n')
     f.write('vdfname=' + vdfname + ' \n')

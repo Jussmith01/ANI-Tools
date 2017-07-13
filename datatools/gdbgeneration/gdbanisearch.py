@@ -9,9 +9,9 @@ import numpy as np
 
 import os
 
-fpf = 'gdb11_s07' #Filename prefix
-wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/' #working directory
-smfile = '/home/jujuman/Research/RawGDB11Database/gdb11_size07.smi' # Smiles file
+fpf = 'gdb11_s08' #Filename prefix
+wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/confs_2/' #working directory
+smfile = '/home/jujuman/Research/RawGDB11Database/gdb11_size08.smi' # Smiles file
 
 Nc = 10
 
@@ -32,7 +32,7 @@ if not os.path.exists(wdir+'inputs'):
 ani = aat.anicomputetool(cnstfile, saefile, nnfdir)
 
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6/model0.05me/cv/cv1/'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-06/cv4/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08/cv3/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-6-ext/model-6e1/'
 #cnstfilecv = wkdircv + 'rHCNO-3.9A_16-3.0A_a4-8.params'
@@ -62,7 +62,7 @@ for n,m in enumerate(molecules):
 
         # ANI Optimization
         #for cid in cids:
-         #   ani.optimize_rdkit_molecule(m,cid,fmax=0.001)
+        #    ani.optimize_rdkit_molecule(m,cid,fmax=0.001)
 
 
         # Detect unique conformers by energy (will fail to select degenerate energy molecules)
@@ -94,7 +94,7 @@ for n,m in enumerate(molecules):
         if len(X) > 0:
             Nd += 1
             X = np.stack(X)
-            X = X[0].reshape(1, X.shape[1], 3) # keep only the first guy
+            #X = X[0].reshape(1, X.shape[1], 3) # keep only the first guy
 
         print('    -kept', len(X),'of',Nu)
 

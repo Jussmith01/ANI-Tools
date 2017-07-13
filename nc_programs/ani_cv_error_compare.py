@@ -19,8 +19,18 @@ cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix  = wkdircv + 'train'
 
+
 # Define the conformer cross validator class
-anicv = aat.anicrossvalidationconformer(cnstfilecv,saefilecv,nnfprefix,5,0,False)
+anicv1 = aat.anicrossvalidationconformer(cnstfilecv,saefilecv,nnfprefix,5,0,False)
+
+# Define cross validation networks
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-07/cv_hyper_search/models/cv_LR_test_32-32-32-1/'
+cnstfilecv = wkdircv + 'rHCNO-4.6A_16-4.6A_a4-8.params'
+saefilecv  = wkdircv + 'sae_6-31gd.dat'
+nnfprefix  = wkdircv + 'train'
+
+# Define the conformer cross validator class
+#anicv2 = aat.anicrossvalidationconformer(cnstfilecv,saefilecv,nnfprefix,5,0,False)
 
 # Declare data loader
 adl = pyt.anidataloader(h5file)
@@ -29,40 +39,84 @@ means = []
 sigms = []
 
 # Iterate data set
-for data in adl:
+for i,data in enumerate(adl):
     # Extract the data
-    X  = data['coordinates']
+    X  = data['coordinates'][0:10]
     S  = data['species']
-    Ea = data['energies']
+    energies_t = data['energies'][0:10]
 
-    minid = np.argmin(Ea)
+    #minid = np.argmin(energies_t)
 
-    X  = X[minid].reshape(1,X.shape[1],3)
-    Ea = np.array(Ea[minid])
+    #X  = X[minid].reshape(1,X.shape[1],3)
+    #energies_t = np.array(energies_t[minid])
 
     # Calculate std. dev. per atom for all conformers
-    sigma = anicv.compute_stddev_conformations(X,S)
+    sigma1 = anicv1.compute_stddev_conformations(X,S)
+    #sigma2 = anicv2.compute_stddev_conformations(X,S)
 
     # Calculate energy deltas
-    delta = anicv.compute_energy_delta_conformations(X,Ea,S)
+    delta, energies_c = anicv1.compute_energy_delta_conformations(X,energies_t,S)
 
     # Print result
-    #print('----------Result----------')
+    print('----------Result----------')
     #print(np.mean(delta,axis=0))
-    #print(sigma)
+    print(sigma1)
+    #print(sigma2)
 
-    means.append(np.max(delta,axis=0)/float(len(S)))
-    #means.append(delta[:,0] / float(len(S)))
+    #rmse = np.array(np.sqrt(np.mean(np.power(delta,2.0))) / float(len(S)))
+    #means.append(rmse)
+
+    energies_t = hdn.hatokcal * (energies_t - energies_t.min())
+    mean = hdn.hatokcal * np.mean(energies_c, axis=0)
+    #delta = np.abs(mean - energies_t) / float(len(S))
+    sigma = hdn.hatokcal * sigma1
+    mdelt = np.abs(np.max(energies_c,axis=0)-np.min(energies_c,axis=0))
+
+    #print(delta)
+
+    #means.append(delta)
+    means.append(np.max(np.abs(hdn.hatokcal * delta),axis=0) / float(len(S)))
 
     sigms.append(sigma)
+
+    idx_hs = np.array(np.where(sigma >= 0.08))
+    idx_ls = np.array(np.where(sigma < 0.08))
+
+    idx_gd = np.intersect1d(np.where(delta < 0.08), idx_ls)
+    idx_bd = np.intersect1d(np.where(delta >= 0.08), idx_ls)
+
+    '''
+    plt.plot(sigma-sigma.mean())
+    plt.plot(delta-delta.mean())
+    plt.plot(mdelt-mdelt.mean())
+    plt.show()
+
+    plt.plot(energies_t / float(len(S)),energies_t / float(len(S)))
+    plt.scatter(energies_t[idx_gd] / float(len(S)), mean[idx_gd] / float(len(S)), color='green', label='Hit : ')
+    plt.scatter(energies_t[idx_bd] / float(len(S)), mean[idx_bd] / float(len(S)), color='red', label='Hit : ')
+    plt.scatter(energies_t[idx_hs] / float(len(S)), mean[idx_hs] / float(len(S)), color='blue', label='Hit : ')
+    plt.show()
+
+    plt.plot(energies_t / float(len(S)), energies_t / float(len(S)))
+    plt.scatter(energies_t / float(len(S)), hdn.hatokcal * energies_c[0,:] / float(len(S)), color='blue', label='Hit : ')
+    plt.scatter(energies_t / float(len(S)), hdn.hatokcal * energies_c[1,:] / float(len(S)), color='red', label='Hit : ')
+    plt.scatter(energies_t / float(len(S)), hdn.hatokcal * energies_c[2,:] / float(len(S)), color='green', label='Hit : ')
+    plt.scatter(energies_t / float(len(S)), hdn.hatokcal * energies_c[3,:] / float(len(S)), color='yellow', label='Hit : ')
+    plt.scatter(energies_t / float(len(S)), hdn.hatokcal * energies_c[4,:] / float(len(S)), color='orange', label='Hit : ')
+
+    plt.show()
+    '''
+
+    if i == 500:
+        break
 
 means = np.concatenate(means)
 sigms = np.concatenate(sigms)
 
 Nt = sigms.size
 
-idx_hs = np.array(np.where(sigms >= 0.1))
-idx_ls = np.array(np.where(sigms < 0.1))
+idx_hs = np.array(np.where(sigms >= 0.02))
+idx_ls = np.array(np.where(sigms < 0.02))
 
 print(type(idx_hs))
 

@@ -20,16 +20,18 @@ saefile  = wkdir + 'sae_6-31gd.dat'
 nnfdir   = wkdir + 'networks/'
 
 # reaction center atoms
-rcatoms = [0, 1, 2, 3]
-inclist = [0,1,2,3,4,5,6,7,8,9]
+#rcatoms = [0, 1, 2, 3]
+#inclist = [0,1,2,3,4,5,6,7,8,9]
+rcatoms = []
+inclist = []
 aevsize = 384
 Nk = 300
-T = 600
-Ngen = 300
-Nkep = 30
+T = 1000
+Ngen = 200
+Nkep = 24
 
-idir = '/home/jujuman/Research/ReactionGeneration/DataGen/inputs/'
-cdir = '/home/jujuman/Research/ReactionGeneration/DataGen/confs/'
+idir = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/inputs/'
+cdir = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/confs/'
 files = os.listdir(idir)
 files.sort()
 
@@ -55,7 +57,7 @@ dm = scispc.distance.pdist(aevs, 'sqeuclidean')
 picker = rdSimDivPickers.MaxMinPicker()
 seed_list = [ i for i in range(aevs.shape[0])]
 np.random.shuffle(seed_list)
-print(seed_list)
+print('seed:',seed_list)
 ids = set(picker.Pick(dm, aevs.shape[0], Nk, firstPicks=list(seed_list[0:10])))
 ids.update(set(inclist))
 ids = list(ids)
@@ -75,7 +77,7 @@ for i in ids:
     nmc = data["nmdisplacements"]
     frc = data["forceconstant"]
 
-    nms = nmt.nmsgenerator(xyz,nmc,frc,spc,T,minfc=5.0E-2)
+    nms = nmt.nmsgenerator(xyz,nmc,frc,spc,T,minfc=1.0E-2)
 
     conformers = []
     for i in range(Ngen):
@@ -94,6 +96,7 @@ for i in ids:
     picker = rdSimDivPickers.MaxMinPicker()
     seed_list = [i for i in range(Ngen)]
     np.random.shuffle(seed_list)
+    print('seed:',seed_list)
     ids = list(picker.Pick(dm, Ngen, Nkep, firstPicks=list(seed_list[0:5])))
     ids.sort()
     print(f,len(ids),conformers.shape,dm.shape,":",ids)

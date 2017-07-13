@@ -4,11 +4,11 @@ import os
 
 #path = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-06_rs2.h5'
 #path = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-06_rs4.h5'
-#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-07/confs_cv_gdb01-07_rs1.h5'
-path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/gdb11_S01_06r.h5'
+#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs3.h5'
+path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/gdb11_S01_06r.h5'
 
-dtdirs = ['/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/data/',
-          #'/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-07/confs_1/data/',
+dtdirs = ['/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/data/',
+          #'/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_3/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_4/data/',
           #"/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_3/data/",
           #"/home/jujuman/Scratch/Research/GDB-11-wB97X-6-31gd/dnnts_nms_resample/confs_cv_gdb01-03_red03-05/data_cv_1/",
@@ -20,16 +20,18 @@ dtdirs = ['/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/data/',
 
 if os.path.exists(path):
     os.remove(path)
-
+s
 #open an HDF5 for compressed storage.
 #Note that if the path exists, it will open whatever is there.
 dpack = pyt.datapacker(path)
 
 Nd = 0
+Nf = 0
 for d in dtdirs:
 
     files = [f for f in os.listdir(d) if ".dat" in f]
     files.sort()
+    Nf += len(files)
 
     for n,f in enumerate(files):
         print(d+f)
@@ -39,10 +41,16 @@ for d in dtdirs:
         Nd += Ne
 
         f = f.split("-")
-        print('Storing: ',f[0] + "/mol" + f[1].split(".")[0],' data:',Ne)
 
-        dpack.store_data(f[0] + "/mol" + f[1].split(".")[0], **data)
+        #print(f)
+        fn = f[0] + "/mol" + f[1].split(".")[0]
+        #fn = f[1] + "/mol" + f[2].split(".")[0]
 
-print('Total data:',Nd)
+        #print(fn)
+        print('Storing: ',fn,' data:',Ne)
+
+        dpack.store_data(fn, **data)
+
+print('Total data:',Nd,'from',Nf,'files.')
 dpack.cleanup()
 

@@ -46,7 +46,7 @@ class nmsgenerator():
     def __check_distance_from_eq__(self,rxyz):
         for i in range(0,self.Na):
             Rii = np.linalg.norm(self.xyz[i]-rxyz[i])
-            if Rii > 0.6:
+            if Rii > 2.0:
                 #print(Rii)
                 return True
         return False
