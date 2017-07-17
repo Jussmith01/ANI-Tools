@@ -61,10 +61,42 @@ def __convert_rdkitmol_to_aseatoms__(mrdk, confId=-1):
     mol = Atoms(symbols=S, positions=X)
     return mol
 
+## Get per conformer data from CV set base on crit
+def getcvconformerdata(Ncv ,datacv, dataa, Scv, c):
+    T1 = []
+    T2 = []
+
+    Nt = 0
+    Nd = 0
+    for id,sig in enumerate(Scv):
+        bidx = np.where(sig <= c)[0]
+        Nt += sig.size
+        Nd += bidx.size
+        T1.append(datacv[id][:, bidx].reshape(Ncv,-1))
+        T2.append(dataa[id][bidx].reshape(-1))
+    return np.hstack(T1),np.concatenate(T2),Nd,Nt
+
+## Get per conformer data from energy set base on crit
+def getenergyconformerdata(Ncv ,datacv, dataa, datae, e):
+    T1 = []
+    T2 = []
+
+    Nt = 0
+    Nd = 0
+    for id,de in enumerate(datae):
+        de = de - de.min()
+        bidx = np.where(de <= e)[0]
+        Nt += de.size
+        Nd += bidx.size
+        T1.append(datacv[id][:, bidx].reshape(Ncv,-1))
+        T2.append(dataa[id][bidx].reshape(-1))
+    return np.hstack(T1),np.concatenate(T2), Nd, Nt
+
 ##-------------------------------------
 ## Class for ANI cross validaiton tools
 ##--------------------------------------
 class anicrossvalidationconformer(object):
+    ''' Constructor '''
     def __init__(self,cnstfile,saefile,nnfprefix,Nnet,gpuid=0, sinet=False):
         # Number of networks
         self.Nn = Nnet
@@ -72,6 +104,7 @@ class anicrossvalidationconformer(object):
         # Construct pyNeuroChem class
         self.ncl = [pync.conformers(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
 
+    ''' Compute the std. dev. from cross validation networks on a set of comformers '''
     def compute_stddev_conformations(self,X,S):
         energies = np.zeros((self.Nn,X.shape[0]),dtype=np.float64)
         for i,nc in enumerate(self.ncl):
@@ -80,6 +113,7 @@ class anicrossvalidationconformer(object):
         sigma = hdt.hatokcal*np.std(energies,axis=0) / float(len(S))
         return sigma
 
+    ''' Compute the dE from cross validation networks on a set of comformers '''
     def compute_energy_delta_conformations(self,X,Ea,S):
         deltas = np.zeros((self.Nn,X.shape[0]),dtype=np.float64)
         energies = np.zeros((self.Nn,X.shape[0]),dtype=np.float64)
@@ -91,17 +125,17 @@ class anicrossvalidationconformer(object):
         deltas = deltas
         return deltas,energies
 
+    ''' Compute the energy of a set of conformers for the CV networks '''
     def compute_energy_conformations(self,X,S):
         energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
         forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
-
         for i,nc in enumerate(self.ncl):
             nc.setConformers(confs=X,types=list(S))
             energies[i] = nc.energy().copy()
             forces[i] = -nc.force().copy()
-
         return energies, forces
 
+    ''' Compute the std. dev. of rdkit conformers '''
     def compute_stddev_rdkitconfs(self,mrdk):
         X,S = __convert_rdkitconfs_to_nparr__(mrdk)
         return self.compute_stddev_conformations(X,S)
@@ -223,7 +257,7 @@ class moldynactivelearning(object):
 
     def __run_rand_dyn__(self, mid, T, dt, Nc, Ns, dS):
         # Setup calculator
-        mol = self.mols[mid].copy()
+        mol = self.mols[0].copy()
         mol.set_calculator(ANI(False))
         mol.calc.setnc(self.ncl[0])
 
@@ -231,7 +265,7 @@ class moldynactivelearning(object):
         spc = mol.get_chemical_symbols()
 
         # Set the momenta corresponding to T=300K
-        MaxwellBoltzmannDistribution(mol, T * units.kB)
+        MaxwellBoltzmannDistribution(mol, (T/4.0) * units.kB)
 
         # Set the thermostat
         dyn = Langevin(mol, dt * units.fs, T * units.kB, 0.02)
@@ -264,14 +298,14 @@ class moldynactivelearning(object):
             fsteps.append(steps)
             if found:
                 Ng += 1
-            #print('Ran', r,':',found,':',steps)
 
         fsteps = np.array(fsteps).mean()
 
         if len(self.X) > 0:
             X = np.stack(self.X)
 
-        print('    -New confs:', Ng, 'of', Nr,'-', str(Nc * Ns * dt) + ' fs', 'trajectories. Failed within',"{:.2f}".format(fsteps*dt),'on average.')
+        self._infostr_ = 'New confs: ' + str(Ng)+' of ' + str(Nr) + ' - ' + \
+                          str(Nc * Ns * dt) + 'fs trajectories. Failed within '+"{:.2f}".format(fsteps*dt)+'fs on average.'
 
         return np.array(self.X)
 ##--------------------------------

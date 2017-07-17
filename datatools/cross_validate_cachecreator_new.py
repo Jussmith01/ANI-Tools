@@ -12,11 +12,13 @@ def interval(v,S):
             return s
         ps = ps + ds
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08/cv3/'
-
+wkdir = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08_mdal01/cv2/'
+#wkdir ='/home/jujuman/Research/transfer_learning/cv1/'
 saef   = wkdir + "sae_6-31gd.dat"
+#saef   = wkdir + "sae_ccsd_cbs.dat"
 
-h5files = [#'/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/mdal.h5',
+
+h5files = ['/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/mdal.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/h2o_nms_clusters.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs1.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs2.h5',
@@ -26,14 +28,16 @@ h5files = [#'/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resa
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_cv_gdb01-06_rs2.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_cv_gdb01-06_rs3.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_cv_gdb01-06_rs4.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-07/confs_cv_gdb01-07_rs1.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-07/confs_cv_gdb01-07_rs2.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-07/confs_cv_gdb01-07_rs3.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-07/confs_cv_gdb01-07_rs4.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs1.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs2.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs3.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-07/confs_cv_gdb01-07_rs1.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-07/confs_cv_gdb01-07_rs2.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-07/confs_cv_gdb01-07_rs3.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-07/confs_cv_gdb01-07_rs4.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs1.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs2.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs3.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs4.h5',
            '/home/jujuman/Research/DataReductionMethods/model6/model0.05me/ani_red_c06.h5',
+           #'/home/jujuman/Research/ANI-DATASET/h5data/r10_ccsd.h5',
            ]
 
 store_dir = wkdir + "cache-data-"
@@ -73,41 +77,43 @@ for f,fn in enumerate(h5files):
         E = data['energies']
         S = data['species']
 
-        # Random mask
-        R = np.random.uniform(0.0, 1.0, E.shape[0])
-        idx = np.array([interval(r,N) for r in R])
+        if (set(S).issubset(['C', 'N', 'O', 'H'])):
 
-        # Build random split lists
-        split = []
-        for j in range(N):
-            split.append([i for i, s in enumerate(idx) if s == j])
-            nd = len([i for i, s in enumerate(idx) if s == j])
-            Nd[j] = Nd[j] + nd
+            # Random mask
+            R = np.random.uniform(0.0, 1.0, E.shape[0])
+            idx = np.array([interval(r,N) for r in R])
 
-        # Store data
-        for i,t,v,te in zip(range(N), cachet, cachev, testh5):
-            ## Store training data
-            X_t = np.array(np.concatenate([X[s] for j, s in enumerate(split) if j != i]), order='C', dtype=np.float32)
-            E_t = np.array(np.concatenate([E[s] for j, s in enumerate(split) if j != i]), order='C', dtype=np.float64)
-            if E_t.shape[0] != 0:
-                t.insertdata(X_t, E_t, list(S))
+            # Build random split lists
+            split = []
+            for j in range(N):
+                split.append([i for i, s in enumerate(idx) if s == j])
+                nd = len([i for i, s in enumerate(idx) if s == j])
+                Nd[j] = Nd[j] + nd
 
-            ## Split test/valid data and store\
-            tv_split = np.array_split(split[i],2)
+            # Store data
+            for i,t,v,te in zip(range(N), cachet, cachev, testh5):
+                ## Store training data
+                X_t = np.array(np.concatenate([X[s] for j, s in enumerate(split) if j != i]), order='C', dtype=np.float32)
+                E_t = np.array(np.concatenate([E[s] for j, s in enumerate(split) if j != i]), order='C', dtype=np.float64)
+                if E_t.shape[0] != 0:
+                    t.insertdata(X_t, E_t, list(S))
 
-            ## Store Validation
-            if tv_split[0].size > 0:
-                X_v = np.array(X[tv_split[0]], order='C', dtype=np.float32)
-                E_v = np.array(E[tv_split[0]], order='C', dtype=np.float64)
-                if E_v.shape[0] != 0:
-                    v.insertdata(X_v, E_v, list(S))
+                ## Split test/valid data and store\
+                tv_split = np.array_split(split[i],2)
 
-            ## Store testset
-            if tv_split[1].size > 0:
-                X_te = np.array(X[tv_split[1]], order='C', dtype=np.float32)
-                E_te = np.array(E[tv_split[1]], order='C', dtype=np.float64)
-                if E_te.shape[0] != 0:
-                    te.store_data(Pn, coordinates=X_te, energies=E_te, species=list(S))
+                ## Store Validation
+                if tv_split[0].size > 0:
+                    X_v = np.array(X[tv_split[0]], order='C', dtype=np.float32)
+                    E_v = np.array(E[tv_split[0]], order='C', dtype=np.float64)
+                    if E_v.shape[0] != 0:
+                        v.insertdata(X_v, E_v, list(S))
+
+                ## Store testset
+                if tv_split[1].size > 0:
+                    X_te = np.array(X[tv_split[1]], order='C', dtype=np.float32)
+                    E_te = np.array(E[tv_split[1]], order='C', dtype=np.float64)
+                    if E_te.shape[0] != 0:
+                        te.store_data(Pn, coordinates=X_te, energies=E_te, species=list(S))
 
     sys.stdout.write("\r%d%%" % int(100))
     sys.stdout.flush()

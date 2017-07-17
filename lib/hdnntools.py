@@ -181,21 +181,24 @@ def readxyz2 (file):
     xyz = []
     typ = []
     Na  = []
+    ct = []
 
     fd = open(file, 'r').read()
 
-    print(fd)
+    #print(fd)
 
     #rb = re.compile('\s*?\n?\s*?(\d+?)\s*?\n((?:\s*?[A-Z][a-z]?.+(?:\n|))+)')
     #rb = re.compile('((?:[A-Z][a-z]? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+?\s*?(?:\n|$))+)')
-    rb = re.compile('(\d+?)\n(.+?)\n((?:[A-Z][a-z]? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+?\s*?(?:\n|$))+)')
-    ra = re.compile('([A-Z][a-z]?) +?([-+]?\d+?\.\S+?) +?([-+]?\d+?\.\S+?) +?([-+]?\d+?\.\S+?)\s*?(?:\n|$)')
+    rb = re.compile('(\d+?)\n(.+?)\n((?:[A-Z][a-z]?.+?(?:\n|$))+)')
+    ra = re.compile('([A-Z][a-z]?)\s+?([-+]?\d+?\.\S+?)\s+?([-+]?\d+?\.\S+?)\s+?([-+]?\d+?\.\S+?)\s*?(?:\n|$)')
 
     s = rb.findall(fd)
-    print(s)
     Nc = len(s)
+    if Nc == 0:
+        raise ValueError('No coordinates found in file. Check formatting.')
+
     for i in s:
-        print(i[1])
+        ct.append(i[1])
 
         c = ra.findall(i[2])
         Na = len(c)
@@ -208,7 +211,7 @@ def readxyz2 (file):
     xyz = np.asarray(xyz,dtype=np.float32)
     xyz = xyz.reshape((Nc,Na,3))
 
-    return xyz,typ[0:Na],Na
+    return xyz,typ[0:Na],Na, ct
 
 def readrcdbstruct (file):
     xyz = []
