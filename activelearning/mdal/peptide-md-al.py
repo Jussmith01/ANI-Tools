@@ -17,18 +17,18 @@ def gendipeptidelist(AAlist):
     return fasta,nlist
 
 #--------------Parameters------------------
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08_mdal01/cv1/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08_mdal01/cv2/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile = wkdir + 'sae_6-31gd.dat'
 
 # Store dir
-sdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/aminoacids/mdal2/'
+sdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/confs_1/'
 
 At = ['C', 'O', 'N'] # Hydrogens added after check
 
 T = 800.0
 dt = 0.5
-N = 200
+N = 100
 
 #-------------------------------------------
 
@@ -38,6 +38,7 @@ fasta,namelist = gendipeptidelist(AAlist)
 
 activ = pya.moldynactivelearning(cnstfile, saefile, wkdir+'train', 5)
 
+difo = open(dstore + 'info_data_mdaa.nfo', 'w')
 for n,(a,l) in enumerate(zip(fasta, namelist)):
     m = Chem.MolFromFASTA(a)
     if not ('F' in Chem.MolToSmiles(m)):
@@ -57,10 +58,16 @@ for n,(a,l) in enumerate(zip(fasta, namelist)):
         activ.setrdkitmol(m,cids)
 
         # Generate conformations
-        X = activ.generate_conformations(N, T, dt, 500, 10, dS = 0.08)
+        X = activ.generate_conformations(N, T, dt, 250, 10, dS = 0.08)
+
+        nfo = activ._infostr_
+        difo.write('  -'+m+': '+nfo+'\n')
+        print(nfo)
+        difo.flush()
 
         # Set chemical symbols
         Xi, S = pya.__convert_rdkitmol_to_nparr__(m)
 
         # Store structures
         hdt.writexyzfile(sdir+l+'-'+str(n).zfill(2)+'.xyz', X, S)
+difo.close()

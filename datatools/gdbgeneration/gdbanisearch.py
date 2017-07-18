@@ -9,9 +9,9 @@ import numpy as np
 
 import os
 
-fpf = 'gdb11_s08' #Filename prefix
-wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/confs_2/' #working directory
-smfile = '/home/jujuman/Research/RawGDB11Database/gdb11_size08.smi' # Smiles file
+fpf = 'gdb11_s06' #Filename prefix
+wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/' #working directory
+smfile = '/home/jujuman/Research/RawGDB11Database/gdb11_size06.smi' # Smiles file
 
 Nc = 10
 
@@ -32,7 +32,7 @@ if not os.path.exists(wdir+'inputs'):
 ani = aat.anicomputetool(cnstfile, saefile, nnfdir)
 
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6/model0.05me/cv/cv1/'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08/cv3/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08_mdal01/cv2/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-6-ext/model-6e1/'
 #cnstfilecv = wkdircv + 'rHCNO-3.9A_16-3.0A_a4-8.params'
@@ -54,7 +54,7 @@ for n,m in enumerate(molecules):
         m = Chem.AddHs(m)
 
         # generate Nc conformers
-        cids = AllChem.EmbedMultipleConfs(m, Nc, useRandomCoords=False)
+        cids = AllChem.EmbedMultipleConfs(m, Nc, useRandomCoords=True)
 
         # Classical Optimization
         for cid in cids:

@@ -255,6 +255,8 @@ class moldynactivelearning(object):
         self.mols = [mol]
 
 
+    """Runs the supplied trajectory with a random starting point
+    """
     def __run_rand_dyn__(self, mid, T, dt, Nc, Ns, dS):
         # Setup calculator
         mol = self.mols[0].copy()
@@ -288,6 +290,8 @@ class moldynactivelearning(object):
                 return True,dyn.get_number_of_steps()
         return False,dyn.get_number_of_steps()
 
+    """Generate a set of conformations from MD
+    """
     def generate_conformations(self, Nr, T, dt, Nc, Ns, dS):
         Ng = 0
         self.Nbad = 0

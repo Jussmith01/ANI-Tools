@@ -18,34 +18,37 @@ nnfdir   = wkdir + 'networks/'
 fpatoms = ['C', 'N', 'O']
 aevsize = 384
 T = 800
-Ngen = 20
+Ngen = 15
 #Nkep = 200
 atmlist = []
 
 idir = [#'/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/inputs/',
-        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_1/inputs/',
-        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_2/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_1/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_1/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_2/inputs/',
-        '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_01/inputs/',
-        '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_02/inputs/',
-        '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_03/inputs/',
-        '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_04/inputs/',
-        '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_05/inputs/',
-        '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnntsgdb11_06/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_3/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_1/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_2/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_3/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s02/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/inputs/',
         '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_03_red/inputs/',
         '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_04_red/inputs/',
         '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_05_red/inputs/',
         '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/',
         ]
 
-cdir = '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_4/'
+cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/confs_1/'
 
 dc = aat.diverseconformers(cnstfile, saefile, nnfdir, aevsize, 0, False)
 
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model3-5/cv1/cv32/'
 #cnstfilecv = wkdircv + '../rHCNO-4.6A_16-3.1A_a4-8.params'
-wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08/cv3/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08_mdal01/cv2/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix   = wkdircv + 'train'
@@ -55,7 +58,7 @@ anicv = aat.anicrossvalidationconformer(cnstfilecv,saefilecv,nnfprefix,5,0,False
 if not os.path.exists(cdir):
     os.mkdir(cdir)
 
-of = open(cdir+'info_data.dat', 'w')
+of = open(cdir+'info_data_nms.nfo', 'w')
 
 Nkp = 0
 Nkt = 0
@@ -90,15 +93,16 @@ for di,id in enumerate(idir):
 
         Nt += Ngen
         Nk += sid.size
-        if 100.0*sid.size/float(Ngen) > 25.0:
+        if 100.0*sid.size/float(Ngen) > 20.0:
             Nkp += sid.size
-            cfn = f.split('.')[0].split('-')[0]+'_'+str(idx).zfill(4)+'-'+f.split('.')[0].split('-')[1]+'.xyz'
+            cfn = f.split('.')[0].split('-')[0]+'_'+str(idx).zfill(5)+'-'+f.split('.')[0].split('-')[1]+'.xyz'
             hdn.writexyzfile(cdir+cfn,conformers[sid],spc)
         idx += 1
 
     Nkt += Nk
     Ntt += Nt
     of.write('    -Total: '+str(Nk)+' of '+str(Nt)+' percent: '+"{:.2f}".format(100.0*Nk/Nt)+'\n')
+    of.flush()
     print('    -Total:',Nk,'of',Nt,'percent:',"{:.2f}".format(100.0*Nk/Nt))
 
 of.write('\nGrand Total: '+ str(Nkt)+ ' of '+ str(Ntt)+' percent: '+"{:.2f}".format(100.0*Nkt/Ntt)+ ' Kept '+str(Nkp)+'\n')

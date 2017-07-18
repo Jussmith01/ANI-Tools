@@ -13,7 +13,7 @@ import matplotlib as mpl
 
 # Define test file
 #h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
@@ -196,33 +196,48 @@ print(dfc)
 
 # with errorbars: clip non-positive values
 ax = plt.subplot(221)
+ax.set_title('Force error vs Max CV Std. Dev')
 #ax.set_xscale("log", nonposx='clip')
 #ax.set_yscale("log", nonposy='clip')
+ax.set_xlabel('Energy confidence (Max Std. Dev. kcal/mol)')
+ax.set_ylabel('Force error (kcal/mol/$\AA$)')
 
-plt.errorbar(clist, dfc['FMAEm'], yerr=dfc['FMAEs'], fmt='--o')
-plt.errorbar(clist, dfc['FRMSm'], yerr=dfc['FRMSs'], fmt='--o')
+plt.errorbar(clist, dfc['FMAEm'], yerr=dfc['FMAEs'], fmt='--o',label='MAE' )
+plt.errorbar(clist, dfc['FRMSm'], yerr=dfc['FRMSs'], fmt='--o',label='RMSE')
+plt.legend(loc=4)
 
 ax = plt.subplot(222)
+ax.set_title('Energy error vs Max CV Std. Dev')
 #ax.set_xscale("log", nonposx='clip')
 #ax.set_yscale("log", nonposy='clip')
+ax.set_xlabel('Energy confidence (Max Std. Dev. kcal/mol)')
+ax.set_ylabel('Energy error (kcal/mol)')
 
-plt.errorbar(clist, dfc['EMAEm'], yerr=dfc['EMAEs'], fmt='--o')
-plt.errorbar(clist, dfc['ERMSm'], yerr=dfc['ERMSs'], fmt='--o')
+plt.errorbar(clist, dfc['EMAEm'], yerr=dfc['EMAEs'], fmt='--o',label='MAE' )
+plt.errorbar(clist, dfc['ERMSm'], yerr=dfc['ERMSs'], fmt='--o',label='RMSE')
+plt.legend(loc=4)
 
 ax = plt.subplot(223)
+ax.set_title('Force error vs Max energy from min')
 #ax.set_xscale("log", nonposx='clip')
 #ax.set_yscale("log", nonposy='clip')
+ax.set_xlabel('Max energy from min (kcal/mol)')
+ax.set_ylabel('Force error (kcal/mol/$\AA$)')
 
-plt.errorbar(elist, dfe['FMAEm'], yerr=dfe['FMAEs'], fmt='--o')
-plt.errorbar(elist, dfe['FRMSm'], yerr=dfe['FRMSs'], fmt='--o')
+plt.errorbar(elist, dfe['FMAEm'], yerr=dfe['FMAEs'], fmt='--o',label='MAE' )
+plt.errorbar(elist, dfe['FRMSm'], yerr=dfe['FRMSs'], fmt='--o',label='RMSE')
+plt.legend(loc=4)
 
 ax = plt.subplot(224)
+ax.set_title('Energy error vs Max energy from min')
 #ax.set_xscale("log", nonposx='clip')
 #ax.set_yscale("log", nonposy='clip')
+ax.set_xlabel('Max energy from min (kcal/mol)')
+ax.set_ylabel('Energy error (kcal/mol)')
 
-plt.errorbar(elist, dfe['EMAEm'], yerr=dfe['EMAEs'], fmt='--o')
-plt.errorbar(elist, dfe['ERMSm'], yerr=dfe['ERMSs'], fmt='--o')
-
+plt.errorbar(elist, dfe['EMAEm'], yerr=dfe['EMAEs'], fmt='--o',label='MAE' )
+plt.errorbar(elist, dfe['ERMSm'], yerr=dfe['ERMSs'], fmt='--o',label='RMSE')
+plt.legend(loc=4)
 plt.show()
 
 #plt.errorbar(clist, np.array(dfc['Frmean']), yerr=np.array(dfc['Frstdd']), fmt='-o')
@@ -328,11 +343,17 @@ print(Fmt.mean())
 print(Frt.mean())
 print('---------------------------')
 
+#print(Cdat['Sigm'].shape,.shape)
+#plt.scatter(Cdat['Sigm'], dErtpa, s=1)
+
+#plt.xlabel('# of atoms')
+#plt.ylabel('RMSE (kcal/mol/atoms)')
+#plt.legend(bbox_to_anchor=(0.01, 0.9), loc=2, borderaxespad=0.)
+#plt.show()
+#plt.savefig('foo.png', bbox_inches='tight')
 
 plt.scatter(Cdat['Natm'], dErtpa, s=1)
-
 plt.xlabel('# of atoms')
 plt.ylabel('RMSE (kcal/mol/atoms)')
 #plt.legend(bbox_to_anchor=(0.01, 0.9), loc=2, borderaxespad=0.)
 plt.show()
-#plt.savefig('foo.png', bbox_inches='tight')
