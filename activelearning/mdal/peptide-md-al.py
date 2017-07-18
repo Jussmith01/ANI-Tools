@@ -61,7 +61,7 @@ for n,(a,l) in enumerate(zip(fasta, namelist)):
         X = activ.generate_conformations(N, T, dt, 250, 10, dS = 0.08)
 
         nfo = activ._infostr_
-        difo.write('  -'+m+': '+nfo+'\n')
+        difo.write('  -'+l+': '+nfo+'\n')
         print(nfo)
         difo.flush()
 
