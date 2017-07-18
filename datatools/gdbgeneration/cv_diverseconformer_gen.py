@@ -18,11 +18,11 @@ nnfdir   = wkdir + 'networks/'
 fpatoms = ['C', 'N', 'O']
 aevsize = 384
 T = 800
-Ngen = 15
+Ngen = 10
 #Nkep = 200
 atmlist = []
 
-idir = [#'/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/inputs/',
+idir = ['/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_1/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_1/inputs/',
@@ -36,10 +36,10 @@ idir = [#'/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/inputs/',
-        '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_03_red/inputs/',
-        '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_04_red/inputs/',
-        '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_05_red/inputs/',
-        '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_03_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_04_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_05_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/',
         ]
 
 cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/confs_1/'
