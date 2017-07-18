@@ -38,7 +38,7 @@ fasta,namelist = gendipeptidelist(AAlist)
 
 activ = pya.moldynactivelearning(cnstfile, saefile, wkdir+'train', 5)
 
-difo = open(dstore + 'info_data_mdaa.nfo', 'w')
+difo = open(sdir + 'info_data_mdaa.nfo', 'w')
 for n,(a,l) in enumerate(zip(fasta, namelist)):
     m = Chem.MolFromFASTA(a)
     if not ('F' in Chem.MolToSmiles(m)):
