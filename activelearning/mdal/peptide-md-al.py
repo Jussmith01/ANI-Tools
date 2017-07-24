@@ -62,7 +62,6 @@ for n,(a,l) in enumerate(zip(fasta, namelist)):
 
         nfo = activ._infostr_
         difo.write('  -'+l+': '+nfo+'\n')
-
         print(nfo)
         difo.flush()
 
