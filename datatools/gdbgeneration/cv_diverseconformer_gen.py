@@ -18,11 +18,11 @@ nnfdir   = wkdir + 'networks/'
 fpatoms = ['C', 'N', 'O']
 aevsize = 384
 T = 800
-Ngen = 15
+Ngen = 10
 #Nkep = 200
 atmlist = []
 
-idir = [#'/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/inputs/',
+idir = ['/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_1/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_1/inputs/',
@@ -36,19 +36,19 @@ idir = [#'/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/inputs/',
-        '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_03_red/inputs/',
-        '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_04_red/inputs/',
-        '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_05_red/inputs/',
-        '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_03_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_04_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_05_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/',
         ]
 
-cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/confs_1/'
+cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/confs_5/'
 
 dc = aat.diverseconformers(cnstfile, saefile, nnfdir, aevsize, 0, False)
 
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model3-5/cv1/cv32/'
 #cnstfilecv = wkdircv + '../rHCNO-4.6A_16-3.1A_a4-8.params'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08_mdal01/cv2/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv4/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix   = wkdircv + 'train'
@@ -93,7 +93,7 @@ for di,id in enumerate(idir):
 
         Nt += Ngen
         Nk += sid.size
-        if 100.0*sid.size/float(Ngen) > 20.0:
+        if 100.0*sid.size/float(Ngen) > 0.0:
             Nkp += sid.size
             cfn = f.split('.')[0].split('-')[0]+'_'+str(idx).zfill(5)+'-'+f.split('.')[0].split('-')[1]+'.xyz'
             hdn.writexyzfile(cdir+cfn,conformers[sid],spc)
