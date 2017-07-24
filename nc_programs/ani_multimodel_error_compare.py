@@ -13,8 +13,8 @@ import matplotlib as mpl
 
 # Define test file
 h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
-h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
+h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
