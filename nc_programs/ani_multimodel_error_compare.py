@@ -12,15 +12,16 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 # Define test file
-#h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
-h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
+h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
+#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
-h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
+#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
+#h5file = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/gdb_r06_comb08_4.h5'
 
 # Define cross validation networks
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08_mdal01/cv2/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv4/'
 #wkdircv = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
 #wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
@@ -285,8 +286,8 @@ print('E RMSE:', Ert, Ert.mean(), Ert.std())
 dEmt = hdn.calculatemeanabserror(Cdat['dEani'],Cdat['dEdft'],axis=1)
 dErt = hdn.calculaterootmeansqrerror(Cdat['dEani'],Cdat['dEdft'],axis=1)
 
-print('E  MAE:', dEmt, dEmt.mean(), dEmt.std())
-print('E RMSE:', dErt, dErt.mean(), dErt.std())
+print('dE  MAE:', dEmt, dEmt.mean(), dEmt.std())
+print('dE RMSE:', dErt, dErt.mean(), dErt.std())
 
 Emtpa = np.mean(Cdat['EMAE'], axis=1)/Cdat['Natm']
 Ertpa = np.mean(Cdat['ERMSE'], axis=1)/Cdat['Natm']

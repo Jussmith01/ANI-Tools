@@ -73,21 +73,24 @@ def plot_irc(axes, i, d, f):
         #axes.plot(Rc[:, 1], energies2[::-1]-energies2[::-1][0],'--',color='red',label="["+str(i)+"]: "+"{:.1f}".format(bar2[-1]),linewidth=3)
         #axes.plot(Rc[:, 1], energies1[::-1]-energies1[::-1][0],'--',color='green',label="["+str(i)+"]: "+"{:.1f}".format(bar1[-1]),linewidth=3)
 
-        axes.legend(loc="upper left",fontsize=10)
+        #axes.legend(loc="upper left",fontsize=10)
         axes.set_title(str(f), color='black', fontdict={'weight': 'bold'}, x=0.8, y=0.85)
 
 
 os.environ["PYTHONPATH"] = "../../lib"
 
-d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS3/IRC/'
-c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS3/XYZ/'
-r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS3/DataGen/'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/DataGen/'
 fp = 'DA_IRC'
 
 wkdircv1 = '/home/jujuman/Research/ReactionGeneration/cv1/'
 cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile1 = 'sae_6-31gd.dat'
 
+#wkdircv1 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv1/'
+#cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
+#saefile1 = 'sae_6-31gd.dat'
 
 wkdircv2 = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
 cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
@@ -98,7 +101,7 @@ Nnc = 5
 files = os.listdir(d)
 files.sort()
 #random.shuffle(files)
-files = files[0:9]
+files = files
 #print(files)
 # Construct pyNeuroChem classes
 nc1 =  [pync.conformers(wkdircv1 + cnstfile1, wkdircv1 + saefile1, wkdircv1 + 'train'     + str(l) + '/networks/', 0, False) for l in range(Nnc)]
