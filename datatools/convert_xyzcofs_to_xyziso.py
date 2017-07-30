@@ -12,8 +12,8 @@ def convert_eformula(sstr):
         rtn += z+str(N)
     return rtn
 
-sdir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/confs_4/confs/"
-ndir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/confs_4/confs_merge/"
+sdir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_2/confs/"
+ndir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_2/confs_iso/"
 
 files = os.listdir(sdir)
 files = [f for f in files if f.rsplit('.',maxsplit=1)[1] == 'xyz']
@@ -49,7 +49,7 @@ for i in ds.keys():
     S = list(i)
     N = X.shape[0]
 
-    fn = 'aldata_' + convert_eformula(i) + '-' + str(N).zfill(5) + '.xyz'
+    fn = 'dimerdata_' + convert_eformula(i) + '-' + str(N).zfill(5) + '.xyz'
     print('Writing: ',fn)
     hdt.writexyzfile(ndir+fn, X, S)
 
