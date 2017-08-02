@@ -47,7 +47,7 @@ idir = [(1.00,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/inputs/')
 
 activ = pya.moldynactivelearning(cnstfile, saefile, wkdir+'train', 5)
 
-difo = open(dstore + 'info_data_mdso.nfo', 'w')
+difo = open(dstore + 'info_data_mdso2.nfo', 'w')
 for di,id in enumerate(idir):
     files = os.listdir(id[1])
     random.shuffle(files)

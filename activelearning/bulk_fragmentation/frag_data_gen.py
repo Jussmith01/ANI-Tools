@@ -11,7 +11,8 @@ from ase.optimize import BFGS, LBFGS
 from ase import units
 
 #wkdir = '/home/jujuman/Dropbox/ChemSciencePaper.AER/networks/ANI-c08f-ntwk-cv/'
-wkdir = '/home/jujuman/Scratch/Research/WaterData/CV2/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv5/'
+#wkdir = '/home/jujuman/Scratch/Research/WaterData/CV2/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile = wkdir + 'sae_6-31gd.dat'
 
@@ -21,11 +22,11 @@ T = 10.0
 dt = 0.25
 
 mol = read('/home/jujuman/Dropbox/ChemSciencePaper.AER/TestCases/water.pdb')
-Nnt = 4
+Nnt = 5
 
 # Construct pyNeuroChem classes
 print('Constructing CV network list...')
-ncl =  [pync.molecule(cnstfile, saefile, wkdir + 'cv_train_' + str(l) + '/networks/', 0, True) for l in range(Nnt)]
+ncl =  [pync.molecule(cnstfile, saefile, wkdir + 'train' + str(l) + '/networks/', 0, False) for l in range(Nnt)]
 print('Complete.')
 
 L1 = 16.761
@@ -35,7 +36,7 @@ mol.set_cell(([[L1,0,0],[0,L2,0],[0,0,L3]]))
 mol.set_pbc((True, True, True))
 
 # Set the calculator
-nc = pync.molecule(cnstfile, saefile, wkdir + 'cv_train_' + str(0) + '/networks/', 0, True)
+nc = pync.molecule(cnstfile, saefile, wkdir + 'train' + str(0) + '/networks/', 0, False)
 mol.set_calculator(ANI(False))
 mol.calc.setnc(nc)
 
@@ -111,7 +112,7 @@ for i in range(100):
         if Nh == 2 * No:
 
             key = str(No).zfill(3) + str(Nh).zfill(3)
-            if sigma > 0.06:
+            if sigma > 0.1:
                 Nb = Nb + 1
                 if key not in data.keys():
                     data[key] = (spc_l,[xyz_l])

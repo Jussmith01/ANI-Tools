@@ -93,7 +93,7 @@ for di,id in enumerate(idir):
 
         Nt += Ngen
         Nk += sid.size
-        if 100.0*sid.size/float(Ngen) > 20.0:
+        if 100.0*sid.size/float(Ngen) > 0.0:
             Nkp += sid.size
             cfn = f.split('.')[0].split('-')[0]+'_'+str(idx).zfill(5)+'-'+f.split('.')[0].split('-')[1]+'.xyz'
             hdn.writexyzfile(cdir+cfn,conformers[sid],spc)

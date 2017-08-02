@@ -12,13 +12,21 @@ def interval(v,S):
             return s
         ps = ps + ds
 
-wkdir = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08_mdal01/cv2/'
-#wkdir ='/home/jujuman/Research/transfer_learning/cv1/'
+wkdir = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv1/'
+#wkdir ='/home/jujuman/Scratch/Research/ReactionGeneration/cv_al_data_1/'
 saef   = wkdir + "sae_6-31gd.dat"
 #saef   = wkdir + "sae_ccsd_cbs.dat"
 
 
-h5files = ['/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/mdal.h5',
+h5files = ['/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
+           '/home/jujuman/Scratch/Research/ReactionGeneration/DA_rxn_1/DA_rxn_1.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_1.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_5.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_4.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_3.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_2.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_1.h5',
+           '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/mdal.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/h2o_nms_clusters.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs1.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs2.h5',

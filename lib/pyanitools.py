@@ -87,6 +87,25 @@ class anidataloader(object):
         for data in self.h5py_dataset_iterator(g):
             yield data
 
+    ''' Returns the requested dataset '''
+    def get_data(self, path, prefix=''):
+        item = self.store[path]
+        path = '{}/{}'.format(prefix, path)
+        keys = [i for i in item.keys()]
+        data = {'path': path}
+        # print(path)
+        for k in keys:
+            if not isinstance(item[k], h5py.Group):
+                dataset = np.array(item[k].value)
+
+                if type(dataset) is np.ndarray:
+                    if dataset.size != 0:
+                        if type(dataset[0]) is np.bytes_:
+                            dataset = [a.decode('ascii') for a in dataset]
+
+                data.update({k: dataset})
+        return data
+
     ''' Returns the number of groups '''
     def group_size(self):
         return len(self.get_group_list())

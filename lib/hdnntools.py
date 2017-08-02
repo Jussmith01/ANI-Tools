@@ -190,6 +190,7 @@ def readxyz2 (file):
     #rb = re.compile('\s*?\n?\s*?(\d+?)\s*?\n((?:\s*?[A-Z][a-z]?.+(?:\n|))+)')
     #rb = re.compile('((?:[A-Z][a-z]? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+?\s*?(?:\n|$))+)')
     rb = re.compile('(\d+?)\n(.+?)\n((?:[A-Z][a-z]?.+?(?:\n|$))+)')
+    #rb = re.compile('(\d+?)(\n)((?:[A-Z][a-z]?.+?(?:\n|$))+)')
     ra = re.compile('([A-Z][a-z]?)\s+?([-+]?\d+?\.\S+?)\s+?([-+]?\d+?\.\S+?)\s+?([-+]?\d+?\.\S+?)\s*?(?:\n|$)')
 
     s = rb.findall(fd)
@@ -242,12 +243,12 @@ def readrcdbstruct (file):
 
     return xyz,typ[0:Na],Na,opt
 
-def writexyzfile (fn,xyz,typ):
+def writexyzfile (fn,xyz,typ,cmt=''):
     f = open(fn, 'w')
     N = len(typ)
     #print('N ATOMS: ',typ)
     for m in xyz:
-        f.write(str(N)+'\n comment \n')
+        f.write(str(N)+'\n comment:' + cmt + '\n')
         #print(m)
         for i in range(N):
             x = m[i,0]

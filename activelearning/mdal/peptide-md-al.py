@@ -8,21 +8,26 @@ from rdkit.Chem import AllChem
 def gendipeptidelist(AAlist):
     fasta = []
     nlist = []
+
     for i in AAlist:
-        #for j in AAlist:
+        for j in AAlist:
             #for k in AAlist:
+            fasta.append( ">1AKI:A|PDBID|CHAIN|SEQUENCE\n" + i + j )
+            nlist.append("aminoacid_" + i + j )
+
+    for i in AAlist:
         fasta.append( ">1AKI:A|PDBID|CHAIN|SEQUENCE\n" + i )
         nlist.append("aminoacid_" + i )
 
     return fasta,nlist
 
 #--------------Parameters------------------
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv1/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv1/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile = wkdir + 'sae_6-31gd.dat'
 
 # Store dir
-sdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/confs_2/'
+sdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/confs_2/'
 
 At = ['C', 'O', 'N'] # Hydrogens added after check
 
@@ -58,7 +63,7 @@ for n,(a,l) in enumerate(zip(fasta, namelist)):
         activ.setrdkitmol(m,cids)
 
         # Generate conformations
-        X = activ.generate_conformations(N, T, dt, 250, 10, dS = 0.08)
+        X = activ.generate_conformations(N, T, dt, 250, 10, dS = 0.1)
 
         nfo = activ._infostr_
         difo.write('  -'+l+': '+nfo+'\n')

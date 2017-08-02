@@ -10,6 +10,11 @@ def plot_irc(axes, i, d, f):
     #print(f)
     Eact, xyz, spc, Rc = pyg.read_irc(d+f)
     Eact = hdt.hatokcal * Eact
+
+    xyz = xyz[1:]
+    Eact = Eact[1:]
+    Rc = Rc[:-1]
+
     #print(Rc[:,1])
     #print(Eact-Eact.min() - Rc[:,1]-Rc[:,1].min())
     s_idx = f.split('IRC')[1].split('.')[0]
@@ -73,36 +78,48 @@ def plot_irc(axes, i, d, f):
         #axes.plot(Rc[:, 1], energies2[::-1]-energies2[::-1][0],'--',color='red',label="["+str(i)+"]: "+"{:.1f}".format(bar2[-1]),linewidth=3)
         #axes.plot(Rc[:, 1], energies1[::-1]-energies1[::-1][0],'--',color='green',label="["+str(i)+"]: "+"{:.1f}".format(bar1[-1]),linewidth=3)
 
-        axes.legend(loc="upper left",fontsize=10)
+        #axes.legend(loc="upper left",fontsize=10)
         axes.set_title(str(f), color='black', fontdict={'weight': 'bold'}, x=0.8, y=0.85)
 
 
 os.environ["PYTHONPATH"] = "../../lib"
 
-d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS3/IRC/'
-c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS3/XYZ/'
-r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS3/DataGen/'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/DataGen/'
 fp = 'DA_IRC'
 
-wkdircv1 = '/home/jujuman/Research/ReactionGeneration/cv1/'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/DataGen/'
+fp = 'CL_IRC'
+
+#wkdircv1 = '/home/jujuman/Research/ReactionGeneration/cv1/'
+#cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
+#saefile1 = 'sae_6-31gd.dat'
+
+wkdircv1 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv5/'
 cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile1 = 'sae_6-31gd.dat'
 
-
-wkdircv2 = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
+wkdircv2 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv4/'
 cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile2 = 'sae_6-31gd.dat'
 
+#wkdircv2 = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
+#cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
+#saefile2 = 'sae_6-31gd.dat'
+
 Nnc = 5
 
-files = os.listdir(d)
+files = os.listdir(d)[0:9]
 files.sort()
 #random.shuffle(files)
-files = files[0:9]
+files = files
 #print(files)
 # Construct pyNeuroChem classes
-nc1 =  [pync.conformers(wkdircv1 + cnstfile1, wkdircv1 + saefile1, wkdircv1 + 'train'     + str(l) + '/networks/', 0, False) for l in range(Nnc)]
-nc2 =  [pync.conformers(wkdircv2 + cnstfile2, wkdircv2 + saefile2, wkdircv2 + 'cv_train_' + str(l) + '/networks/', 0, False) for l in range(Nnc)]
+nc1 =  [pync.conformers(wkdircv1 + cnstfile1, wkdircv1 + saefile1, wkdircv1 + 'train' + str(l) + '/networks/', 0, False) for l in range(Nnc)]
+nc2 =  [pync.conformers(wkdircv2 + cnstfile2, wkdircv2 + saefile2, wkdircv2 + 'train' + str(l) + '/networks/', 0, False) for l in range(Nnc)]
 
 comp_xyz = []
 

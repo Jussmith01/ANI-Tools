@@ -6,7 +6,7 @@ from pyNeuroChem import cachegenerator as cg
 import hdnntools as hdn
 
 # Set the HDF5 file containing the data
-hdf5files = ['/home/jujuman/Research/Non-bonded/dimer_C1-test.h5',
+hdf5files = ['/home/jujuman/Research/HIPNN-MD-Traj/test1/datasets/trajbnz/data_trajbnz.h5',
              #'/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_red/ani_correct.h5',
              #'/home/jujuman/Research/DataReductionMethods/model6/model0.05me/ani_red_c06.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s01.h5',
@@ -15,7 +15,7 @@ hdf5files = ['/home/jujuman/Research/Non-bonded/dimer_C1-test.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s04.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s05.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s06.h5',
-             '/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c01.h5',
+             #'/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c01.h5',
              #'/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c02.h5',
              #'/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c03.h5',
              #'/home/jujuman/Research/ANI-DATASET/h5data/ani-gdb-c04.h5',
@@ -27,9 +27,12 @@ hdf5files = ['/home/jujuman/Research/Non-bonded/dimer_C1-test.h5',
              ]
 
 #hdf5file = '/home/jujuman/Research/ANI-DATASET/ani-1_data_c03.h5'
-storecac = '/home/jujuman/Research/Non-bonded/traintest/cache/'
-saef   = "/home/jujuman/Research/Non-bonded/traintest/train/sae_6-31gd.dat"
-path = "/home/jujuman/Research/Non-bonded/traintest/cache/testset/testset.h5"
+storecac = '/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/cache/'
+saef   = "/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/sae_6-31gd.dat"
+path = "/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/cache/testset/testset.h5"
+
+Ts = 0.095
+Vs = 0.002
 
 if os.path.exists(path):
     os.remove(path)
@@ -52,25 +55,28 @@ for f in hdf5files:
     dc = 0
     for i,data in enumerate(adl):
         #if (i == 2):
-        xyz = np.array_split(data['coordinates'], 10)
-        eng = np.array_split(data['energies'], 10)
+        xyz = data['coordinates']
+        eng = data['energies']
         spc = data['species']
+
         ds_path = data['path']
 
-        print('Delta:',hdn.hatokcal*abs(data['energies'].min()-data['energies'].max()))
+        Ndat = eng.size
+        idx = np.arange(0,Ndat)
+        np.random.shuffle(idx)
 
-        #print('Parent: ', nme, eng)
-        dc = dc + np.concatenate(eng[0:8]).shape[0]
+        print('Training Size:   ',Ts*Ndat)
+        print('Validation Size: ',Vs*Ndat)
 
         # Prepare and store the training and validation data
-        cachet.insertdata(np.concatenate(xyz[0:8]), np.array(np.concatenate(eng[0:8]), dtype=np.float64), list(spc))
-        cachev.insertdata(xyz[8], np.array(eng[8], dtype=np.float64), list(spc))
+        cachet.insertdata(xyz[idx[0:int(Ts*Ndat)]], eng[idx[0:int(Ts*Ndat)]], list(spc))
+        cachev.insertdata(xyz[idx[int(Ts*Ndat):int((Ts+Vs)*Ndat)]], eng[idx[int(Ts*Ndat):int((Ts+Vs)*Ndat)]], list(spc))
 
         # Prepare and store the test data set
-        if xyz[9].shape[0] != 0:
+        #if xyz[9].shape[0] != 0:
             #print(xyz[9].shape)
-            t_xyz = xyz[9].reshape(xyz[9].shape[0],xyz[9].shape[1]*xyz[9].shape[2])
-            dpack.store_data(ds_path, coordinates=t_xyz, energies=np.array(eng[9]), species=spc)
+        #t_xyz = xyz[9].reshape(xyz[9].shape[0],xyz[9].shape[1]*xyz[9].shape[2])
+        dpack.store_data(ds_path, coordinates=xyz[int((Ts+Vs)*Ndat):], energies=eng[int((Ts+Vs)*Ndat):], species=spc)
     print('Count: ',dc)
 
     adl.cleanup()

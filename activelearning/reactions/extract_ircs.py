@@ -7,10 +7,16 @@ import numpy as np
 
 os.environ["PYTHONPATH"] = "../../lib"
 
-d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS3/IRC/'
-c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS3/XYZ/'
-r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS3/DataGen/'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/DataGen/'
 fp = 'DA_IRC'
+
+d = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/DataGen/'
+fp = 'CL_IRC'
+
 
 wkdir1 = '/home/jujuman/Research/ReactionGeneration/cv1/'
 cnstfile = 'rHCNO-4.6A_16-3.1A_a4-8.params'
@@ -31,7 +37,7 @@ nc1 =  [pync.conformers(wkdir1 + cnstfile, wkdir1 + saefile, wkdir1 + 'train' + 
 comp_xyz = []
 
 for f in files:
-    print(f)
+    #print(f)
     Eact, xyz, spc, Rc = pyg.read_irc(d+f)
     s_idx = f.split('IRC')[1].split('.')[0]
     hdt.writexyzfile(c+f.split('.')[0]+'.xyz',xyz,spc)
@@ -52,11 +58,11 @@ for f in files:
         bad_xyz = []
         bad_idx = []
         for i,(X,s) in enumerate(zip(xyz,modl_std)):
-            if s > 0.06:
-                bad_cnt = bad_cnt + 1
-                if i%3 == 0:
+            if s > 0.05:
+                if bad_cnt%3 == 0:
                     bad_xyz.append(X)
                     bad_idx.append(i)
+                bad_cnt = bad_cnt + 1
 
         for j,(X,i) in enumerate(zip(bad_xyz,bad_idx)):
             idx = s_idx + str(j).zfill(3)
