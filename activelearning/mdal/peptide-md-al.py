@@ -8,9 +8,14 @@ from rdkit.Chem import AllChem
 def gendipeptidelist(AAlist):
     fasta = []
     nlist = []
+
     for i in AAlist:
-        #for j in AAlist:
+        for j in AAlist:
             #for k in AAlist:
+            fasta.append( ">1AKI:A|PDBID|CHAIN|SEQUENCE\n" + i + j )
+            nlist.append("aminoacid_" + i + j )
+
+    for i in AAlist:
         fasta.append( ">1AKI:A|PDBID|CHAIN|SEQUENCE\n" + i )
         nlist.append("aminoacid_" + i )
 
@@ -58,7 +63,7 @@ for n,(a,l) in enumerate(zip(fasta, namelist)):
         activ.setrdkitmol(m,cids)
 
         # Generate conformations
-        X = activ.generate_conformations(N, T, dt, 250, 10, dS = 0.08)
+        X = activ.generate_conformations(N, T, dt, 250, 10, dS = 0.1)
 
         nfo = activ._infostr_
         difo.write('  -'+l+': '+nfo+'\n')

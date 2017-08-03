@@ -9,10 +9,10 @@ import numpy as np
 
 import os
 
-fpf = 'gdb11_s06' #Filename prefix
-wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/' #working directory
-smfile = '/home/jujuman/Research/RawGDB11Database/gdb11_size06.smi' # Smiles file
-
+fpf = 'chemmbl22' #Filename prefix
+wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_1/' #working directory
+#smfile = '/home/jujuman/Research/RawGDB11Database/gdb11_size09.smi' # Smiles file
+smfile = '/home/jujuman/Research/Drug_moles_raw/chembl_22_clean_1576904_sorted_std_final.smi'
 Nc = 10
 
 LOT='wb97x/6-31g*' # Level of theory
@@ -32,7 +32,7 @@ if not os.path.exists(wdir+'inputs'):
 ani = aat.anicomputetool(cnstfile, saefile, nnfdir)
 
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6/model0.05me/cv/cv1/'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08_mdal01/cv2/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv5/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-6-ext/model-6e1/'
 #cnstfilecv = wkdircv + 'rHCNO-3.9A_16-3.0A_a4-8.params'
@@ -47,8 +47,15 @@ molecules = Chem.SmilesMolSupplier(smfile, nameColumn=0)
 Nd = 0
 Nt = 0
 for n,m in enumerate(molecules):
-    if not ('F' in Chem.MolToSmiles(m)):
-        print(n,') Working on',Chem.MolToSmiles(m),'...')
+
+    s = ''
+    try:
+        s = Chem.MolToSmiles(m)
+    except Exception as ex:
+        print('Error:',ex)
+
+    if not any(x in s for x in ['F', 'S', 'Br', 'I', 'Cl', 's', 'P']) and s != '':
+        print(n,') Working on', s,'... Na: ',m.GetNumAtoms())
 
         # Add hydrogens
         m = Chem.AddHs(m)

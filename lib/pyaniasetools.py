@@ -232,6 +232,10 @@ class moldynactivelearning(object):
         # Construct pyNeuroChem class
         self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
 
+        # Initalize PBC
+        self.pbc = False
+        self.pbl = 0.0
+
         # ANI compute tools
         #self.ani = anicomputetool(self.ncl[0])
 
@@ -254,12 +258,27 @@ class moldynactivelearning(object):
         mol = Atoms(symbols=S, positions=X)
         self.mols = [mol]
 
+    """Sets the box size for use in PBC dynamics
+    """
+    def set_pbc_box(self, length):
+        self.pbl = length
+        self.pbc = True
 
     """Runs the supplied trajectory with a random starting point
     """
     def __run_rand_dyn__(self, mid, T, dt, Nc, Ns, dS):
         # Setup calculator
         mol = self.mols[0].copy()
+
+        # Setup PBC if active
+        if self.pbc:
+            mol.set_cell(([[self.pbl, 0, 0],
+                           [0, self.pbl, 0],
+                           [0, 0, self.pbl]]))
+
+            mol.set_pbc((self.pbc, self.pbc, self.pbc))
+
+        # Setup calculator
         mol.set_calculator(ANI(False))
         mol.calc.setnc(self.ncl[0])
 
@@ -271,10 +290,11 @@ class moldynactivelearning(object):
 
         # Set the thermostat
         dyn = Langevin(mol, dt * units.fs, T * units.kB, 0.02)
+        #print('Running...')
         for i in range(Nc):
-            dyn.run(Ns)  # Do 100 steps of MD
+            dyn.run(Ns)  # Do Ns steps of MD
 
-            xyz = np.array(mol.get_positions(), dtype=np.float32).reshape(len(spc), 3)
+            xyz = np.array(mol.get_positions(wrap=True), dtype=np.float32).reshape(len(spc), 3)
             energies = np.zeros((self.Nn), dtype=np.float64)
             N = 0
             for comp in self.ncl:
@@ -284,6 +304,7 @@ class moldynactivelearning(object):
 
             energies = hdt.hatokcal * energies
             sigma = np.std(energies) / float(len(spc))
+            #print('s:', sigma)
             if sigma > dS:
                 self.Nbad += 1
                 self.X.append(mol.get_positions())

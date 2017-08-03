@@ -7,10 +7,16 @@ import numpy as np
 
 os.environ["PYTHONPATH"] = "../../lib"
 
-d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/IRC/'
-c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/XYZ/'
-r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/DataGen/'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/DataGen/'
 fp = 'DA_IRC'
+
+d = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/DataGen/'
+fp = 'CL_IRC'
+
 
 wkdir1 = '/home/jujuman/Research/ReactionGeneration/cv1/'
 cnstfile = 'rHCNO-4.6A_16-3.1A_a4-8.params'

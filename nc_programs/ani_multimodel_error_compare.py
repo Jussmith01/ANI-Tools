@@ -13,15 +13,18 @@ import matplotlib as mpl
 
 # Define test file
 h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
-h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
-#h5file = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/gdb_r06_comb08_4.h5'
+h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5'
+#h5file = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_1.h5'
 
 # Define cross validation networks
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv4/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv5/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv1/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-07/cv4/'
 #wkdircv = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
 #wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
@@ -35,7 +38,7 @@ Ncv = 5
 clist = [0.03,0.05,0.08,0.12,0.2,0.4,0.6]
 
 # Energy list
-elist = [10.0, 25.0, 50.0, 75.0, 100.0, 125.0, 150.0, 200.0]
+elist = [0.01, 10.0, 25.0, 50.0, 75.0, 100.0, 125.0, 150.0, 200.0]
 
 # Define the conformer cross validator class
 anicv = aat.anicrossvalidationconformer(cnstfilecv,saefilecv,nnfprefix,Ncv,0,False)
@@ -65,10 +68,10 @@ for i,data in enumerate(adl):
     #if (i==10):
     #    break
     # Extract the data
-    X  = data['coordinates']
+    X  = np.ndarray.astype(data['coordinates'], dtype=np.float32)
     S  = data['species']
     Edft = data['energies']
-    Fdft = data['forces']#/(0.52917724900001*0.52917724900001)
+    Fdft =  np.empty_like(X)#data['forces']/(0.52917724900001*0.52917724900001)
     path = data['path']
 
     # Calculate std. dev. per atom for all conformers

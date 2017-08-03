@@ -243,12 +243,12 @@ def readrcdbstruct (file):
 
     return xyz,typ[0:Na],Na,opt
 
-def writexyzfile (fn,xyz,typ):
+def writexyzfile (fn,xyz,typ,cmt=''):
     f = open(fn, 'w')
     N = len(typ)
     #print('N ATOMS: ',typ)
     for m in xyz:
-        f.write(str(N)+'\n comment \n')
+        f.write(str(N)+'\n comment:' + cmt + '\n')
         #print(m)
         for i in range(N):
             x = m[i,0]

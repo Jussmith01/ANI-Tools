@@ -10,6 +10,11 @@ def plot_irc(axes, i, d, f):
     #print(f)
     Eact, xyz, spc, Rc = pyg.read_irc(d+f)
     Eact = hdt.hatokcal * Eact
+
+    xyz = xyz[1:]
+    Eact = Eact[1:]
+    Rc = Rc[:-1]
+
     #print(Rc[:,1])
     #print(Eact-Eact.min() - Rc[:,1]-Rc[:,1].min())
     s_idx = f.split('IRC')[1].split('.')[0]
@@ -79,33 +84,42 @@ def plot_irc(axes, i, d, f):
 
 os.environ["PYTHONPATH"] = "../../lib"
 
-d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/IRC/'
-c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/XYZ/'
-r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS1/DataGen/'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/DataGen/'
 fp = 'DA_IRC'
 
-wkdircv1 = '/home/jujuman/Research/ReactionGeneration/cv1/'
-cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
-saefile1 = 'sae_6-31gd.dat'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/DataGen/'
+fp = 'CL_IRC'
 
-#wkdircv1 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv1/'
+#wkdircv1 = '/home/jujuman/Research/ReactionGeneration/cv1/'
 #cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 #saefile1 = 'sae_6-31gd.dat'
 
-wkdircv2 = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
+wkdircv1 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv5/'
+cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
+saefile1 = 'sae_6-31gd.dat'
+
+wkdircv2 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv4/'
 cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile2 = 'sae_6-31gd.dat'
 
+#wkdircv2 = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
+#cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
+#saefile2 = 'sae_6-31gd.dat'
+
 Nnc = 5
 
-files = os.listdir(d)
+files = os.listdir(d)[0:9]
 files.sort()
 #random.shuffle(files)
 files = files
 #print(files)
 # Construct pyNeuroChem classes
-nc1 =  [pync.conformers(wkdircv1 + cnstfile1, wkdircv1 + saefile1, wkdircv1 + 'train'     + str(l) + '/networks/', 0, False) for l in range(Nnc)]
-nc2 =  [pync.conformers(wkdircv2 + cnstfile2, wkdircv2 + saefile2, wkdircv2 + 'cv_train_' + str(l) + '/networks/', 0, False) for l in range(Nnc)]
+nc1 =  [pync.conformers(wkdircv1 + cnstfile1, wkdircv1 + saefile1, wkdircv1 + 'train' + str(l) + '/networks/', 0, False) for l in range(Nnc)]
+nc2 =  [pync.conformers(wkdircv2 + cnstfile2, wkdircv2 + saefile2, wkdircv2 + 'train' + str(l) + '/networks/', 0, False) for l in range(Nnc)]
 
 comp_xyz = []
 

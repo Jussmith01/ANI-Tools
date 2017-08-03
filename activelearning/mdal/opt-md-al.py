@@ -40,8 +40,8 @@ idir = [(1.00,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_1/in
         (0.10,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/inputs/'),
         (1.00,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_03_red/inputs/'),
         (1.00,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_04_red/inputs/'),
-        (0.25,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_05_red/inputs/'),
-        (0.10,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/'),
+        (0.50,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_05_red/inputs/'),
+        (0.20,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/'),
         ]
 
 #-------------------------------------------
@@ -66,7 +66,7 @@ for di,id in enumerate(idir):
         activ.setmol(data["coordinates"], S)
 
         # Generate conformations
-        X = activ.generate_conformations(N, T, dt, 300, 10, dS = 0.08)
+        X = activ.generate_conformations(N, T, dt, 250, 10, dS = 0.08)
 
         nfo = activ._infostr_
         difo.write('  -'+m+': '+nfo+'\n')
