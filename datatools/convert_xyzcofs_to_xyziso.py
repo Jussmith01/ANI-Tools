@@ -12,8 +12,8 @@ def convert_eformula(sstr):
         rtn += z+str(N)
     return rtn
 
-sdir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/confs_4/confs/"
-ndir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08/confs_4/confs_merge/"
+sdir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/confs_1/confs/"
+ndir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/confs_1/confs_merge/"
 
 files = os.listdir(sdir)
 files = [f for f in files if f.rsplit('.',maxsplit=1)[1] == 'xyz']
