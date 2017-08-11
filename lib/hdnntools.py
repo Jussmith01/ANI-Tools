@@ -196,7 +196,7 @@ def readxyz2 (file):
     s = rb.findall(fd)
     Nc = len(s)
     if Nc == 0:
-        raise ValueError('No coordinates found in file. Check formatting.')
+        raise ValueError('No coordinates found in file. Check formatting of '+file+'.')
 
     for i in s:
         ct.append(i[1])
