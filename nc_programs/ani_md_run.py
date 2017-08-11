@@ -35,30 +35,31 @@ import seaborn as sns
 #----------------Parameters--------------------
 
 # Molecule file
-#molfile = '/home/jujuman/Research/GDB_Dimer/test/meth.xyz'
-molfile = '/home/jujuman/Research/IR_MD/methanol/meth.xyz'
+molfile = '/home/jujuman/Research/MD_TEST/Chignolin/1uao_H.pdb'
+#molfile = '/home/jujuman/Research/IR_MD/M3/m3.xyz'
 
 # Dynamics file
-#xyzfile = '/home/jujuman/Research/GDB_Dimer/test/mdcrd.xyz'
-xyzfile = '/home/jujuman/Research/IR_MD/methanol/mdcrd.xyz'
+xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
+#xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
 
 # Trajectory file
-#trajfile = '/home/jujuman/Research/GDB_Dimer/test/traj.dat'
-trajfile = '/home/jujuman/Research/IR_MD/methanol/traj.dat'
+trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
+#trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
 
 # Optimized structure out
-#optfile = '/home/jujuman/Research/GDB_Dimer/test/optmol.xyz'
-optfile = '/home/jujuman/Research/IR_MD/methanol/optmol.xyz'
+optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
+#optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
 
 
 T = 300.0 # Temperature
-C = 0.00001 # Optimization convergence
+C = 0.0001 # Optimization convergence
 
 #wkdir    = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk/'
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv5/'
+#wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv3/'
+wkdir = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
-nnfdir   = wkdir + '/train1/networks/'
+nnfdir   = wkdir + '/train0/networks/'
 
 #----------------------------------------------
 
@@ -101,13 +102,13 @@ traj = open(trajfile,'w')
 # We want to run MD with constant energy using the Langevin algorithm
 # with a time step of 0.5 fs, the temperature T and the friction
 # coefficient to 0.02 atomic units.
-dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.01)
+dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.001)
 
 # Run equilibration
-print('Running equilibration...')
-start_time = time.time()
-dyn.run(50000) # Run 100ps equilibration dynamics
-print('[ANI Total time:', time.time() - start_time, 'seconds]')
+#print('Running equilibration...')
+#start_time = time.time()
+#dyn.run(50000) # Run 100ps equilibration dynamics
+#print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
 # Set the momenta corresponding to T=300K
 #MaxwellBoltzmannDistribution(mol, T * units.kB)
@@ -131,7 +132,7 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
           'Etot = %.3feV' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin))
 
 # Attach the printer
-dyn.attach(printenergy, interval=1)
+dyn.attach(printenergy, interval=10)
 
 # Run production
 print('Running production...')

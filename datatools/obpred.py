@@ -13,7 +13,7 @@ from sklearn import metrics
 
 import hdnntools as hdt
 
-data = np.loadtxt('/home/jujuman/Downloads/BMI_ML.txt')
+data = np.loadtxt('/home/jujuman/Downloads/BMI_ML_N.txt')
 
 X = data[:,3:]
 Y = data[:, 1].reshape(-1, 1)
@@ -43,9 +43,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y,
                                                     train_size=13000,
                                                     random_state=10)
 
-nnr = MLPRegressor(activation='relu', solver='adam', batch_size=50, max_iter=5000, hidden_layer_sizes=(20,20), early_stopping=True, verbose=True)
+#nnr = MLPRegressor(activation='relu', solver='adam', batch_size=50, max_iter=5000, hidden_layer_sizes=(20,20), early_stopping=True, verbose=True)
 #svr_rbf = SVR(kernel='rbf', C=1e3, gamma=0.1, verbose=True)
-#rf = RandomForestRegressor(n_estimators=10)
+rf = RandomForestRegressor(n_estimators=10)
 
 print('Fitting...')
 nnr.fit(X_train, y_train.flatten())

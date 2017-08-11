@@ -24,6 +24,7 @@ print (len(files))
 ds = dict()
 of = open(ndir+'info_confstoiso_map.dat', 'w')
 for i,f in enumerate(files):
+    print(sdir+f)
     X, S, N, C = hdt.readxyz2(sdir+f)
     S = np.array(S)
 
@@ -45,14 +46,17 @@ for i,f in enumerate(files):
 of.close()
     #print(i,len(ds))
 
+Nt = 0
 for i in ds.keys():
     ds[i] = np.vstack(ds[i])
     X = ds[i]
     S = list(i)
     N = X.shape[0]
 
-    fn = 'comb08_c3_' + convert_eformula(i) + '-' + str(N).zfill(5) + '.xyz'
+    Nt += N
+
+    fn = 'dimerdata_' + convert_eformula(i) + '-' + str(N).zfill(5) + '.xyz'
     print('Writing: ',fn)
     hdt.writexyzfile(ndir+fn, X, S)
-
+print('Total data:',Nt)
 

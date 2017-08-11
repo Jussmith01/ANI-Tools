@@ -146,9 +146,17 @@ class dimergenerator():
             while fail:
                 ctr = np.random.uniform(2.0*maxd + 1.0, L - 2.0*maxd - 1.0, (3))
                 fail = False
-                for c in self.ctd:
-                    if np.linalg.norm(c[0] - ctr) < maxd + c[1] + 3.0:
-                        fail = True
+                for cid,c in enumerate(self.ctd):
+                    if np.linalg.norm(c[0] - ctr) < maxd + c[1] + 4.0:
+                        # search for atoms within r angstroms
+                        minv = 10.0
+                        for xi in self.X[c[2]:c[2]+self.Na[cid],:]:
+                            for xj in x + ctr:
+                                dij = np.linalg.norm(xi-xj)
+                                if dij < minv:
+                                    minv = dij
+                        if minv < 1.75:
+                            fail = True
 
                 if not fail:
                     self.ctd.append((ctr, maxd, pos))
@@ -217,15 +225,16 @@ class dimergenerator():
                   'Etot = %.3feV' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin))
 
         # Attach the printer
-        #self.dyn.attach(printenergy, interval=1)
+        self.dyn.attach(printenergy, interval=4)
 
         self.dyn.run(Ni) # Do Ni steps
 
         # Open MD output
-        mdcrd = open(xyzfile, 'w')
+        mdcrd.close()
 
         # Open MD output
-        traj = open(trajfile, 'w')
+        traj.close()
+
     def __fragmentbox__(self, file):
         self.X = self.mol.get_positions()
 
@@ -278,8 +287,8 @@ class dimergenerator():
                                 sig = np.std(hdn.hatokcal*E)/(Nai+Naj)
 
                                 self.Nt += 1
-                                if sig > 0.1:
+                                if sig > 0.0:
                                     self.Nd += 1
-                                    hdn.writexyzfile(file+str(i)+'-'+str(j)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
+                                    hdn.writexyzfile(file+str(i).zfill(4)+'-'+str(j).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
                                     self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
                                     #print(dc, Sf, sig)
