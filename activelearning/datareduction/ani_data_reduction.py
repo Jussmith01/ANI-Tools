@@ -3,7 +3,7 @@ import pyanitrainer as atr
 import os
 
 # Network 1 Files
-wkdir = '/home/jujuman/Research/DataReductionMethods/model_force_reduced_al1/train/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model_force_reduce_al1/train/'
 cnstf = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saenf = 'sae_6-31gd.dat'
 nfdir = 'networks/'
@@ -11,9 +11,9 @@ nfdir = 'networks/'
 opt = 'active_output.opt'
 
 # Data Dir
-datadir = '/home/jujuman/Research/DataReductionMethods/model_force_reduced_al1/cache/'
+datadir = '/home/jujuman/Research/DataReductionMethods/model_force_reduce_al1/cache/'
 testdata = datadir + 'testset/testset.h5'
-trainh5 = wkdir + 'ani_red_c06f.h5'
+trainh5 = wkdir + 'ani_red_ALfull.h5'
 
 # Test data
 test_files = ['/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
@@ -28,7 +28,7 @@ test_files = ['/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_3.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_2.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_1.h5',
-              '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/mdal.h5',
+              '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/mdal.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/h2o_nms_clusters.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs1.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs2.h5',
@@ -109,7 +109,7 @@ aani = atr.ActiveANI(test_files, wkdir+saenf, wkdir+opt, datadir, testdata, Naev
 aani.init_dataset(P)
 
 inc = 0
-while aani.get_percent_bad() > 4.0:
+while aani.get_percent_bad() > 5.0:
     # Remove existing network
     network_files = os.listdir(wkdir + 'networks/')
     for f in network_files:
