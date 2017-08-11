@@ -5,8 +5,10 @@ import pyanitools as pyt
 from pyNeuroChem import cachegenerator as cg
 import hdnntools as hdn
 
+import matplotlib.pyplot as plt
+
 # Set the HDF5 file containing the data
-hdf5files = ['/home/jujuman/Research/HIPNN-MD-Traj/test1/datasets/trajbnz/data_trajbnz.h5',
+hdf5files = ['/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/data_benzene_md.h5',
              #'/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_red/ani_correct.h5',
              #'/home/jujuman/Research/DataReductionMethods/model6/model0.05me/ani_red_c06.h5',
              #'/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s01.h5',
@@ -31,7 +33,7 @@ storecac = '/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/cache/'
 saef   = "/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/sae_6-31gd.dat"
 path = "/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/cache/testset/testset.h5"
 
-Ts = 0.095
+Ts = 0.002
 Vs = 0.002
 
 if os.path.exists(path):
@@ -56,8 +58,11 @@ for f in hdf5files:
     for i,data in enumerate(adl):
         #if (i == 2):
         xyz = data['coordinates']
+        frc = data['forces']
         eng = data['energies']
         spc = data['species']
+
+        #eng = eng - eng.mean()
 
         ds_path = data['path']
 
@@ -68,15 +73,16 @@ for f in hdf5files:
         print('Training Size:   ',Ts*Ndat)
         print('Validation Size: ',Vs*Ndat)
 
+        print(eng)
         # Prepare and store the training and validation data
-        cachet.insertdata(xyz[idx[0:int(Ts*Ndat)]], eng[idx[0:int(Ts*Ndat)]], list(spc))
-        cachev.insertdata(xyz[idx[int(Ts*Ndat):int((Ts+Vs)*Ndat)]], eng[idx[int(Ts*Ndat):int((Ts+Vs)*Ndat)]], list(spc))
+        cachet.insertdata(xyz[idx[0:int(Ts*Ndat)]], frc[idx[0:int(Ts*Ndat)]], eng[idx[0:int(Ts*Ndat)]], list(spc))
+        cachev.insertdata(xyz[idx[int(Ts*Ndat):int((Ts+Vs)*Ndat)]], frc[idx[int(Ts*Ndat):int((Ts+Vs)*Ndat)]], eng[idx[int(Ts*Ndat):int((Ts+Vs)*Ndat)]], list(spc))
 
         # Prepare and store the test data set
         #if xyz[9].shape[0] != 0:
             #print(xyz[9].shape)
         #t_xyz = xyz[9].reshape(xyz[9].shape[0],xyz[9].shape[1]*xyz[9].shape[2])
-        dpack.store_data(ds_path, coordinates=xyz[int((Ts+Vs)*Ndat):], energies=eng[int((Ts+Vs)*Ndat):], species=spc)
+        dpack.store_data(ds_path, coordinates=xyz[int((Ts+Vs)*Ndat):], forces=frc[int((Ts+Vs)*Ndat):], energies=eng[int((Ts+Vs)*Ndat):], species=spc)
     print('Count: ',dc)
 
     adl.cleanup()

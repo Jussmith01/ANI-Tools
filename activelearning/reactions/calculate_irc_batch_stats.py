@@ -84,23 +84,27 @@ def plot_irc(axes, i, d, f):
 
 os.environ["PYTHONPATH"] = "../../lib"
 
-d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/IRC/'
-c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/XYZ/'
-r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/DataGen/'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS4/testset/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS4/testset/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS4/testset/DataGen/'
 fp = 'DA_IRC'
 
-d = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/IRC/'
-c = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/XYZ/'
-r = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/DataGen/'
+#d = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/IRC/'
+#c = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/XYZ/'
+#r = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/DataGen/'
 fp = 'CL_IRC'
 
-#wkdircv1 = '/home/jujuman/Research/ReactionGeneration/cv1/'
+wkdircv1 = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
+cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
+saefile1 = 'sae_6-31gd.dat'
+
+#wkdircv1 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv3/'
 #cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 #saefile1 = 'sae_6-31gd.dat'
 
-wkdircv1 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv5/'
-cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
-saefile1 = 'sae_6-31gd.dat'
+#wkdircv2 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv2/'
+#cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
+#saefile2 = 'sae_6-31gd.dat'
 
 wkdircv2 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv4/'
 cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
@@ -112,7 +116,7 @@ saefile2 = 'sae_6-31gd.dat'
 
 Nnc = 5
 
-files = os.listdir(d)[0:9]
+files = os.listdir(d)
 files.sort()
 #random.shuffle(files)
 files = files

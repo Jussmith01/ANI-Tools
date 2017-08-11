@@ -12,8 +12,8 @@ def convert_eformula(sstr):
         rtn += z+str(N)
     return rtn
 
-sdir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_2/confs/"
-ndir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_2/confs_iso/"
+sdir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_test/confs/"
+ndir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_test/confs_iso/"
 
 files = os.listdir(sdir)
 files = [f for f in files if f.rsplit('.',maxsplit=1)[1] == 'xyz']
@@ -22,6 +22,7 @@ print (len(files))
 ds = dict()
 of = open(ndir+'info_confstoiso_map.dat', 'w')
 for i,f in enumerate(files):
+    print(sdir+f)
     X, S, N, C = hdt.readxyz2(sdir+f)
     S = np.array(S)
 
@@ -43,14 +44,17 @@ for i,f in enumerate(files):
 of.close()
     #print(i,len(ds))
 
+Nt = 0
 for i in ds.keys():
     ds[i] = np.vstack(ds[i])
     X = ds[i]
     S = list(i)
     N = X.shape[0]
 
+    Nt += N
+
     fn = 'dimerdata_' + convert_eformula(i) + '-' + str(N).zfill(5) + '.xyz'
     print('Writing: ',fn)
     hdt.writexyzfile(ndir+fn, X, S)
-
+print('Total data:',Nt)
 

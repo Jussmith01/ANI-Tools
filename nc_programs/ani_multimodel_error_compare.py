@@ -18,21 +18,27 @@ h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
-h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5'
-#h5file = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_1.h5'
+#h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_test/dimers3.h5'
+#h5file = '/home/jujuman/Research/ForceTrainTesting/train3/cache-data-0/testset/testset.h5'
+#h5file = '/home/jujuman/Research/IR_MD/methanol/methanol_traj_rsub.h5'
 
 # Define cross validation networks
-#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv5/'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv1/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv4/'
+#wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv3/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
+wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-07/cv4/'
 #wkdircv = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
 #wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
+#wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_e_comp/'
+#wkdircv = '/home/jujuman/Research/ForceTrainTesting/train/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix  = wkdircv + 'train'
 
 # Number of cv networks
-Ncv = 5
+Ncv = 3
 
 # Confidence list
 clist = [0.03,0.05,0.08,0.12,0.2,0.4,0.6]
@@ -63,15 +69,19 @@ Cdat = dict({'Sigm' : [],
              'FMAE' : [],
              'FRMSE': [],})
 
+Emax = [0.0,0.0,0.0]
+Fmax = [0.0,0.0,0.0]
+
 # Iterate data set
 for i,data in enumerate(adl):
     #if (i==10):
     #    break
     # Extract the data
+    print(data['path'])
     X  = np.ndarray.astype(data['coordinates'], dtype=np.float32)
     S  = data['species']
     Edft = data['energies']
-    Fdft =  np.empty_like(X)#data['forces']/(0.52917724900001*0.52917724900001)
+    Fdft =  data['forces']#/(0.52917724900001*0.52917724900001)
     path = data['path']
 
     # Calculate std. dev. per atom for all conformers
@@ -84,7 +94,9 @@ for i,data in enumerate(adl):
     Eani = hdn.hatokcal * Eani
     Edft = hdn.hatokcal * Edft
 
-    Fani = hdn.hatokcal * Fani#.reshape(Ncv, -1)
+    #print(Edft-Eani)
+
+    Fani = -hdn.hatokcal * Fani#.reshape(Ncv, -1)
     Fdft = hdn.hatokcal * Fdft#.reshape(-1)
 
     # Calculate full dE
@@ -94,6 +106,28 @@ for i,data in enumerate(adl):
     # Calculate per molecule errors
     FMAE  = hdn.calculatemeanabserror(Fani.reshape(Ncv, -1), Fdft.reshape(-1), axis=1)
     FRMSE = hdn.calculaterootmeansqrerror(Fani.reshape(Ncv, -1), Fdft.reshape(-1), axis=1)
+
+    #plt.hist((Fani-Fdft).flatten(),bins=100)
+    # plt.show()
+
+    '''
+    if Emax[0] < np.abs((Eani-Edft)).max():
+        ind = np.argmax(np.abs((Eani-Edft)).flatten())
+        Emax[0] = (Eani-Edft).flatten()[ind]
+        Emax[1] = Eani.flatten()[ind]
+        Emax[2] = Edft.flatten()[ind]
+
+    if Fmax[0] < np.abs((Fani-Fdft)).max():
+        ind = np.argmax(np.abs((Fani-Fdft)).flatten())
+        Fmax[0] = (Fani-Fdft).flatten()[ind]
+        Fmax[1] = Fani.flatten()[ind]
+        Fmax[2] = Fdft.flatten()[ind]
+    '''
+
+    #if FRMSE.mean() > 45.0:
+    #    print("!!!!!!!!!!!!!!!!!!!!!FRMSE: ", FRMSE)
+    #    print(Fani-Fdft)
+    #    exit(0)
 
     # Calculate per molecule errors
     EMAE  = hdn.calculatemeanabserror (Eani,Edft,axis=1)
@@ -134,6 +168,9 @@ for i,data in enumerate(adl):
     print('   -dERMSE:', dERMSE, ':', "{:.2f}".format(dERMSE.mean()))
     print('   -FMAE:  ',   FMAE, ':', "{:.2f}".format(FMAE.mean()))
     print('   -FRMSE: ',  FRMSE, ':', "{:.2f}".format(FRMSE.mean()))
+
+#print("\n  MAX ENERGY DELTA:",Emax)
+#"  MAX FORCE DELTA:",Fmax)
 
 dfe = pd.DataFrame()
 print('\nPrinting stats...')
