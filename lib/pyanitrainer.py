@@ -587,15 +587,16 @@ class ActiveANI (object):
 
         dpack = pyt.datapacker(path)
 
-        for j, (i,X,E,S,P) in enumerate(zip(self.kid,self.xyz,self.Eqm,self.spc,self.prt)):
+        for j, (i,X,F,E,S,P) in enumerate(zip(self.kid,self.xyz,self.frc,self.Eqm,self.spc,self.prt)):
             xyz = X[i]
+            frc = F[i]
             eng = E[i]
             spc = S
             nme = P
 
             # Prepare and store the test data set
             if xyz.size != 0:
-                dpack.store_data(nme + '/mol' + str(j), coordinates=xyz, energies=eng, species=spc)
+                dpack.store_data(nme + '/mol' + str(j), coordinates=xyz, forces=frc, energies=eng, species=spc)
 
         # Cleanup the disk
         dpack.cleanup()
