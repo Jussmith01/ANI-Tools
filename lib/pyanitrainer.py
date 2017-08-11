@@ -124,7 +124,9 @@ class anitrainer(object):
             Toler = ST
 
         print('Final - Epoch(', str(Epoch).zfill(4), ') Errors:',
-              "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid)))
+              "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_E)),
+              "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_dE)),
+              "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_F)))
 
 class anitester (object):
     def __init__(self, cnstfile, saefile, nnfdir, gpuid, sinet):
@@ -140,11 +142,13 @@ class anitester (object):
         # Declare containers
         Eact = []
         Ecmp = []
+        Fcmp = []
         Nmt = 0
 
         for data in adl:
             # Extract the data
             xyz = data['coordinates']
+            frc = data['forces']
             Eqm = data['energies']
             spc = data['species']
 
@@ -170,21 +174,26 @@ class anitester (object):
 
                     # copy array subset
                     Eact_t = Eqm[i1:i2]
+                    Fact_t = frc[i1:i2]
 
                     # Set the conformers in NeuroChem
                     self.nc.setConformers(confs=xyz[i1:i2], types=list(spc))
 
                     Ecmp_t = self.nc.energy()
+                    Fcmp_t = self.nc.force()
 
                     Ecmp.append(np.sum(np.power(hdn.hatokcal * Ecmp_t - hdn.hatokcal * Eact_t,2)))
+                    Fcmp.append(np.sum(np.power(hdn.hatokcal * Fcmp_t.flatten() - hdn.hatokcal * Fact_t.flatten(), 2))/float(3.0*Fact_t.shape[1]))
+
                     Nmt = Nmt + Ecmp_t.size
                     #Eact.append(Eact_t)
 
                     #print(hdn.hatokcal * np.sum(np.abs(Ecmp_t-Eact_t))/float(Ecmp_t.size))
 
         Ecmp = np.array(Ecmp, dtype=np.float64)
+        Fcmp = np.array(Fcmp, dtype=np.float64)
 
-        return np.sqrt(np.sum(Ecmp) / float(Nmt))
+        return np.sqrt(np.sum(Ecmp) / float(Nmt)), np.sqrt(np.sum(Fcmp) / float(Nmt))
 
     def test_for_bad (self, xyz, Eact_W, spc, index, Emax):
         mNa = 100
@@ -339,6 +348,16 @@ class ActiveANI (object):
                 eng = data['energies']
                 spc = data['species']
                 nme = data['path']
+
+                # Toss out high forces
+                Mv = np.max(np.linalg.norm(frc, axis=2), axis=1)
+                index = np.where(Mv > 1.75)[0]
+                indexk = np.where(Mv <= 1.75)[0]
+
+                # CLear forces
+                xyz = xyz[indexk]
+                frc = frc[indexk]
+                eng = eng[indexk]
 
                 idx = np.random.uniform(0.0, 1.0, eng.size)
                 tr_idx = np.asarray(np.where(idx < 0.9))[0]

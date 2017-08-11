@@ -3,7 +3,7 @@ import pyanitrainer as atr
 import os
 
 # Network 1 Files
-wkdir = '/home/jujuman/Research/DataReductionMethods/model_force_reduced/train/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model_force_reduced_al1/train/'
 cnstf = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saenf = 'sae_6-31gd.dat'
 nfdir = 'networks/'
@@ -11,7 +11,7 @@ nfdir = 'networks/'
 opt = 'active_output.opt'
 
 # Data Dir
-datadir = '/home/jujuman/Research/DataReductionMethods/model_force_reduced/cache/'
+datadir = '/home/jujuman/Research/DataReductionMethods/model_force_reduced_al1/cache/'
 testdata = datadir + 'testset/testset.h5'
 trainh5 = wkdir + 'ani_red_c06f.h5'
 
@@ -62,7 +62,7 @@ CV  = 1.0e-6
 ST  = 100
 M   = 0.08 # Max error per atom in kcal/mol
 P   = 0.01
-ps  = 10
+ps  = 20
 Naev = 384
 sinet= False
 #--------------------
@@ -74,7 +74,7 @@ d = dict({'wkdir'         : wkdir,
           'atomEnergyFile': saenf,
           'datadir'       : datadir,
           'tbtchsz'       : '256',
-          'vbtchsz'       : '256',
+          'vbtchsz'       : '128',
           'gpuid'         : str(GPU),
           'ntwshr'        : '0',
           'nkde'          : '2',
@@ -129,9 +129,9 @@ while aani.get_percent_bad() > 4.0:
     test_rmse_e, test_rmse_f = ant.compute_test(testdata)
     print('Test E RMSE:', "{:.3f}".format(test_rmse_e), 'kcal/mol')
     print('Test F RMSE:', "{:.3f}".format(test_rmse_f), 'kcal/mol/A')
- 
+    
     # Check for and add bad data
-    aani.add_bad_data(wkdir+cnstf, wkdir+saenf, wkdir+nfdir, GPU, sinet, P=0.05 + inc * 0.025, M=M)
+    aani.add_bad_data(wkdir+cnstf, wkdir+saenf, wkdir+nfdir, GPU, sinet, P=0.025 + inc * 0.025, M=M)
 
     inc = inc + 1
 
