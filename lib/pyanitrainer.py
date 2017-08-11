@@ -481,7 +481,7 @@ class ActiveANI (object):
         return np.array([]), np.array([]), 0
 
 
-    def store_random(self, cache, X, E, S, index, P, T):
+    def store_random(self, cache, X, F, E, S, index, P, T):
         #print(index, index.shape, index.size)
         if index.size != 0:
             # Array of random floats from 0 to 1
@@ -496,7 +496,7 @@ class ActiveANI (object):
                 cur_index = index[cur_index]
 
                 # Add data to the cache
-                cache.insertdata(X[cur_index], E[cur_index], list(S))
+                cache.insertdata(X[cur_index], F[cur_index], E[cur_index], list(S))
 
             if new_index.size != 0:
                 return np.array(index[new_index]), np.array(cur_index), cur_index.size
@@ -542,8 +542,11 @@ class ActiveANI (object):
                 Nbad = Nbad + self.idx[i].size
 
                 # Store a random subset of the bad for training
-                self.idx[i], kat, Nt = self.store_diverse(cachet, atest, X, F, E, S, self.idx[i], P, T)
-                self.idx[i], kav, Nv = self.store_diverse(cachev, atest, X, F, E, S, self.idx[i], P, V)
+                self.idx[i], kat, Nt = self.store_random(cachet, X, F, E, S, self.idx[i], P, T)
+                self.idx[i], kav, Nv = self.store_random(cachev, X, F, E, S, self.idx[i], P, V)
+
+                #self.idx[i], kat, Nt = self.store_diverse(cachet, atest, X, F, E, S, self.idx[i], P, T)
+                #self.idx[i], kav, Nv = self.store_diverse(cachev, atest, X, F, E, S, self.idx[i], P, V)
 
                 # Add the training data to kid
                 self.kid[i] = np.array(np.concatenate([self.kid[i],kat,kav]),dtype=np.int)
