@@ -488,8 +488,8 @@ class ActiveANI (object):
             selection = np.random.uniform(low=0.0, high=1.0, size=index.shape[0])
 
             # Obtain the sample
-            new_index = np.array([n for n, i in enumerate(selection) if i > P * T])
-            cur_index = np.array([n for n, i in enumerate(selection) if i <= P * T])
+            new_index = np.asarray(np.where(selection > P * T))[0]
+            cur_index = np.asarray(np.where(selection <=  P * T))[0]
 
             if cur_index.shape[0] != 0:
                 # Get the new index
