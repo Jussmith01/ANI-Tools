@@ -182,6 +182,8 @@ class anitester (object):
                     Ecmp_t = self.nc.energy()
                     Fcmp_t = self.nc.force()
 
+                    #print(hdn.hatokcal*np.abs(Fact_t-Fcmp_t).sum()/Ecmp_t.size)
+
                     Ecmp.append(np.sum(np.power(hdn.hatokcal * Ecmp_t - hdn.hatokcal * Eact_t,2)))
                     Fcmp.append(np.sum(np.power(hdn.hatokcal * Fcmp_t.flatten() - hdn.hatokcal * Fact_t.flatten(), 2))/float(3.0*Fact_t.shape[1]))
 
@@ -387,7 +389,7 @@ class ActiveANI (object):
                 # Prepare and store the test data set
                 if xyz[te_idx].size != 0:
                     #t_xyz = xyz[te_idx].reshape(te_idx.size, xyz[te_idx].shape[1] * xyz[te_idx].shape[2])
-                    dpack.store_data(nme + '/mol' + str(i), coordinates=xyz[te_idx], forces=frc[tr_idx], energies=np.array(eng[te_idx]), species=spc)
+                    dpack.store_data(nme + '/mol' + str(i), coordinates=xyz[te_idx], forces=frc[te_idx], energies=np.array(eng[te_idx]), species=spc)
 
             # Clean up
             adl.cleanup()
