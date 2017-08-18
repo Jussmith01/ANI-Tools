@@ -74,5 +74,5 @@ for di,id in enumerate(idir):
         print(nfo)
 
         if X.size > 0:
-            hdn.writexyzfile(dstore+'mds_'+m.split('.')[0]+'_'+str(di).zfill(4)+'.xyz',X,S)
+            #hdn.writexyzfile(dstore+'mds_'+m.split('.')[0]+'_'+str(di).zfill(4)+'.xyz',X,S)
 difo.close()

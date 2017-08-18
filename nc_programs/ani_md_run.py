@@ -35,31 +35,35 @@ import seaborn as sns
 #----------------Parameters--------------------
 
 # Molecule file
-molfile = '/home/jujuman/Research/MD_TEST/Chignolin/1uao_H.pdb'
+#molfile = '/home/jujuman/Research/MD_TEST/Chignolin/1uao_H.pdb'
 #molfile = '/home/jujuman/Research/IR_MD/M3/m3.xyz'
+molfile = '/home/jujuman/Research/MD_TEST/ACS_mole_confidence/drugbank_1560.xyz'
 
 # Dynamics file
-xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
+#xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
+xyzfile = '/home/jujuman/Research/MD_TEST/ACS_mole_confidence/mdcrd.xyz'
 
 # Trajectory file
-trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
+#trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
 #trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
+trajfile = '/home/jujuman/Research/MD_TEST/ACS_mole_confidence/traj.dat'
 
 # Optimized structure out
-optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
+#optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
 #optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
+optfile = '/home/jujuman/Research/MD_TEST/ACS_mole_confidence/optmol.xyz'
 
-
-T = 300.0 # Temperature
+T = 2000.0 # Temperature
 C = 0.0001 # Optimization convergence
 
 #wkdir    = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk/'
-#wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv3/'
-wkdir = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv3/'
+#wkdir = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
-nnfdir   = wkdir + '/train0/networks/'
+nnfdir   = wkdir + '/train3/networks/'
+#nnfdir   = wkdir + 'networks/'
 
 #----------------------------------------------
 
@@ -102,7 +106,7 @@ traj = open(trajfile,'w')
 # We want to run MD with constant energy using the Langevin algorithm
 # with a time step of 0.5 fs, the temperature T and the friction
 # coefficient to 0.02 atomic units.
-dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.001)
+dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.005)
 
 # Run equilibration
 #print('Running equilibration...')

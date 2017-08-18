@@ -13,12 +13,15 @@ r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/testset/DataGen/'
 #r = '/home/jujuman/Dropbox/IRC_DBondMig/RxNGeneration/'
 fp = 'DA_t5_test_IRC'
 
-#d = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try3/IRC/'
-#c = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try3/XYZ/'
-##r = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try3/DataGen/'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try3/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try3/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try3/DataGen/'
 #r = '/home/jujuman/Dropbox/IRC_DBondMig/RxNGeneration/'
-#fp = 'CL_t3_IRC'
+fp = 'CP_t1_IRC'
 
+os.mkdir(c)
+os.mkdir(r)
+os.mkdir(r+'inputs')
 
 wkdir1 = '/home/jujuman/Research/ReactionGeneration/cv1/'
 cnstfile = 'rHCNO-4.6A_16-3.1A_a4-8.params'

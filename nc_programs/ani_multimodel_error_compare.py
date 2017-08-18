@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 # Define test file
-h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
+#h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
+h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
 #h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_test/dimers3.h5'
 #h5file = '/home/jujuman/Research/ForceTrainTesting/train3/cache-data-0/testset/testset.h5'
 #h5file = '/home/jujuman/Research/IR_MD/methanol/methanol_traj_rsub.h5'
@@ -29,7 +29,7 @@ h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-07/cv4/'
-#wkdircv = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
+#wkdircv = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk/'
 #wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 #wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_e_comp/'
 #wkdircv = '/home/jujuman/Research/ForceTrainTesting/train/'
@@ -38,7 +38,7 @@ saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix  = wkdircv + 'train'
 
 # Number of cv networks
-Ncv = 3
+Ncv = 5
 
 # Confidence list
 clist = [0.03,0.05,0.08,0.12,0.2,0.4,0.6]
@@ -72,6 +72,7 @@ Cdat = dict({'Sigm' : [],
 Emax = [0.0,0.0,0.0]
 Fmax = [0.0,0.0,0.0]
 
+Ferr = []
 # Iterate data set
 for i,data in enumerate(adl):
     #if (i==10):
@@ -96,8 +97,12 @@ for i,data in enumerate(adl):
 
     #print(Edft-Eani)
 
-    Fani = -hdn.hatokcal * Fani#.reshape(Ncv, -1)
+    Fani = hdn.hatokcal * Fani#.reshape(Ncv, -1)
     Fdft = hdn.hatokcal * Fdft#.reshape(-1)
+
+    idx = np.asarray(np.where(sigma < 0.08))[0]
+    #print(idx,Fani[0].shape,Fdft.shape)
+    Ferr.append((Fani[0][idx]-Fdft[idx]).flatten())
 
     # Calculate full dE
     dEani = hdn.calculateKdmat(Ncv, Eani)
@@ -171,6 +176,10 @@ for i,data in enumerate(adl):
 
 #print("\n  MAX ENERGY DELTA:",Emax)
 #"  MAX FORCE DELTA:",Fmax)
+
+Ferr = np.concatenate(Ferr)
+plt.hist(Ferr, bins=250)
+plt.show()
 
 dfe = pd.DataFrame()
 print('\nPrinting stats...')

@@ -10,7 +10,7 @@ import linecache
 import pandas as pd
 
 hatokcal = 627.509469
-evtokcal = 27.2107
+evtokcal = 27.21138505
 AtoBohr = 1.88973
 
 convert = hatokcal  # Ha to Kcal/mol
