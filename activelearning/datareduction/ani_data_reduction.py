@@ -131,8 +131,7 @@ while aani.get_percent_bad() > 5.0:
     print('Test F RMSE:', "{:.3f}".format(test_rmse_f), 'kcal/mol/A')
     
     # Check for and add bad data
-    aani.add_bad_data(wkdir+cnstf, wkdir+saenf, wkdir+nfdir, GPU, sinet, P=0.025, M=M)
-    #aani.add_bad_data(wkdir+cnstf, wkdir+saenf, wkdir+nfdir, GPU, sinet, P=0.025 + inc * 0.025, M=M)
+    aani.add_bad_data(wkdir+cnstf, wkdir+saenf, wkdir+nfdir, GPU, sinet, P=0.01 + inc * 0.01, M=M)
 
     inc = inc + 1
 
