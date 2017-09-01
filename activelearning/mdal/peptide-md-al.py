@@ -22,12 +22,12 @@ def gendipeptidelist(AAlist):
     return fasta,nlist
 
 #--------------Parameters------------------
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv2/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv1/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile = wkdir + 'sae_6-31gd.dat'
 
 # Store dir
-sdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/confs_3/'
+sdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_2/'
 
 At = ['C', 'O', 'N'] # Hydrogens added after check
 
@@ -43,6 +43,7 @@ fasta,namelist = gendipeptidelist(AAlist)
 
 activ = pya.moldynactivelearning(cnstfile, saefile, wkdir+'train', 5)
 
+print('Nmol:',len(fasta))
 difo = open(sdir + 'info_data_mdaa.nfo', 'w')
 for n,(a,l) in enumerate(zip(fasta, namelist)):
     m = Chem.MolFromFASTA(a)
@@ -63,7 +64,7 @@ for n,(a,l) in enumerate(zip(fasta, namelist)):
         activ.setrdkitmol(m,cids)
 
         # Generate conformations
-        X = activ.generate_conformations(N, T, dt, 350, 10, dS = 0.1)
+        X = activ.generate_conformations(N, T, dt, 2000, 10, dS = 0.06)
 
         nfo = activ._infostr_
         difo.write('  -'+l+': '+nfo+'\n')

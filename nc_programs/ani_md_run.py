@@ -37,28 +37,28 @@ import seaborn as sns
 # Molecule file
 #molfile = '/home/jujuman/Research/MD_TEST/Chignolin/1uao_H.pdb'
 #molfile = '/home/jujuman/Research/IR_MD/M3/m3.xyz'
-molfile = '/home/jujuman/Research/MD_TEST/ACS_mole_confidence/drugbank_1560.xyz'
+molfile = '/home/jujuman/Research/Opt_test/1d.pdb'
 
 # Dynamics file
 #xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
-xyzfile = '/home/jujuman/Research/MD_TEST/ACS_mole_confidence/mdcrd.xyz'
+xyzfile = '/home/jujuman/Research/Opt_test/mdcrd_1d.xyz'
 
 # Trajectory file
 #trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
 #trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
-trajfile = '/home/jujuman/Research/MD_TEST/ACS_mole_confidence/traj.dat'
+trajfile = '/home/jujuman/Research/Opt_test/traj_1d.dat'
 
 # Optimized structure out
 #optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
 #optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
-optfile = '/home/jujuman/Research/MD_TEST/ACS_mole_confidence/optmol.xyz'
+optfile = '/home/jujuman/Research/Opt_test/optmol_1d.xyz'
 
 T = 2000.0 # Temperature
 C = 0.0001 # Optimization convergence
 
 #wkdir    = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk/'
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv3/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
 #wkdir = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
@@ -90,12 +90,17 @@ dyn = LBFGS(mol)
 dyn.run(fmax=C)
 print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
-# Save optimized mol
+print(hdt.evtokcal*mol.get_potential_energy())
 
+
+# Save optimized mol
 spc = mol.get_chemical_symbols()
 pos = mol.get_positions(wrap=True).reshape(1,len(spc),3)
 
 hdt.writexyzfile(optfile, pos, spc)
+
+
+exit(0)
 
 # Open MD output
 mdcrd = open(xyzfile,'w')

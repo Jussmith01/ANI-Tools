@@ -12,25 +12,27 @@ def interval(v,S):
             return s
         ps = ps + ds
 
-#wkdir = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv3/'
-wkdir ='/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv1/'
+#wkdir ='/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/'
 saef   = wkdir + "sae_6-31gd.dat"
 #saef   = wkdir + "sae_ccsd_cbs.dat"
 
-'''
 h5files = ['/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
            '/home/jujuman/Research/GDB_Dimer/dimer_gen_2/dimers2.h5',
+           '/home/jujuman/Research/GDB_Dimer/dimer_gen_3/dimers3.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/DA_rxn_1/DA_rxn_1.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1/comb_rxn_1.h5',
-           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_3.h5',
-           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_2.h5',
-           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_1.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_1.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_02_4.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_02_3.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_02_2.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_02_1.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_5.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_4.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_3.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_2.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_1/gdb_r06_comb08_1.h5',
-           '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/mdal.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/mdal.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/h2o_nms_clusters.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs1.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs2.h5',
@@ -48,7 +50,13 @@ h5files = ['/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs2.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs3.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs4.h5',
-           '/home/jujuman/Research/DataReductionMethods/model6/model0.05me/ani_red_c06.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S01_06r.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S02_06r.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S03_06r.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S04_06r.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S05_06r.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S06_06r.h5',
+           #'/home/jujuman/Research/DataReductionMethods/model6/model0.05me/ani_red_c06.h5',
            #'/home/jujuman/Research/ANI-DATASET/h5data/r10_ccsd.h5',
            ]
 '''
@@ -59,7 +67,7 @@ h5files = ['/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/data_benzene_
            #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S04_06r.h5',
            #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S05_06r.h5',
            ]
-
+'''
 store_dir = wkdir + "cache-data-"
 
 N = 5
@@ -97,8 +105,6 @@ for f,fn in enumerate(h5files):
         F = data['forces']
         E = data['energies']
         S = data['species']
-
-
 
         if (set(S).issubset(['C', 'N', 'O', 'H'])):
 
