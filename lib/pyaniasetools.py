@@ -133,7 +133,7 @@ class anicrossvalidationconformer(object):
             nc.setConformers(confs=X,types=list(S))
             energies[i] = nc.energy().copy()
             forces[i] = nc.force().copy()
-        return energies, forces
+        return hdt.hatokcal*energies, hdt.hatokcal*forces
 
     ''' Compute the std. dev. of rdkit conformers '''
     def compute_stddev_rdkitconfs(self,mrdk):

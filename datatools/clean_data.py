@@ -91,15 +91,15 @@ for d in datlist:
         X = np.concatenate(X)
         E = np.concatenate(E)
 
-        #pr,dl = boltzmann_prob_ratio(E.min(),E,T)
-        gid = np.where(E - E.min() <= 300.0/hdn.hatokcal)
-        bid = np.where(E - E.min() > 300.0/hdn.hatokcal)
+        pr,dl = boltzmann_prob_ratio(E.min(),E,T)
+        #gid = np.where(E - E.min() <= 300.0/hdn.hatokcal)
+        #bid = np.where(E - E.min() > 300.0/hdn.hatokcal)
 
         #gid = gid[0][0:E[gid].size-rmtot[i]]
         #print(gid.size)
 
-        #bid = list(np.where( pr >  R ))
-        #gid = list(np.where( pr <= R ))
+        bid = list(np.where( pr >  R ))
+        gid = list(np.where( pr <= R ))
 
         smiles = get_smiles(indir+f+'.ipt')
         #ipd = hdn.read_rcdb_coordsandnm(indir+f+'.ipt')

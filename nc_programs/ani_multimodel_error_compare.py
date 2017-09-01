@@ -12,24 +12,26 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 # Define test file
-#h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
+h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
-h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
-#h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_test/dimers3.h5'
+#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
+#h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_test/dimers_test.h5'
 #h5file = '/home/jujuman/Research/ForceTrainTesting/train3/cache-data-0/testset/testset.h5'
 #h5file = '/home/jujuman/Research/IR_MD/methanol/methanol_traj_rsub.h5'
 
 # Define cross validation networks
-#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv4/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv6/'
 #wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
-#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv3/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv1/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
-wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
-#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-07/cv4/'
-#wkdircv = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk/'
+#wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-06/cv4/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08_mdal01/cv2/'
+#wkdircv = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
 #wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 #wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_e_comp/'
 #wkdircv = '/home/jujuman/Research/ForceTrainTesting/train/'
@@ -92,12 +94,12 @@ for i,data in enumerate(adl):
     Eani, Fani = anicv.compute_energy_conformations(X,S)
 
     # Convert to kcal/mol and reshape if needed
-    Eani = hdn.hatokcal * Eani
+    #Eani = hdn.hatokcal * Eani
     Edft = hdn.hatokcal * Edft
 
     #print(Edft-Eani)
 
-    Fani = hdn.hatokcal * Fani#.reshape(Ncv, -1)
+    #Fani = hdn.hatokcal * Fani#.reshape(Ncv, -1)
     Fdft = hdn.hatokcal * Fdft#.reshape(-1)
 
     idx = np.asarray(np.where(sigma < 0.08))[0]
