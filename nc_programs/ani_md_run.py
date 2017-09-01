@@ -35,34 +35,34 @@ import seaborn as sns
 #----------------Parameters--------------------
 
 # Molecule file
-#molfile = '/home/jujuman/Research/MD_TEST/Chignolin/1uao_H.pdb'
+molfile = '/home/jujuman/Research/MD_TEST/Chignolin/1uao_H.pdb'
 #molfile = '/home/jujuman/Research/IR_MD/M3/m3.xyz'
-molfile = '/home/jujuman/Research/Opt_test/1d.pdb'
+#molfile = '/home/jujuman/Scratch/Research/MD_TEST/methanol_box/MethanolBoxCenter.xyz'
 
 # Dynamics file
-#xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
+xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
-xyzfile = '/home/jujuman/Research/Opt_test/mdcrd_1d.xyz'
+#xyzfile = '/home/jujuman/Scratch/Research/MD_TEST/methanol_box/mdcrd.xyz'
 
 # Trajectory file
-#trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
+trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
 #trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
-trajfile = '/home/jujuman/Research/Opt_test/traj_1d.dat'
+#trajfile = '/home/jujuman/Scratch/Research/MD_TEST/methanol_box/traj.dat'
 
 # Optimized structure out
-#optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
+optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
 #optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
-optfile = '/home/jujuman/Research/Opt_test/optmol_1d.xyz'
+#optfile = '/home/jujuman/Scratch/Research/MD_TEST/methanol_box/optmol.xyz'
 
-T = 2000.0 # Temperature
-C = 0.0001 # Optimization convergence
+T = 10.0 # Temperature
+C = 0.01 # Optimization convergence
 
 #wkdir    = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk/'
 wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
 #wkdir = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
-nnfdir   = wkdir + '/train3/networks/'
+nnfdir   = wkdir + '/train0/networks/'
 #nnfdir   = wkdir + 'networks/'
 
 #----------------------------------------------

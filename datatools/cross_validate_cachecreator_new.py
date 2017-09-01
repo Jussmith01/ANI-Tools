@@ -59,15 +59,7 @@ h5files = ['/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
            #'/home/jujuman/Research/DataReductionMethods/model6/model0.05me/ani_red_c06.h5',
            #'/home/jujuman/Research/ANI-DATASET/h5data/r10_ccsd.h5',
            ]
-'''
-h5files = ['/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/data_benzene_md.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S01_06r.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S02_06r.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S03_06r.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S04_06r.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S05_06r.h5',
-           ]
-'''
+
 store_dir = wkdir + "cache-data-"
 
 N = 5

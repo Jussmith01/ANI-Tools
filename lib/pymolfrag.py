@@ -221,8 +221,8 @@ class dimergenerator():
             for j, i in zip(a, c):
                 b.write(str(j.symbol) + ' ' + str(i[0]) + ' ' + str(i[1]) + ' ' + str(i[2]) + '\n')
 
-            print('Step: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
-                  'Etot = %.3feV' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin))
+            print('Step: %d Size: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
+                  'Etot = %.3feV' % (d.get_number_of_steps(), len(a), epot, ekin, ekin / (1.5 * units.kB), epot + ekin))
 
         # Attach the printer
         self.dyn.attach(printenergy, interval=4)
@@ -271,7 +271,7 @@ class dimergenerator():
                                     if v < min:
                                         min = v
 
-                            if min < 4.0 and min > 0.8:
+                            if min < 3.0 and min > 1.1:
                                 Xf = np.vstack([Xi, Xj])
                                 Sf = self.S[si:si+Nai]
                                 Sf.extend(self.S[sj:sj+Naj])
@@ -287,7 +287,7 @@ class dimergenerator():
                                 sig = np.std(hdn.hatokcal*E)/(Nai+Naj)
 
                                 self.Nt += 1
-                                if sig > 0.0:
+                                if sig > 0.08:
                                     self.Nd += 1
                                     hdn.writexyzfile(file+str(i).zfill(4)+'-'+str(j).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
                                     self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
