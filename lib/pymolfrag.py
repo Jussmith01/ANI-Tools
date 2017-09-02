@@ -1,4 +1,7 @@
 from ase_interface import ANI
+from ase_interface import ANIENS
+from ase_interface import ensemblemolecule
+
 import pyNeuroChem as pync
 
 import numpy as np
@@ -119,8 +122,11 @@ class dimergenerator():
         # Number of networks
         self.Nn = Nnet
 
+        # Build ANI ensemble
+        self.aens = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)
+
         # Construct pyNeuroChem class
-        self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
+        #self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
 
     def __generategarbagebox__(self,Nm, L):
         self.X = np.empty((0, 3), dtype=np.float32)
@@ -182,8 +188,10 @@ class dimergenerator():
         self.mol.set_pbc((True, True, True))
 
         # Set ANI calculator
-        self.mol.set_calculator(ANI(False))
-        self.mol.calc.setnc(self.ncl[0])
+        # Set ANI calculator
+        self.mol.set_calculator(ANIENS(self.aens))
+        #self.mol.set_calculator(ANI(False))
+        #self.mol.calc.setnc(self.ncl[0])
 
 
         # Give molecules random velocity
@@ -280,7 +288,7 @@ class dimergenerator():
                                 Xf = Xf - Xcf
 
                                 E = np.empty(5, dtype=np.float64)
-                                for id,nc in enumerate(self.ncl):
+                                for id,nc in enumerate(self.aens.ncl):
                                     nc.setMolecule(coords=np.array(Xf,dtype=np.float32), types=Sf)
                                     E[id] = nc.energy()[0]
 

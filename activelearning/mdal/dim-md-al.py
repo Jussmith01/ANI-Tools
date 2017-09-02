@@ -27,7 +27,7 @@ trajfile = '/home/jujuman/Research/GDB_Dimer/test/traj.dat'
 # Optimized structure out
 optfile = '/home/jujuman/Research/GDB_Dimer/test/optmol.xyz'
 
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv1/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix  = wkdircv + 'train'
@@ -38,13 +38,13 @@ dstore = '/home/jujuman/Research/GDB_Dimer/test/'
 
 N = 15
 T = 400.0
-L = 60.0
-V = 0.1
+L = 40.0
+V = 0.04
 dt = 0.25
-Nm = 600
+Nm = 200
 Nr = 300
 
-Ni = 12
+Ni = 200
 Ns = 100
 
 
