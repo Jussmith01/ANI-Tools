@@ -10,23 +10,35 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib.colors import LogNorm
+
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 # Define test file
-h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
-h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5'
-#h5file = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_1.h5'
+#h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
+h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
+#h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_test/dimers_test.h5'
+#h5file = '/home/jujuman/Research/ForceTrainTesting/train3/cache-data-0/testset/testset.h5'
+#h5file = '/home/jujuman/Research/IR_MD/methanol/methanol_traj_rsub.h5'
 
 # Define cross validation networks
-#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv5/'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv1/'
-#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-07/cv4/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv6/'
+#wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv1/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
+#wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-06/cv4/'
+#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-08_mdal01/cv2/'
 #wkdircv = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
 #wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
+#wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_e_comp/'
+#wkdircv = '/home/jujuman/Research/ForceTrainTesting/train/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix  = wkdircv + 'train'
@@ -63,15 +75,21 @@ Cdat = dict({'Sigm' : [],
              'FMAE' : [],
              'FRMSE': [],})
 
+Emax = [0.0,0.0,0.0]
+Fmax = [0.0,0.0,0.0]
+
+Ferr = []
 # Iterate data set
 for i,data in enumerate(adl):
     #if (i==10):
     #    break
+
     # Extract the data
+    print(data['path'])
     X  = np.ndarray.astype(data['coordinates'], dtype=np.float32)
     S  = data['species']
     Edft = data['energies']
-    Fdft =  np.empty_like(X)#data['forces']/(0.52917724900001*0.52917724900001)
+    Fdft =  -data['forces']#/(0.52917724900001*0.52917724900001)
     path = data['path']
 
     # Calculate std. dev. per atom for all conformers
@@ -81,11 +99,17 @@ for i,data in enumerate(adl):
     Eani, Fani = anicv.compute_energy_conformations(X,S)
 
     # Convert to kcal/mol and reshape if needed
-    Eani = hdn.hatokcal * Eani
+    #Eani = hdn.hatokcal * Eani
     Edft = hdn.hatokcal * Edft
 
-    Fani = hdn.hatokcal * Fani#.reshape(Ncv, -1)
+    #print(Edft-Eani)
+
+    #Fani = hdn.hatokcal * Fani#.reshape(Ncv, -1)
     Fdft = hdn.hatokcal * Fdft#.reshape(-1)
+
+    idx = np.asarray(np.where(sigma < 0.08))[0]
+    #print(idx,Fani[0].shape,Fdft.shape)
+    Ferr.append((Fani[0][idx]-Fdft[idx]).flatten())
 
     # Calculate full dE
     dEani = hdn.calculateKdmat(Ncv, Eani)
@@ -94,6 +118,28 @@ for i,data in enumerate(adl):
     # Calculate per molecule errors
     FMAE  = hdn.calculatemeanabserror(Fani.reshape(Ncv, -1), Fdft.reshape(-1), axis=1)
     FRMSE = hdn.calculaterootmeansqrerror(Fani.reshape(Ncv, -1), Fdft.reshape(-1), axis=1)
+
+    #plt.hist((Fani-Fdft).flatten(),bins=100)
+    # plt.show()
+
+    '''
+    if Emax[0] < np.abs((Eani-Edft)).max():
+        ind = np.argmax(np.abs((Eani-Edft)).flatten())
+        Emax[0] = (Eani-Edft).flatten()[ind]
+        Emax[1] = Eani.flatten()[ind]
+        Emax[2] = Edft.flatten()[ind]
+
+    if Fmax[0] < np.abs((Fani-Fdft)).max():
+        ind = np.argmax(np.abs((Fani-Fdft)).flatten())
+        Fmax[0] = (Fani-Fdft).flatten()[ind]
+        Fmax[1] = Fani.flatten()[ind]
+        Fmax[2] = Fdft.flatten()[ind]
+    '''
+
+    #if FRMSE.mean() > 45.0:
+    #    print("!!!!!!!!!!!!!!!!!!!!!FRMSE: ", FRMSE)
+    #    print(Fani-Fdft)
+    #    exit(0)
 
     # Calculate per molecule errors
     EMAE  = hdn.calculatemeanabserror (Eani,Edft,axis=1)
@@ -135,6 +181,13 @@ for i,data in enumerate(adl):
     print('   -FMAE:  ',   FMAE, ':', "{:.2f}".format(FMAE.mean()))
     print('   -FRMSE: ',  FRMSE, ':', "{:.2f}".format(FRMSE.mean()))
 
+#print("\n  MAX ENERGY DELTA:",Emax)
+#"  MAX FORCE DELTA:",Fmax)
+
+Ferr = np.concatenate(Ferr)
+#plt.hist(Ferr, bins=250)
+#plt.show()
+
 dfe = pd.DataFrame()
 print('\nPrinting stats...')
 for id, e in enumerate(elist):
@@ -165,6 +218,76 @@ for id, e in enumerate(elist):
 
 print('Energy level performance: ')
 print(dfe)
+
+# ----------------------------------
+# Plot force histogram
+# ----------------------------------
+def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
+    Fmx = Xa.max()
+    Fmn = Xa.min()
+
+    label_size = 14
+    mpl.rcParams['xtick.labelsize'] = label_size
+    mpl.rcParams['ytick.labelsize'] = label_size
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # Plot ground truth line
+    ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='r', linewidth=3)
+
+    # Set labels
+    ax.set_xlabel('$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
+    ax.set_ylabel('$F_{ani}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
+
+    cmap = mpl.cm.viridis
+
+    # Plot 2d Histogram
+    bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), range= [[Fmn, Fmx], [Fmn, Fmx]], cmap=cmap)
+
+    # Build color bar
+    #cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
+    cb1 = fig.colorbar(bins[-1], cmap=cmap)
+    cb1.set_label('Log(count)', fontsize=16)
+
+    # Annotate with errors
+    PMAE = hdn.calculatemeanabserror(Xa, Xp)
+    PRMS = hdn.calculaterootmeansqrerror(Xa, Xp)
+    ax.text(0.75*((Fmx-Fmn))+Fmn, 0.43*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=20,
+            bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
+
+    if inset:
+        axins = zoomed_inset_axes(ax, 2.2, loc=2) # zoom = 6
+
+        sz = 6
+        axins.hist2d(Xa, Xp,bins=50, range=[[Fmn/sz, Fmx/sz], [Fmn/sz, Fmx/sz]], norm=LogNorm(), cmap=cmap)
+        axins.plot([Xa.min(), Xa.max()], [Xa.min(), Xa.max()], '--', c='r', linewidth=3)
+
+        # sub region of the original image
+        x1, x2, y1, y2 = Fmn/sz, Fmx/sz, Fmn/sz, Fmx/sz
+        axins.set_xlim(x1, x2)
+        axins.set_ylim(y1, y2)
+        axins.yaxis.tick_right()
+
+        plt.xticks(visible=True)
+        plt.yticks(visible=True)
+
+        mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.5")
+
+        Ferr = Xa - Xp
+        std = np.std(Ferr)
+        men = np.mean(Ferr)
+        axh = plt.axes([.49, .14, .235, .235])
+        axh.hist(Ferr, bins=75, range=[men-4*std, men+4*std], normed=True)
+        axh.set_title('Difference distribution')
+
+    #plt.draw()
+    plt.show()
+
+Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cdat['Sigm'], 300.0)
+plot_corr_dist(Fdft, np.mean(Fani, axis=0), True)
+
+exit(0)
+# ----------------------------------
 
 dfc = pd.DataFrame()
 for c in clist:

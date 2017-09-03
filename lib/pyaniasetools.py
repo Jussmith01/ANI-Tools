@@ -132,8 +132,8 @@ class anicrossvalidationconformer(object):
         for i,nc in enumerate(self.ncl):
             nc.setConformers(confs=X,types=list(S))
             energies[i] = nc.energy().copy()
-            forces[i] = -nc.force().copy()
-        return energies, forces
+            forces[i] = nc.force().copy()
+        return hdt.hatokcal*energies, hdt.hatokcal*forces
 
     ''' Compute the std. dev. of rdkit conformers '''
     def compute_stddev_rdkitconfs(self,mrdk):
@@ -162,7 +162,7 @@ class anicrossvalidationmolecule(object):
             nc.setCoordinates(coords=X)
             energies[i] = nc.energy()[0]
         sigma = hdt.hatokcal * np.std(energies, axis=0) / float(X.shape[0])
-        return sigma
+        return sigma, hdt.hatokcal *energies
 
 ##--------------------------------
 ## Class for ANI compute tools

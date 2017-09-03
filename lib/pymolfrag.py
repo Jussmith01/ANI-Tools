@@ -1,4 +1,7 @@
 from ase_interface import ANI
+from ase_interface import ANIENS
+from ase_interface import ensemblemolecule
+
 import pyNeuroChem as pync
 
 import numpy as np
@@ -119,8 +122,11 @@ class dimergenerator():
         # Number of networks
         self.Nn = Nnet
 
+        # Build ANI ensemble
+        self.aens = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)
+
         # Construct pyNeuroChem class
-        self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
+        #self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
 
     def __generategarbagebox__(self,Nm, L):
         self.X = np.empty((0, 3), dtype=np.float32)
@@ -146,9 +152,17 @@ class dimergenerator():
             while fail:
                 ctr = np.random.uniform(2.0*maxd + 1.0, L - 2.0*maxd - 1.0, (3))
                 fail = False
-                for c in self.ctd:
-                    if np.linalg.norm(c[0] - ctr) < maxd + c[1] + 3.0:
-                        fail = True
+                for cid,c in enumerate(self.ctd):
+                    if np.linalg.norm(c[0] - ctr) < maxd + c[1] + 4.0:
+                        # search for atoms within r angstroms
+                        minv = 10.0
+                        for xi in self.X[c[2]:c[2]+self.Na[cid],:]:
+                            for xj in x + ctr:
+                                dij = np.linalg.norm(xi-xj)
+                                if dij < minv:
+                                    minv = dij
+                        if minv < 1.75:
+                            fail = True
 
                 if not fail:
                     self.ctd.append((ctr, maxd, pos))
@@ -174,8 +188,10 @@ class dimergenerator():
         self.mol.set_pbc((True, True, True))
 
         # Set ANI calculator
-        self.mol.set_calculator(ANI(False))
-        self.mol.calc.setnc(self.ncl[0])
+        # Set ANI calculator
+        self.mol.set_calculator(ANIENS(self.aens))
+        #self.mol.set_calculator(ANI(False))
+        #self.mol.calc.setnc(self.ncl[0])
 
 
         # Give molecules random velocity
@@ -213,19 +229,20 @@ class dimergenerator():
             for j, i in zip(a, c):
                 b.write(str(j.symbol) + ' ' + str(i[0]) + ' ' + str(i[1]) + ' ' + str(i[2]) + '\n')
 
-            print('Step: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
-                  'Etot = %.3feV' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin))
+            print('Step: %d Size: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
+                  'Etot = %.3feV' % (d.get_number_of_steps(), len(a), epot, ekin, ekin / (1.5 * units.kB), epot + ekin))
 
         # Attach the printer
-        #self.dyn.attach(printenergy, interval=1)
+        self.dyn.attach(printenergy, interval=4)
 
         self.dyn.run(Ni) # Do Ni steps
 
         # Open MD output
-        mdcrd = open(xyzfile, 'w')
+        mdcrd.close()
 
         # Open MD output
-        traj = open(trajfile, 'w')
+        traj.close()
+
     def __fragmentbox__(self, file):
         self.X = self.mol.get_positions()
 
@@ -262,7 +279,7 @@ class dimergenerator():
                                     if v < min:
                                         min = v
 
-                            if min < 4.0 and min > 0.8:
+                            if min < 3.0 and min > 1.1:
                                 Xf = np.vstack([Xi, Xj])
                                 Sf = self.S[si:si+Nai]
                                 Sf.extend(self.S[sj:sj+Naj])
@@ -271,15 +288,15 @@ class dimergenerator():
                                 Xf = Xf - Xcf
 
                                 E = np.empty(5, dtype=np.float64)
-                                for id,nc in enumerate(self.ncl):
+                                for id,nc in enumerate(self.aens.ncl):
                                     nc.setMolecule(coords=np.array(Xf,dtype=np.float32), types=Sf)
                                     E[id] = nc.energy()[0]
 
-                                sig = np.std(hdn.hatokcal*E)/(Nai+Naj)
+                                sig = np.std(hdn.hatokcal*E)/np.sqrt(Nai+Naj)
 
                                 self.Nt += 1
                                 if sig > 0.1:
                                     self.Nd += 1
-                                    hdn.writexyzfile(file+str(i)+'-'+str(j)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
+                                    hdn.writexyzfile(file+str(i).zfill(4)+'-'+str(j).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
                                     self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
                                     #print(dc, Sf, sig)

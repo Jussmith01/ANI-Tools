@@ -7,18 +7,27 @@ import numpy as np
 
 os.environ["PYTHONPATH"] = "../../lib"
 
-d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/IRC/'
-c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/XYZ/'
-r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/DataGen/'
-fp = 'DA_IRC'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/testset/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/testset/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/testset/DataGen/'
+#r = '/home/jujuman/Dropbox/IRC_DBondMig/RxNGeneration/'
+fp = 'DA_t5_test_IRC'
 
-d = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/IRC/'
-c = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/XYZ/'
-r = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try1/DataGen/'
-fp = 'CL_IRC'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try3/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try3/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try3/DataGen/'
+#r = '/home/jujuman/Dropbox/IRC_DBondMig/RxNGeneration/'
+fp = 'CP_t1_IRC'
 
+os.mkdir(c)
+os.mkdir(r)
+os.mkdir(r+'inputs')
 
 wkdir1 = '/home/jujuman/Research/ReactionGeneration/cv1/'
+cnstfile = 'rHCNO-4.6A_16-3.1A_a4-8.params'
+saefile = 'sae_6-31gd.dat'
+
+wkdir1 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv2/'
 cnstfile = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile = 'sae_6-31gd.dat'
 

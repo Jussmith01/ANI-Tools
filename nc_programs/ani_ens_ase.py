@@ -1,4 +1,6 @@
-from ase_interface import ANI
+from ase_interface import ANIENS
+from ase_interface import ensemblemolecule
+
 import pyNeuroChem as pync
 
 import pyaniasetools as pya
@@ -35,34 +37,44 @@ import seaborn as sns
 #----------------Parameters--------------------
 
 # Molecule file
-molfile = '/home/jujuman/Research/MD_TEST/Chignolin/1uao_H.pdb'
+#molfile = '/home/jujuman/Research/MD_TEST/Chignolin/1uao_H.pdb'
 #molfile = '/home/jujuman/Research/IR_MD/M3/m3.xyz'
-#molfile = '/home/jujuman/Scratch/Research/MD_TEST/methanol_box/MethanolBoxCenter.xyz'
+#molfile = '/home/jujuman/Research/Opt_test/1d.pdb'
+molfile = '/home/jujuman/Research/MD_TEST/C_2500/C_2500.xyz'
+#molfile = '/home/jujuman/Research/MD_TEST/methanol_box/MethanolBoxCenter.xyz'
+#molfile = '/home/jujuman/Research/MD_TEST/taxol/taxol.xyz'
 
 # Dynamics file
-xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
+#xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
-#xyzfile = '/home/jujuman/Scratch/Research/MD_TEST/methanol_box/mdcrd.xyz'
+#xyzfile = '/home/jujuman/Research/Opt_test/mdcrd_1d.xyz'
+#xyzfile = '/home/jujuman/Research/MD_TEST/C_2500/mdcrd.xyz'
+xyzfile = '/home/jujuman/Research/MD_TEST/taxol/mdcrd.xyz'
 
 # Trajectory file
-trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
+#trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
 #trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
-#trajfile = '/home/jujuman/Scratch/Research/MD_TEST/methanol_box/traj.dat'
+#trajfile = '/home/jujuman/Research/Opt_test/traj_1d.dat'
+trajfile = '/home/jujuman/Research/MD_TEST/C_2500/traj.dat'
+#trajfile = '/home/jujuman/Research/MD_TEST/taxol/traj.dat'
 
 # Optimized structure out
-optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
+#optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
 #optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
-#optfile = '/home/jujuman/Scratch/Research/MD_TEST/methanol_box/optmol.xyz'
+#optfile = '/home/jujuman/Research/Opt_test/optmol_1d.xyz'
+optfile = '/home/jujuman/Research/MD_TEST/C_2500/optmol.xyz'
+#optfile = '/home/jujuman/Research/MD_TEST/taxol/optmol.xyz'
 
-T = 10.0 # Temperature
-C = 0.01 # Optimization convergence
+T = 2200.0 # Temperature
+C = 8.0 # Optimization convergence
 
 #wkdir    = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk/'
 wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
 #wkdir = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
-nnfdir   = wkdir + '/train0/networks/'
+nnfdir   = wkdir + '/train'
+Nn = 5
 #nnfdir   = wkdir + 'networks/'
 
 #----------------------------------------------
@@ -71,18 +83,17 @@ nnfdir   = wkdir + '/train0/networks/'
 mol = read(molfile)
 
 #L = 20.0
-#mol.set_cell(([[L, 0, 0],
-#               [0, L, 0],
-#               [0, 0, L]]))
+#mol.set_cell(([[16.291, 0, 0],
+#               [0, 18.744, 0],
+#               [0, 0, 30.715]]))
 
 #mol.set_pbc((True, True, True))
 
 # Set NC
-nc = pync.molecule(cnstfile, saefile, nnfdir, 0, False)
+aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 1)
 
 # Set ANI calculator
-mol.set_calculator(ANI(False))
-mol.calc.setnc(nc)
+mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
 
 # Optimize molecule
 start_time = time.time()
@@ -100,7 +111,7 @@ pos = mol.get_positions(wrap=True).reshape(1,len(spc),3)
 hdt.writexyzfile(optfile, pos, spc)
 
 
-exit(0)
+#exit(0)
 
 # Open MD output
 mdcrd = open(xyzfile,'w')
@@ -111,7 +122,7 @@ traj = open(trajfile,'w')
 # We want to run MD with constant energy using the Langevin algorithm
 # with a time step of 0.5 fs, the temperature T and the friction
 # coefficient to 0.02 atomic units.
-dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.005)
+dyn = Langevin(mol, 0.2 * units.fs, T * units.kB, 0.05)
 
 # Run equilibration
 #print('Running equilibration...')
@@ -131,6 +142,9 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
     epot = a.get_potential_energy() / len(a)
     ekin = a.get_kinetic_energy() / len(a)
 
+    #print()
+    stddev =  hdt.evtokcal*a.calc.stddev
+
     t.write(str(d.get_number_of_steps()) + ' ' + str(ekin / (1.5 * units.kB)) + ' ' + str(epot) + ' ' + str(ekin) + ' ' + str(epot+ekin) + '\n')
     b.write(str(len(a)) + '\n' + str(ekin / (1.5 * units.kB)) + ' Step: ' + str(d.get_number_of_steps()) + '\n')
     c = a.get_positions(wrap=True)
@@ -138,7 +152,7 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
         b.write(str(j.symbol) + ' ' + str(i[0]) + ' ' + str(i[1]) + ' ' + str(i[2]) + '\n')
 
     print('Step: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
-          'Etot = %.3feV' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin))
+          'Etot = %.3feV' ' StdDev = %.3fKcal/mol/atom' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin, stddev))
 
 # Attach the printer
 dyn.attach(printenergy, interval=10)
@@ -146,7 +160,16 @@ dyn.attach(printenergy, interval=10)
 # Run production
 print('Running production...')
 start_time = time.time()
-dyn.run(1000000) # Do 0.5ns of MD
+dyn.run(15000) # Do 0.5ns of MD
+
+for i in range(100):
+    dyn.set_temperature(300.0 * units.kB)
+    dyn.run(15000)  # Do 0.5ns of MD
+    dyn.set_temperature(T * units.kB)
+    dyn.run(15000)  # Do 0.5ns of MD
+
+dyn.set_temperature(300.0 * units.kB)
+dyn.run(50000) # Do 0.5ns of MD
 print('[ANI Total time:', time.time() - start_time, 'seconds]')
 mdcrd.close()
 traj.close()

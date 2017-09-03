@@ -10,7 +10,7 @@ import linecache
 import pandas as pd
 
 hatokcal = 627.509469
-evtokcal = 27.2107
+evtokcal = 27.21138505
 AtoBohr = 1.88973
 
 convert = hatokcal  # Ha to Kcal/mol
@@ -196,7 +196,7 @@ def readxyz2 (file):
     s = rb.findall(fd)
     Nc = len(s)
     if Nc == 0:
-        raise ValueError('No coordinates found in file. Check formatting.')
+        raise ValueError('No coordinates found in file. Check formatting of '+file+'.')
 
     for i in s:
         ct.append(i[1])
