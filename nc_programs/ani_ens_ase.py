@@ -40,25 +40,26 @@ import seaborn as sns
 #molfile = '/home/jujuman/Research/MD_TEST/Chignolin/1uao_H.pdb'
 #molfile = '/home/jujuman/Research/IR_MD/M3/m3.xyz'
 #molfile = '/home/jujuman/Research/Opt_test/1d.pdb'
-molfile = '/home/jujuman/Research/MD_TEST/methanol_box/MethanolBoxCenter.xyz'
+#molfile = '/home/jujuman/Research/MD_TEST/methanol_box/MethanolBoxCenter.xyz'
+molfile = '/home/jujuman/Research/MD_TEST/taxol/taxol.xyz'
 
 # Dynamics file
 #xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/Opt_test/mdcrd_1d.xyz'
-xyzfile = '/home/jujuman/Research/MD_TEST/methanol_box/mdcrd.xyz'
+xyzfile = '/home/jujuman/Research/MD_TEST/taxol/mdcrd.xyz'
 
 # Trajectory file
 #trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
 #trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
 #trajfile = '/home/jujuman/Research/Opt_test/traj_1d.dat'
-trajfile = '/home/jujuman/Research/MD_TEST/methanol_box/traj.dat'
+trajfile = '/home/jujuman/Research/MD_TEST/taxol/traj.dat'
 
 # Optimized structure out
 #optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
 #optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
 #optfile = '/home/jujuman/Research/Opt_test/optmol_1d.xyz'
-optfile = '/home/jujuman/Research/MD_TEST/methanol_box/optmol.xyz'
+optfile = '/home/jujuman/Research/MD_TEST/taxol/optmol.xyz'
 
 T = 300.0 # Temperature
 C = 0.0001 # Optimization convergence
@@ -77,23 +78,23 @@ Nn = 5
 # Load molecule
 mol = read(molfile)
 
-L = 20.0
-mol.set_cell(([[L, 0, 0],
-               [0, L, 0],
-               [0, 0, L]]))
+#L = 20.0
+#mol.set_cell(([[16.291, 0, 0],
+#               [0, 18.744, 0],
+#               [0, 0, 30.715]]))
 
-mol.set_pbc((True, True, True))
+#mol.set_pbc((True, True, True))
 
 # Set NC
-aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 0)
+aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 1)
 
 # Set ANI calculator
 mol.set_calculator(ANIENS(aens))
 
 # Optimize molecule
 start_time = time.time()
-#dyn = LBFGS(mol)
-#dyn.run(fmax=C)
+dyn = LBFGS(mol)
+dyn.run(fmax=C)
 print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
 print(hdt.evtokcal*mol.get_potential_energy())

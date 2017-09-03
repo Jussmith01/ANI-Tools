@@ -292,10 +292,10 @@ class dimergenerator():
                                     nc.setMolecule(coords=np.array(Xf,dtype=np.float32), types=Sf)
                                     E[id] = nc.energy()[0]
 
-                                sig = np.std(hdn.hatokcal*E)/(Nai+Naj)
+                                sig = np.std(hdn.hatokcal*E)/np.sqrt(Nai+Naj)
 
                                 self.Nt += 1
-                                if sig > 0.08:
+                                if sig > 0.1:
                                     self.Nd += 1
                                     hdn.writexyzfile(file+str(i).zfill(4)+'-'+str(j).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
                                     self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
