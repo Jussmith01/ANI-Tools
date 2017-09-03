@@ -10,10 +10,14 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib.colors import LogNorm
+
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 # Define test file
-h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+#h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
+h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
@@ -77,14 +81,15 @@ Fmax = [0.0,0.0,0.0]
 Ferr = []
 # Iterate data set
 for i,data in enumerate(adl):
-    #if (i==10):
+    #if (i==50):
     #    break
+
     # Extract the data
     print(data['path'])
     X  = np.ndarray.astype(data['coordinates'], dtype=np.float32)
     S  = data['species']
     Edft = data['energies']
-    Fdft =  data['forces']#/(0.52917724900001*0.52917724900001)
+    Fdft =  -data['forces']#/(0.52917724900001*0.52917724900001)
     path = data['path']
 
     # Calculate std. dev. per atom for all conformers
@@ -180,8 +185,8 @@ for i,data in enumerate(adl):
 #"  MAX FORCE DELTA:",Fmax)
 
 Ferr = np.concatenate(Ferr)
-plt.hist(Ferr, bins=250)
-plt.show()
+#plt.hist(Ferr, bins=250)
+#plt.show()
 
 dfe = pd.DataFrame()
 print('\nPrinting stats...')
@@ -213,6 +218,54 @@ for id, e in enumerate(elist):
 
 print('Energy level performance: ')
 print(dfe)
+
+# ----------------------------------
+# Plot force histogram
+# ----------------------------------
+def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
+    Fmx = Xa.max()
+    Fmn = Xa.min()
+
+    label_size = 14
+    mpl.rcParams['xtick.labelsize'] = label_size
+    mpl.rcParams['ytick.labelsize'] = label_size
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='r', linewidth=3)
+
+    ax.set_xlabel('$F_{dft}$ (kcal/mol/A)', fontsize=20)
+    ax.set_ylabel('$F_{ani}$ (kcal/mol/A)', fontsize=20)
+
+    bins = ax.hist2d(Xa, Xp,bins=200, norm=LogNorm(), range= [[Fmn, Fmx], [Fmn, Fmx]])
+
+    fig.colorbar(bins[-1])
+
+    if inset:
+        axins = zoomed_inset_axes(ax, 3.0, bbox_to_anchor=(530.0,840.0), loc=1) # zoom = 6
+
+        sz = 8
+        axins.hist2d(Fdft, np.mean(Fani, axis=0),bins=50, range=[[Fmn/sz, Fmx/sz], [Fmn/sz, Fmx/sz]], norm=LogNorm())
+        axins.plot([Fdft.min(), Fdft.max()], [Fdft.min(), Fdft.max()], '--', c='r', linewidth=3)
+
+        # sub region of the original image
+        x1, x2, y1, y2 = Fmn/sz, Fmx/sz, Fmn/sz, Fmx/sz
+        axins.set_xlim(x1, x2)
+        axins.set_ylim(y1, y2)
+
+        plt.xticks(visible=True)
+        plt.yticks(visible=True)
+
+        mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.5")
+
+    #plt.draw()
+    plt.show()
+
+Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cdat['Sigm'], 300.0)
+plot_corr_dist(Fdft, np.mean(Fani, axis=0), True)
+
+exit(0)
+# ----------------------------------
 
 dfc = pd.DataFrame()
 for c in clist:

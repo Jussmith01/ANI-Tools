@@ -40,28 +40,28 @@ import seaborn as sns
 #molfile = '/home/jujuman/Research/MD_TEST/Chignolin/1uao_H.pdb'
 #molfile = '/home/jujuman/Research/IR_MD/M3/m3.xyz'
 #molfile = '/home/jujuman/Research/Opt_test/1d.pdb'
-molfile = '/home/jujuman/Research/MD_TEST/methanol_box/MethanolBoxCenter.xyz'
+molfile = '/home/jujuman/Research/MD_TEST/C_2500/C_2500.xyz'
 
 # Dynamics file
 #xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/Opt_test/mdcrd_1d.xyz'
-xyzfile = '/home/jujuman/Research/MD_TEST/methanol_box/mdcrd.xyz'
+xyzfile = '/home/jujuman/Research/MD_TEST/C_2500/mdcrd.xyz'
 
 # Trajectory file
 #trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
 #trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
 #trajfile = '/home/jujuman/Research/Opt_test/traj_1d.dat'
-trajfile = '/home/jujuman/Research/MD_TEST/methanol_box/traj.dat'
+trajfile = '/home/jujuman/Research/MD_TEST/C_2500/traj.dat'
 
 # Optimized structure out
 #optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
 #optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
 #optfile = '/home/jujuman/Research/Opt_test/optmol_1d.xyz'
-optfile = '/home/jujuman/Research/MD_TEST/methanol_box/optmol.xyz'
+optfile = '/home/jujuman/Research/MD_TEST/C_2500/optmol.xyz'
 
-T = 300.0 # Temperature
-C = 0.0001 # Optimization convergence
+T = 2200.0 # Temperature
+C = 8.0 # Optimization convergence
 
 #wkdir    = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk/'
 wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
@@ -77,7 +77,7 @@ Nn = 5
 # Load molecule
 mol = read(molfile)
 
-L = 20.0
+L = 70.0
 mol.set_cell(([[L, 0, 0],
                [0, L, 0],
                [0, 0, L]]))
@@ -88,12 +88,12 @@ mol.set_pbc((True, True, True))
 aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 0)
 
 # Set ANI calculator
-mol.set_calculator(ANIENS(aens))
+mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
 
 # Optimize molecule
 start_time = time.time()
-#dyn = LBFGS(mol)
-#dyn.run(fmax=C)
+dyn = LBFGS(mol)
+dyn.run(fmax=C)
 print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
 print(hdt.evtokcal*mol.get_potential_energy())
@@ -117,7 +117,7 @@ traj = open(trajfile,'w')
 # We want to run MD with constant energy using the Langevin algorithm
 # with a time step of 0.5 fs, the temperature T and the friction
 # coefficient to 0.02 atomic units.
-dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.05)
+dyn = Langevin(mol, 0.2 * units.fs, T * units.kB, 0.05)
 
 # Run equilibration
 #print('Running equilibration...')
@@ -155,7 +155,16 @@ dyn.attach(printenergy, interval=10)
 # Run production
 print('Running production...')
 start_time = time.time()
-dyn.run(10000000) # Do 0.5ns of MD
+dyn.run(15000) # Do 0.5ns of MD
+
+for i in range(100):
+    dyn.set_temperature(300.0 * units.kB)
+    dyn.run(15000)  # Do 0.5ns of MD
+    dyn.set_temperature(T * units.kB)
+    dyn.run(15000)  # Do 0.5ns of MD
+
+dyn.set_temperature(300.0 * units.kB)
+dyn.run(50000) # Do 0.5ns of MD
 print('[ANI Total time:', time.time() - start_time, 'seconds]')
 mdcrd.close()
 traj.close()
