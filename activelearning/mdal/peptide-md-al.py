@@ -22,18 +22,18 @@ def gendipeptidelist(AAlist):
     return fasta,nlist
 
 #--------------Parameters------------------
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv1/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv3/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile = wkdir + 'sae_6-31gd.dat'
 
 # Store dir
-sdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/confs_2/'
+sdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/confs_4/'
 
 At = ['C', 'O', 'N'] # Hydrogens added after check
 
 T = 800.0
 dt = 0.5
-N = 50
+N = 120
 
 #-------------------------------------------
 
@@ -63,7 +63,7 @@ for n,(a,l) in enumerate(zip(fasta, namelist)):
         activ.setrdkitmol(m,cids)
 
         # Generate conformations
-        X = activ.generate_conformations(N, T, dt, 250, 10, dS = 0.1)
+        X = activ.generate_conformations(N, T, dt, 2000, 10, dS = 0.1)
 
         nfo = activ._infostr_
         difo.write('  -'+l+': '+nfo+'\n')
