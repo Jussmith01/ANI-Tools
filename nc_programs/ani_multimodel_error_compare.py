@@ -236,8 +236,8 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
     ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='r', linewidth=3)
 
     # Set labels
-    ax.set_xlabel('$F_{dft}$ (kcal/mol/A)', fontsize=20)
-    ax.set_ylabel('$F_{ani}$ (kcal/mol/A)', fontsize=20)
+    ax.set_xlabel('$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
+    ax.set_ylabel('$F_{ani}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
 
     cmap = mpl.cm.viridis
 
@@ -252,20 +252,21 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
     # Annotate with errors
     PMAE = hdn.calculatemeanabserror(Xa, Xp)
     PRMS = hdn.calculaterootmeansqrerror(Xa, Xp)
-    ax.text(0.05*((Fmx-Fmn)/2.0), 0.92*((Fmx-Fmn)/2.0), 'MAE='+"{:.1f}".format(PMAE)+r'$kcal \times mol^{-1}$'+'\nRMSE='+"{:.1f}".format(PRMS)+r'$kcal \times mol^{-1} \times \AA^{-1}$', fontsize=16,
+    ax.text(0.75*((Fmx-Fmn))+Fmn, 0.43*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=20,
             bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
 
     if inset:
-        axins = zoomed_inset_axes(ax, 2.2, bbox_to_anchor=(420.0,710.0), loc=1) # zoom = 6
+        axins = zoomed_inset_axes(ax, 2.2, loc=2) # zoom = 6
 
         sz = 6
-        axins.hist2d(Fdft, np.mean(Fani, axis=0),bins=50, range=[[Fmn/sz, Fmx/sz], [Fmn/sz, Fmx/sz]], norm=LogNorm(), cmap=cmap)
-        axins.plot([Fdft.min(), Fdft.max()], [Fdft.min(), Fdft.max()], '--', c='r', linewidth=3)
+        axins.hist2d(Xa, Xp,bins=50, range=[[Fmn/sz, Fmx/sz], [Fmn/sz, Fmx/sz]], norm=LogNorm(), cmap=cmap)
+        axins.plot([Xa.min(), Xa.max()], [Xa.min(), Xa.max()], '--', c='r', linewidth=3)
 
         # sub region of the original image
         x1, x2, y1, y2 = Fmn/sz, Fmx/sz, Fmn/sz, Fmx/sz
         axins.set_xlim(x1, x2)
         axins.set_ylim(y1, y2)
+        axins.yaxis.tick_right()
 
         plt.xticks(visible=True)
         plt.yticks(visible=True)
