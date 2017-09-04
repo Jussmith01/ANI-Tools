@@ -18,41 +18,41 @@ nnfdir   = wkdir + 'networks/'
 fpatoms = ['C', 'N', 'O']
 aevsize = 384
 T = 800
-Ngen = 25
+Ngen = 4
 #Nkep = 200
 atmlist = []
 
 idir = ['/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_2/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_1/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_1/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_3/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_1/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_2/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_3/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_1/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_2/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_3/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_4/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_1/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_2/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_3/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_1/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_2/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_3/inputs/',
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_4/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s02/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_03_red/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_04_red/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_05_red/inputs/',
-        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s02/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_03_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_04_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_05_red/inputs/',
+        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/',
         ]
 
-cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_2/'
+cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_3/'
 
 dc = aat.diverseconformers(cnstfile, saefile, nnfdir, aevsize, 0, False)
 
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model3-5/cv1/cv32/'
 #cnstfilecv = wkdircv + '../rHCNO-4.6A_16-3.1A_a4-8.params'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv1/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv2/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix   = wkdircv + 'train'

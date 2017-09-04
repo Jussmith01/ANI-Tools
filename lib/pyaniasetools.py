@@ -110,7 +110,7 @@ class anicrossvalidationconformer(object):
         for i,nc in enumerate(self.ncl):
             nc.setConformers(confs=X,types=list(S))
             energies[i] = nc.energy().copy()
-        sigma = hdt.hatokcal*np.std(energies,axis=0) / float(len(S))
+        sigma = hdt.hatokcal*np.std(energies,axis=0) / np.sqrt(float(len(S)))
         return sigma
 
     ''' Compute the dE from cross validation networks on a set of comformers '''
