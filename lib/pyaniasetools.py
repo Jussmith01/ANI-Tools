@@ -303,7 +303,7 @@ class moldynactivelearning(object):
                 N = N + 1
 
             energies = hdt.hatokcal * energies
-            sigma = np.std(energies) / float(len(spc))
+            sigma = np.std(energies) / np.sqrt(float(len(spc)))
             #print('s:', sigma)
             if sigma > dS:
                 self.Nbad += 1
