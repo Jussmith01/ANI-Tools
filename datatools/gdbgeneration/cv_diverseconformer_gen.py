@@ -46,13 +46,13 @@ idir = ['/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_2/inputs/'
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/',
         ]
 
-cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_3/'
+cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_4/'
 
 dc = aat.diverseconformers(cnstfile, saefile, nnfdir, aevsize, 0, False)
 
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model3-5/cv1/cv32/'
 #cnstfilecv = wkdircv + '../rHCNO-4.6A_16-3.1A_a4-8.params'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv2/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv3/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix   = wkdircv + 'train'
@@ -93,7 +93,7 @@ for di,id in enumerate(idir):
         #print('    -',f,len(ids),conformers.shape)
 
         sigma = anicv.compute_stddev_conformations(conformers,spc)
-        sid = np.where( sigma >  0.125 )[0]
+        sid = np.where( sigma >  0.2 )[0]
         print('  -', fi, 'of', len(files), ') File:', f, 'keep:', sid.size,'percent:',"{:.2f}".format(100.0*sid.size/Ngen))
 
         Nt += Ngen
