@@ -129,14 +129,16 @@ term = False
 i=0
 while not term:
     ds = ddict['sn1'].max() - i*dx
+
+    Nds1 = np.where(ddict['sn1'] > ds)[0].size
+
     idx = np.where(ddict['sn1'] < ds)
     i += 1
-    print(ds, ddict['de1'][idx].max())
+    print(ds, ddict['de1'][idx].max(),Nds1, 'of', ddict['de1'].size)
     if ddict['de1'][idx].max() < demax:
         term = True
 
-Nds1 = np.where(ddict['de1'] > ds)[0].size
-
+Nds1 = np.where(ddict['sn1'] > ds)[0].size
 print(Nds1,'of',ddict['de1'].size)
 
 plot_corr_dist(ddict['sn1'], ddict['de1'], False)
