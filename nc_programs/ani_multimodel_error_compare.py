@@ -17,12 +17,12 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 # Define test file
 #h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
-#h5file = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
-h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_test/dimers_test.h5'
+h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
+#h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_test/dimers_test.h5'
 #h5file = '/home/jujuman/Research/ForceTrainTesting/train3/cache-data-0/testset/testset.h5'
 #h5file = '/home/jujuman/Research/IR_MD/methanol/methanol_traj_rsub.h5'
 
@@ -81,7 +81,7 @@ Fmax = [0.0,0.0,0.0]
 Ferr = []
 # Iterate data set
 for i,data in enumerate(adl):
-    #if (i==50):
+    #if (i==10):
     #    break
 
     # Extract the data
@@ -232,31 +232,53 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
 
     fig, ax = plt.subplots(figsize=figsize)
 
+    # Plot ground truth line
     ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='r', linewidth=3)
 
-    ax.set_xlabel('$F_{dft}$ (kcal/mol/A)', fontsize=20)
-    ax.set_ylabel('$F_{ani}$ (kcal/mol/A)', fontsize=20)
+    # Set labels
+    ax.set_xlabel('$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
+    ax.set_ylabel('$F_{ani}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
 
-    bins = ax.hist2d(Xa, Xp,bins=200, norm=LogNorm(), range= [[Fmn, Fmx], [Fmn, Fmx]])
+    cmap = mpl.cm.viridis
 
-    fig.colorbar(bins[-1])
+    # Plot 2d Histogram
+    bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), range= [[Fmn, Fmx], [Fmn, Fmx]], cmap=cmap)
+
+    # Build color bar
+    #cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
+    cb1 = fig.colorbar(bins[-1], cmap=cmap)
+    cb1.set_label('Log(count)', fontsize=16)
+
+    # Annotate with errors
+    PMAE = hdn.calculatemeanabserror(Xa, Xp)
+    PRMS = hdn.calculaterootmeansqrerror(Xa, Xp)
+    ax.text(0.75*((Fmx-Fmn))+Fmn, 0.43*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=20,
+            bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
 
     if inset:
-        axins = zoomed_inset_axes(ax, 3.0, bbox_to_anchor=(530.0,840.0), loc=1) # zoom = 6
+        axins = zoomed_inset_axes(ax, 2.2, loc=2) # zoom = 6
 
-        sz = 8
-        axins.hist2d(Fdft, np.mean(Fani, axis=0),bins=50, range=[[Fmn/sz, Fmx/sz], [Fmn/sz, Fmx/sz]], norm=LogNorm())
-        axins.plot([Fdft.min(), Fdft.max()], [Fdft.min(), Fdft.max()], '--', c='r', linewidth=3)
+        sz = 6
+        axins.hist2d(Xa, Xp,bins=50, range=[[Fmn/sz, Fmx/sz], [Fmn/sz, Fmx/sz]], norm=LogNorm(), cmap=cmap)
+        axins.plot([Xa.min(), Xa.max()], [Xa.min(), Xa.max()], '--', c='r', linewidth=3)
 
         # sub region of the original image
         x1, x2, y1, y2 = Fmn/sz, Fmx/sz, Fmn/sz, Fmx/sz
         axins.set_xlim(x1, x2)
         axins.set_ylim(y1, y2)
+        axins.yaxis.tick_right()
 
         plt.xticks(visible=True)
         plt.yticks(visible=True)
 
         mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.5")
+
+        Ferr = Xa - Xp
+        std = np.std(Ferr)
+        men = np.mean(Ferr)
+        axh = plt.axes([.49, .14, .235, .235])
+        axh.hist(Ferr, bins=75, range=[men-4*std, men+4*std], normed=True)
+        axh.set_title('Difference distribution')
 
     #plt.draw()
     plt.show()

@@ -12,10 +12,10 @@ def convert_eformula(sstr):
         rtn += z+str(N)
     return rtn
 
-sdir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_2/confs/"
-ndir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_2/confs_iso/"
-#sdir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_3/confs/"
-#ndir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_3/confs_iso/"
+sdir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_3/confs/"
+ndir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_3/confs_iso/"
+#sdir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_4/confs/"
+#ndir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_4/confs_iso/"
 
 files = os.listdir(sdir)
 files = [f for f in files if f.rsplit('.',maxsplit=1)[-1] == 'xyz']
