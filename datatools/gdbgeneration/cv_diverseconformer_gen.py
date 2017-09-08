@@ -93,7 +93,7 @@ for di,id in enumerate(idir):
         #print('    -',f,len(ids),conformers.shape)
 
         sigma = anicv.compute_stddev_conformations(conformers,spc)
-        sid = np.where( sigma >  0.2 )[0]
+        sid = np.where( sigma >  0.3 )[0]
         print('  -', fi, 'of', len(files), ') File:', f, 'keep:', sid.size,'percent:',"{:.2f}".format(100.0*sid.size/Ngen))
 
         Nt += Ngen

@@ -64,7 +64,7 @@ for n,(a,l) in enumerate(zip(fasta, namelist)):
         activ.setrdkitmol(m,cids)
 
         # Generate conformations
-        X = activ.generate_conformations(N, T, dt, 2000, 10, dS = 0.2)
+        X = activ.generate_conformations(N, T, dt, 2000, 10, dS = 0.3)
 
         nfo = activ._infostr_
         difo.write('  -'+l+': '+nfo+'\n')
