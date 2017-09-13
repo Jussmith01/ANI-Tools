@@ -59,7 +59,6 @@ h5file = ['/home/jujuman/Research/extensibility_test_sets/gdb-07/gdb11_07_test50
           '/home/jujuman/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5',
           '/home/jujuman/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5',
           '/home/jujuman/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5',
-          '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_testset.h5',
           '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5',
           ]
 
@@ -77,16 +76,19 @@ anicv = aat.anicrossvalidationconformer(cnstfilecv,saefilecv,nnfprefix,Ncv,0,Fal
 # ddict
 ddict = dict({'de1': [],
               'de2': [],
+              'df1': [],
+              'fs1': [],
               'sn1': [],
               'sn2': [],
               'na': []})
+
 for fn,h5 in enumerate(h5file):
     print('working on file',fn,'...')
     # Declare data loader
     adl = pyt.anidataloader(h5)
 
     for i,data in enumerate(adl):
-        #if i == 50:
+        #if i == 10:
         #    break
 
         X  = np.ndarray.astype(data['coordinates'], dtype=np.float32)
@@ -100,18 +102,25 @@ for fn,h5 in enumerate(h5file):
 
         # Calculate energy deltas
         Eani, Fani = anicv.compute_energy_conformations(X,S)
-        Eani = np.mean(Eani,axis=0)
+        #Eani = np.mean(Eani,axis=0)
+        Fstd = np.std(Fani, axis=0)
+        Fani = np.mean(Fani,axis=0)
 
         Edft = hdn.hatokcal * Edft
-        #Fdft = hdn.hatokcal * Fdft
+        Fdft = hdn.hatokcal * Fdft
 
         Na = np.full(Eani.size,len(S),dtype=np.int64)
         ddict['na'].append(Na)
 
+        df = np.mean(np.abs(Fani-Fdft).reshape(Fani.shape[0], -1), axis=1)
+        sf = np.max(Fstd.reshape(Fani.shape[0], -1), axis=1)
+
         ddict['sn1'].append(sigma1)
         ddict['sn2'].append(sigma2)
-        ddict['de1'].append(np.abs(Eani-Edft)/np.sqrt(float(len(S))))
-        ddict['de2'].append(np.abs(Eani-Edft)/float(len(S)))
+        ddict['df1'].append(df)
+        ddict['fs1'].append(sf)
+        ddict['de1'].append(np.max(np.abs(Eani-Edft), axis=0)/np.sqrt(float(len(S))))
+        ddict['de2'].append(np.max(np.abs(Eani-Edft), axis=0)/float(len(S)))
 
     adl.cleanup()
 
@@ -120,8 +129,10 @@ ddict['sn1'] = np.concatenate(ddict['sn1'])
 ddict['sn2'] = np.concatenate(ddict['sn2'])
 ddict['de1'] = np.concatenate(ddict['de1'])
 ddict['de2'] = np.concatenate(ddict['de2'])
+ddict['df1'] = np.concatenate(ddict['df1'])
+ddict['fs1'] = np.concatenate(ddict['fs1'])
 
-demax = 2.0
+demax = 1.0
 dsig = ddict['sn1'].max()
 dx = dsig/1000.0
 
@@ -142,5 +153,5 @@ Nds1 = np.where(ddict['sn1'] > ds)[0].size
 print(Nds1,'of',ddict['de1'].size)
 
 plot_corr_dist(ddict['sn1'], ddict['de1'], False)
-#plot_corr_dist(ddict['sn1'], ddict['de2'], False)
+#plot_corr_dist(ddict['de1'], ddict['fs1'], False)
 #plot_corr_dist(ddict['de'], ddict['sn2'], False)

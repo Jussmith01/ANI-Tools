@@ -17,12 +17,15 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 # Define test file
 #h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
-h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
-#h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_test/dimers_test.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-11/gdb11_11_test500.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-12/gdb11_12_test500.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-13/gdb11_13_test500.h5'
+h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_test/dimers_test.h5'
 #h5file = '/home/jujuman/Research/ForceTrainTesting/train3/cache-data-0/testset/testset.h5'
 #h5file = '/home/jujuman/Research/IR_MD/methanol/methanol_traj_rsub.h5'
 
@@ -30,7 +33,7 @@ h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_tests
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv6/'
 #wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv1/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv4/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 #wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-06/cv4/'
@@ -47,7 +50,7 @@ nnfprefix  = wkdircv + 'train'
 Ncv = 5
 
 # Confidence list
-clist = [0.03,0.05,0.08,0.12,0.2,0.4,0.6]
+clist = [0.2,0.3,0.34,0.45,0.6,0.8,1.0]
 
 # Energy list
 elist = [0.01, 10.0, 25.0, 50.0, 75.0, 100.0, 125.0, 150.0, 200.0]
@@ -286,7 +289,6 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
 Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cdat['Sigm'], 300.0)
 plot_corr_dist(Fdft, np.mean(Fani, axis=0), True)
 
-exit(0)
 # ----------------------------------
 
 dfc = pd.DataFrame()
