@@ -13,12 +13,14 @@ def file_len(fname):
 #path = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-06_rs4.h5'
 #path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs4.h5'
 #path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_3.h5'
-#path = '/home/jujuman/Scratch/Research/ReactionGeneration/reactiondata/comb_rxn_1/comb_rxn_1.h5'
+#path = '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1.h5'
 #path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S06_06r.h5'
-path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_2.h5'
+#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_3.h5'
+path = '/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/gdb_r06_comb09_01_1.h5'
 
-dtdirs = [#'/home/jujuman/Scratch/Research/ReactionGeneration/DA_rxn_1/data/',
-          '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_2/data/',
+dtdirs = ['/home/jujuman/Scratch/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_1/data/',
+          #'/home/jujuman/Scratch/Research/ReactionGeneration/DA_rxn_1/data/',
+          #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_3/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/confs_4/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/confs_3/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_mdal_resample/aminoacids/mdal1/data/',
@@ -64,7 +66,8 @@ for i,d in enumerate(dtdirs):
             #ridx = np.random.rand(data['energies'].size)
             #ridx = np.where(ridx < 0.2)
 
-            data['forces'] = data['forces']# / (0.52917724900001*0.52917724900001)
+            #data['energies'] = data['energies'][ridx]
+            #data['forces'] = data['forces'][ridx]# / (0.52917724900001*0.52917724900001)
             #data['coordinates'] = data['coordinates'][ridx]
 
             Ne = data['energies'].size

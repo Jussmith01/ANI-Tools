@@ -3,8 +3,12 @@ import numpy as np
 import platform
 import os
 
+# Determine python version
 PY_VERSION = int(platform.python_version().split('.')[0]) > 3
 
+'''                ANI data packer class
+    Class for storing data supplied as a dictionary.
+'''
 class datapacker(object):
     def __init__(self, store_file, mode='w-', complib='gzip', complevel=6):
         """Wrapper to store arrays within HFD5 file
@@ -17,12 +21,8 @@ class datapacker(object):
     def store_data(self, store_loc, **kwargs):
         """Put arrays to store
         """
-        #print(store_loc)
         g = self.store.create_group(store_loc)
         for k, v, in kwargs.items():
-            #print(type(v[0]))
-
-            #print(k)
             if type(v) == list:
                 if len(v) != 0:
                     if type(v[0]) is np.str_ or type(v[0]) is str:
@@ -36,12 +36,15 @@ class datapacker(object):
         self.store.close()
 
 
+'''                 ANI data loader class
+    Class for loading data stored with the datapacker class.
+'''
 class anidataloader(object):
 
     ''' Contructor '''
     def __init__(self, store_file):
         if not os.path.exists(store_file):
-            exit('Error: file not found - '+store_file)
+            raise('Error: file not found - '+store_file)
         self.store = h5py.File(store_file)
 
     ''' Group recursive iterator (iterate through all groups in all branches and return datasets in dicts) '''
@@ -52,7 +55,6 @@ class anidataloader(object):
             keys = [i for i in item.keys()]
             if isinstance(item[keys[0]], h5py.Dataset): # test for dataset
                 data = {'path':path}
-                #print(path)
                 for k in keys:
                     if not isinstance(item[k], h5py.Group):
                         dataset = np.array(item[k].value)
@@ -73,11 +75,6 @@ class anidataloader(object):
         for data in self.h5py_dataset_iterator(self.store):
             yield data
 
-    ''' Iterates through a file stored as roman stores it '''
-    def get_roman_data(self):
-        for g in self.store.values():
-            yield dict((d, g[d].value) for d in g)
-
     ''' Returns a list of all groups in the file '''
     def get_group_list(self):
         return [g for g in self.store.values()]
@@ -93,7 +90,6 @@ class anidataloader(object):
         path = '{}/{}'.format(prefix, path)
         keys = [i for i in item.keys()]
         data = {'path': path}
-        # print(path)
         for k in keys:
             if not isinstance(item[k], h5py.Group):
                 dataset = np.array(item[k].value)
@@ -110,6 +106,7 @@ class anidataloader(object):
     def group_size(self):
         return len(self.get_group_list())
 
+    ''' Returns the number of items in the entire file '''
     def size(self):
         count = 0
         for g in self.store.values():

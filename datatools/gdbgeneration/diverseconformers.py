@@ -18,12 +18,12 @@ fpatoms = ['C', 'N', 'O']
 aevsize = 384
 
 T = 800
-K = 10
+K = 24
 P = 0.25
 atmlist = []
 
-idir = '/home/jujuman/Research/ReactionGeneration/DA_rxn_2/inputs/'
-cdir = '/home/jujuman/Research/ReactionGeneration/DA_rxn_2/confs/'
+idir = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-12/inputs/'
+cdir = '/home/jujuman/Scratch/Research/extensibility_test_sets/gdb-12/confs/'
 
 #idir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_h2ocluster/h2o_cluster/inputs/'
 #cdir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_h2ocluster/h2o_cluster/confs/'
@@ -47,10 +47,10 @@ for fi,f in enumerate(files):
 
     if set(['S','P','Cl','F','B','Br']).isdisjoint(set(spc)):
 
-        Ngen = K*frc.size
-        Nkep = int(Ngen*P)
-        #Ngen = 60
-        #Nkep = 16
+        #Ngen = K*frc.size
+        #Nkep = int(Ngen*P)
+        Ngen = 100
+        Nkep = 12
 
         print('    -',Nkep,'of',Ngen)
 

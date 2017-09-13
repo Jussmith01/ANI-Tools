@@ -32,7 +32,7 @@ if not os.path.exists(wdir+'inputs'):
 ani = aat.anicomputetool(cnstfile, saefile, nnfdir)
 
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6/model0.05me/cv/cv1/'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv3/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-6-ext/model-6e1/'
 #cnstfilecv = wkdircv + 'rHCNO-3.9A_16-3.0A_a4-8.params'
@@ -88,7 +88,7 @@ for n,m in enumerate(molecules):
         # Get all conformers
         X = []
         for s,c in zip(sigma,m.GetConformers()):
-            if s > 0.1:
+            if s > 0.34:
                 x =  np.empty((m.GetNumAtoms(),3),dtype=np.float32)
                 for i in range(m.GetNumAtoms()):
                     r = c.GetAtomPosition(i)
@@ -98,6 +98,7 @@ for n,m in enumerate(molecules):
         #Nd += len(X)
         #Nt += Nu
         Nt += 1
+        Ns = len(X)
         if len(X) > 0:
             Nd += 1
             X = np.stack(X)
@@ -108,11 +109,14 @@ for n,m in enumerate(molecules):
         if len(X) > 0:
             S = gdb.get_symbols_rdkitmol(m)
 
-        for i,x in enumerate(X):
-            id = int(str(n)+str(i))
-            hdn.write_rcdb_input(x,S,id,wdir,fpf,100,LOT,'500.0',fill=8,comment='smiles: '+Chem.MolToSmiles(m))
-            hdn.writexyzfile(wdir+fpf+'-'+str(id).zfill(8)+'.xyz',x.reshape(1,x.shape[0],x.shape[1]),S)
-            #print(str(id).zfill(8))
+        P = np.random.binomial(1, 0.25, Ns)
+        for i,(x,p) in enumerate(zip(X,P)):
+            print('       -Keep:', p)
+            if p:
+                id = int(str(n)+str(i))
+                hdn.write_rcdb_input(x,S,id,wdir,fpf,100,LOT,'500.0',fill=8,comment='smiles: '+Chem.MolToSmiles(m))
+                hdn.writexyzfile(wdir+fpf+'-'+str(id).zfill(8)+'.xyz',x.reshape(1,x.shape[0],x.shape[1]),S)
+                #print(str(id).zfill(8))
 
 print('Total mols:',Nd,'of',Nt,'percent:',"{:.2f}".format(100.0*Nd/float(Nt)))
 
