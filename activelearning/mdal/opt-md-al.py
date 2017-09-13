@@ -11,15 +11,15 @@ import random
 import os
 
 #--------------Parameters------------------
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv2/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv3/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile = wkdir + 'sae_6-31gd.dat'
 
 At = ['C', 'O', 'N'] # Hydrogens added after check
 
-dstore = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_3/'
+dstore = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_4/'
 
-N = 6
+N = 4
 T = 800.0
 dt = 0.5
 
@@ -71,7 +71,7 @@ for di,id in enumerate(idir):
         activ.setmol(data["coordinates"], S)
 
         # Generate conformations
-        X = activ.generate_conformations(N, T, dt, 700, 10, dS = 0.125)
+        X = activ.generate_conformations(N, T, dt, 700, 10, dS = 0.3)
 
         nfo = activ._infostr_
         difo.write('  -'+m+': '+nfo+'\n')
