@@ -279,7 +279,7 @@ class dimergenerator():
                                     if v < min:
                                         min = v
 
-                            if min < 3.0 and min > 1.1:
+                            if min < 3.5 and min > 1.1:
                                 Xf = np.vstack([Xi, Xj])
                                 Sf = self.S[si:si+Nai]
                                 Sf.extend(self.S[sj:sj+Naj])
@@ -295,7 +295,7 @@ class dimergenerator():
                                 sig = np.std(hdn.hatokcal*E)/np.sqrt(Nai+Naj)
 
                                 self.Nt += 1
-                                if sig > 0.1:
+                                if sig > 0.25:
                                     self.Nd += 1
                                     hdn.writexyzfile(file+str(i).zfill(4)+'-'+str(j).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
                                     self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
