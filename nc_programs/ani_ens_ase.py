@@ -42,34 +42,34 @@ import seaborn as sns
 #molfile = '/home/jujuman/Research/Opt_test/1d.pdb'
 #molfile = '/home/jujuman/Research/MD_TEST/helix_test/gly-15/gly-15_solv_gv.pdb'
 #molfile = '/home/jujuman/Research/MD_TEST/methanol_box/MethanolBoxCenter.xyz'
-molfile = '/home/jujuman/Research/MD_TEST/DecaAlanine/dala_init.xyz'
+molfile = '/home/jujuman/Research/MD_TEST/Alanine50_vac/ala_50_gv.pdb'
 
 # Dynamics file
 #xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/Opt_test/mdcrd_1d.xyz'
 #xyzfile = '/home/jujuman/Research/MD_TEST/C_2500/mdcrd.xyz'
-xyzfile = '/home/jujuman/Research/MD_TEST/DecaAlanine/mdcrd2.xyz'
+xyzfile = '/home/jujuman/Research/MD_TEST/Alanine50_vac/mdcrd2.xyz'
 
 # Trajectory file
 #trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
 #trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
 #trajfile = '/home/jujuman/Research/Opt_test/traj_1d.dat'
-trajfile = '/home/jujuman/Research/MD_TEST/DecaAlanine/traj2.dat'
+trajfile = '/home/jujuman/Research/MD_TEST/Alanine50_vac/traj2.dat'
 #trajfile = '/home/jujuman/Research/MD_TEST/taxol/traj.dat'
 
 # Optimized structure out
 #optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
 #optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
 #optfile = '/home/jujuman/Research/Opt_test/optmol_1d.xyz'
-optfile = '/home/jujuman/Research/MD_TEST/DecaAlanine/optmol2.xyz'
+optfile = '/home/jujuman/Research/MD_TEST/Alanine50_vac/optmol2.xyz'
 #optfile = '/home/jujuman/Research/MD_TEST/taxol/optmol.xyz'
 
 T = 300.0 # Temperature
-C = 0.0001 # Optimization convergence
+C = 0.001 # Optimization convergence
 
 #wkdir    = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv3/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv1/'
 #wkdir = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
