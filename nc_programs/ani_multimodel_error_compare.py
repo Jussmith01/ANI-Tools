@@ -92,7 +92,7 @@ for i,data in enumerate(adl):
     X  = np.ndarray.astype(data['coordinates'], dtype=np.float32)
     S  = data['species']
     Edft = data['energies']
-    Fdft =  data['forces']#/(0.52917724900001*0.52917724900001)
+    Fdft =  -data['forces']#/(0.52917724900001*0.52917724900001)
     path = data['path']
 
     # Calculate std. dev. per atom for all conformers
