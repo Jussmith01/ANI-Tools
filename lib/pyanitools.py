@@ -44,7 +44,7 @@ class anidataloader(object):
     ''' Contructor '''
     def __init__(self, store_file):
         if not os.path.exists(store_file):
-            raise('Error: file not found - '+store_file)
+            raise FileNotFoundError('file ' + store_file + 'not found.')
         self.store = h5py.File(store_file)
 
     ''' Group recursive iterator (iterate through all groups in all branches and return datasets in dicts) '''

@@ -17,7 +17,7 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 # Define test file
 #h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
-#h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
@@ -286,7 +286,7 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
     #plt.draw()
     plt.show()
 
-Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cdat['Sigm'], 300.0)
+Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cdat['Sigm'], 30000.0)
 plot_corr_dist(Fdft, np.mean(Fani, axis=0), True)
 
 # ----------------------------------
@@ -377,6 +377,10 @@ plt.show()
 #plt.errorbar(clist, np.array(dfc['EMAEm']), yerr=np.array(dfc['EMAEs']), fmt='-o')
 #plt.show()
 
+Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cdat['Sigm'], 30000.0)
+Cdat['Fani'] = Fani
+Cdat['Fdft'] = Fdft
+
 # Convert arrays
 Cdat['Sigm']   = np.concatenate(Cdat['Sigm'])
 Cdat['Natm']   = np.array(Cdat['Natm'], dtype=np.int)
@@ -390,7 +394,7 @@ Cdat['ERMSE']  = np.vstack(Cdat['ERMSE'])
 Cdat['dEMAE']  = np.vstack(Cdat['dEMAE'])
 Cdat['dERMSE'] = np.vstack(Cdat['dERMSE'])
 #Cdat['Fani']   = np.hstack(Cdat['Fani'].reshape(Ncv,-1))
-#Cdat['Fdft']   = np.concatenate(Cdat['Fdft'].reshape(-1))
+#Cdat['Fdft']   = np.hstack(Cdat['Fani'].reshape(Ncv,-1))
 Cdat['FMAE']   = np.vstack(Cdat['FMAE'])
 Cdat['FRMSE']  = np.vstack(Cdat['FRMSE'])
 
@@ -399,13 +403,19 @@ Cdat['FRMSE']  = np.vstack(Cdat['FRMSE'])
 Emt = hdn.calculatemeanabserror(Cdat['Eani'], Cdat['Edft'],axis=1)
 Ert = hdn.calculaterootmeansqrerror(Cdat['Eani'], Cdat['Edft'],axis=1)
 
+Emte = hdn.calculatemeanabserror(np.mean(Cdat['Eani'], axis=0), Cdat['Edft'])
+Erte = hdn.calculaterootmeansqrerror(np.mean(Cdat['Eani'], axis=0), Cdat['Edft'])
+
 print('\n')
 print('E  MAE:', Emt, Emt.mean(), Emt.std())
 print('E RMSE:', Ert, Ert.mean(), Ert.std())
 
 #print(Cdat['Fani'].shape)
-#Fmt = hdn.calculatemeanabserror(Cdat['Fani'],Cdat['Fdft'],axis=1)
-#Frt = hdn.calculaterootmeansqrerror(Cdat['Fani'],Cdat['Fdft'],axis=1)
+Fmt = hdn.calculatemeanabserror(Cdat['Fani'],Cdat['Fdft'],axis=1)
+Frt = hdn.calculaterootmeansqrerror(Cdat['Fani'],Cdat['Fdft'],axis=1)
+
+Fmte = hdn.calculatemeanabserror(np.mean(Cdat['Fani'], axis=0),Cdat['Fdft'])
+Frte = hdn.calculaterootmeansqrerror(np.mean(Cdat['Fani'], axis=0),Cdat['Fdft'])
 
 #print('   -', c,'F  MAE:', Fmt, Fmt.mean(), Fmt.std())
 #print('   -', c,'F RMSE:', Frt, Frt.mean(), Frt.std())
@@ -413,6 +423,9 @@ print('E RMSE:', Ert, Ert.mean(), Ert.std())
 
 dEmt = hdn.calculatemeanabserror(Cdat['dEani'],Cdat['dEdft'],axis=1)
 dErt = hdn.calculaterootmeansqrerror(Cdat['dEani'],Cdat['dEdft'],axis=1)
+
+dEmte = hdn.calculatemeanabserror(np.mean(Cdat['dEani'],axis=0),Cdat['dEdft'])
+dErte = hdn.calculaterootmeansqrerror(np.mean(Cdat['dEani'],axis=0),Cdat['dEdft'])
 
 print('dE  MAE:', dEmt, dEmt.mean(), dEmt.std())
 print('dE RMSE:', dErt, dErt.mean(), dErt.std())
@@ -431,6 +444,9 @@ print('A. dE RMSE/atom:', np.mean(dErtpa))
 
 Emm = hdn.calculatemeanabserror(Cdat['Emin'][:, 0], Cdat['Emin'][:, 1])
 Erm = hdn.calculaterootmeansqrerror(Cdat['Emin'][:, 0], Cdat['Emin'][:, 1])
+
+Emme = hdn.calculatemeanabserror(Cdat['Emin'][:, 0], Cdat['Emin'][:, 1])
+Erme = hdn.calculaterootmeansqrerror(Cdat['Emin'][:, 0], Cdat['Emin'][:, 1])
 
 print('Emin  MAE:', Emm)
 print('Emin RMSE:', Erm)
@@ -455,7 +471,33 @@ print('C Emin RMSE:', dEtRMSE)
 #print('Complete dE MAE :',  dEtMAE,  dEtMAE.mean())
 #print('Complete dE RMSE:', dEtRMSE, dEtRMSE.mean())
 
-print('--------INLINE DATA--------')
+print('--------AVG DATA--------')
+print(Emt.mean())
+print(Ert.mean())
+#print(np.mean(Emtpa))
+#print(np.mean(Ertpa))
+print(dEmt.mean())
+print(dErt.mean())
+#print(np.mean(dEmtpa))
+#print(np.mean(dErtpa))
+#print(Emm)
+#print(Erm)
+#print(dEtMAE)
+#print(dEtRMSE)
+print(Fmt.mean())
+print(Frt.mean())
+print('---------------------------')
+
+print('--------ENS DATA--------')
+print(Emte)
+print(Erte)
+print(dEmte)
+print(dErte)
+print(Fmte)
+print(Frte)
+print('---------------------------')
+
+print('--------COMP DATA--------')
 print(Emt.mean())
 print(Ert.mean())
 print(np.mean(Emtpa))

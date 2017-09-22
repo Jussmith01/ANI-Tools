@@ -74,7 +74,7 @@ def plot_irc(axes, i, d, f):
         axes.plot(Rc[:, 1], hdt.hatokcal*(Rc[:, 0]-Rc[:, 0][0]),color='Black', label='DFT')
 
         axes.errorbar(Rc[:, 1], energies2[::-1]-energies2[::-1][0], yerr=modl_std2, fmt='--',color='red',label="ANI-1: "+"{:.1f}".format(bar2[-1]),linewidth=2)
-        #axes.errorbar(Rc[:, 1], energies1[::-1]-energies1[::-1][0], yerr=modl_std1, fmt='--',color='blue',label="["+str(i)+"]: "+"{:.1f}".format(bar1[-1]),linewidth=2)
+        axes.errorbar(Rc[:, 1], energies1[::-1]-energies1[::-1][0], yerr=modl_std1, fmt='--',color='blue',label="["+str(i)+"]: "+"{:.1f}".format(bar1[-1]),linewidth=2)
         #axes.plot(Rc[:, 1], energies2[::-1]-energies2[::-1][0],'--',color='red',label="["+str(i)+"]: "+"{:.1f}".format(bar2[-1]),linewidth=3)
         #axes.plot(Rc[:, 1], energies1[::-1]-energies1[::-1][0],'--',color='green',label="["+str(i)+"]: "+"{:.1f}".format(bar1[-1]),linewidth=3)
 
@@ -84,15 +84,15 @@ def plot_irc(axes, i, d, f):
 
 os.environ["PYTHONPATH"] = "../../lib"
 
-#d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/testset/IRC/'
-#c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/testset/XYZ/'
-#r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS5/testset/DataGen/'
-#fp = 'DA_IRC'
+d = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/testset/IRC/'
+c = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/testset/XYZ/'
+r = '/home/jujuman/Dropbox/IRC_DBondMig/auto-TS/auto-TS2/testset/DataGen/'
+fp = 'DA_IRC'
 
-d = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try1/testset/IRC/'
-c = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try1/testset/XYZ/'
-r = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try1/testset/DataGen/'
-fp = 'CP_IRC'
+#d = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try1/IRC/'
+#c = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try1/XYZ/'
+#r = '/home/jujuman/Dropbox/IRC_DBondMig/Cope/Try1/DataGen/'
+#fp = 'CP_IRC'
 
 #d = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try3/testset/IRC/'
 #c = '/home/jujuman/Dropbox/IRC_DBondMig/Claisen/Try3/testset/XYZ/'
@@ -104,7 +104,7 @@ fp = 'CP_IRC'
 #cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 #saefile1 = 'sae_6-31gd.dat'
 
-wkdircv1 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv2/'
+wkdircv1 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv1/'
 cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile1 = 'sae_6-31gd.dat'
 
@@ -112,7 +112,7 @@ saefile1 = 'sae_6-31gd.dat'
 #cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 #saefile2 = 'sae_6-31gd.dat'
 
-wkdircv2 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv4/'
+wkdircv2 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv2/'
 cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile2 = 'sae_6-31gd.dat'
 
