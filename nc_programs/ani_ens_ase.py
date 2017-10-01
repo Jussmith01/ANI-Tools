@@ -42,30 +42,26 @@ import seaborn as sns
 #molfile = '/home/jujuman/Research/Opt_test/1d.pdb'
 #molfile = '/home/jujuman/Research/MD_TEST/helix_test/gly-15/gly-15_solv_gv.pdb'
 #molfile = '/home/jujuman/Research/MD_TEST/methanol_box/MethanolBoxCenter.xyz'
-#molfile = '/home/jujuman/Research/MD_TEST/WeirdThing/full_box_md_1f-a/initil_105mol_1f-a_115bs.xyz'
-molfile = '/home/jujuman/Research/MD_TEST/WeirdThing/input/1f-methyl_init.xyz'
+molfile = '/home/jujuman/Research/MD_TEST/capsaicin/Structure3D_CID_1548943.sdf'
 
 # Dynamics file
 #xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/Opt_test/mdcrd_1d.xyz'
 #xyzfile = '/home/jujuman/Research/MD_TEST/C_2500/mdcrd.xyz'
-#xyzfile = '/home/jujuman/Research/MD_TEST/WeirdThing/full_box_md_1f-a/mdcrd.xyz'
-xyzfile = '/home/jujuman/Research/MD_TEST/WeirdThing/input/mdcrd.xyz'
+xyzfile = '/home/jujuman/Research/MD_TEST/capsaicin/mdcrd.xyz'
 
 # Trajectory file
 #trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
 #trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
-#trajfile = '/home/jujuman/Research/Opt_test/traj_1d.dat'
-#trajfile = '/home/jujuman/Research/MD_TEST/WeirdThing/full_box_md_1f-a/traj.dat'
-trajfile = '/home/jujuman/Research/MD_TEST/WeirdThing/input/traj.dat'
+trajfile = '/home/jujuman/Research/Opt_test/traj_1d.dat'
 
 # Optimized structure out:
 #optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
 #optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
 #optfile = '/home/jujuman/Research/Opt_test/optmol_1d.xyz'
-#optfile = '/home/jujuman/Research/MD_TEST/WeirdThing/full_box_md_1f-a/optmol.xyz'
-optfile = '/home/jujuman/Research/MD_TEST/WeirdThing/input/1f-b_hexyl_opt.xyz'
+optfile = '/home/jujuman/Research/MD_TEST/capsaicin/optmol.xyz'
+#optfile = '/home/jujuman/Research/MD_TEST/taxol/optmol.xyz'
 
 T = 300.0 # Temperature
 C = 0.0001 # Optimization convergence
@@ -123,7 +119,7 @@ traj = open(trajfile,'w')
 # We want to run MD with constant energy using the Langevin algorithm
 # with a time step of 0.5 fs, the temperature T and the friction
 # coefficient to 0.02 atomic units.
-dyn = Langevin(mol, 0.2 * units.fs, T * units.kB, 0.05)
+dyn = Langevin(mol, 0.25 * units.fs, T * units.kB, 0.1)
 
 # Run equilibration
 #print('Running equilibration...')
@@ -156,7 +152,7 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
           'Etot = %.3feV' ' StdDev = %.3fKcal/mol/atom' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin, stddev))
 
 # Attach the printer
-dyn.attach(printenergy, interval=100)
+dyn.attach(printenergy, interval=200)
 
 # Run production
 print('Running production...')
