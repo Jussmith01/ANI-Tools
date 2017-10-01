@@ -17,16 +17,16 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 # Define test file
 #h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
-h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+#h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-11/gdb11_11_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-12/gdb11_12_test500.h5'
-#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-13/gdb11_13_test500.h5'
+h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-13/gdb11_13_test500.h5'
 #h5file = '/home/jujuman/Research/GDB_Dimer/dimer_gen_test/dimers_test.h5'
-#h5file = '/home/jujuman/Research/ForceTrainTesting/train3/cache-data-0/testset/testset.h5'
+#h5file = '/home/jujuman/Research/ForceTrainTesting/train/cache-data-0/testset/testset.h5'
 #h5file = '/home/jujuman/Research/IR_MD/methanol/methanol_traj_rsub.h5'
 
 # Define cross validation networks
@@ -34,6 +34,7 @@ h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_tests
 #wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
 wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv1/'
+wkdircv = '/home/jujuman/Research/ForceTrainTesting/train/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 #wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-06/cv4/'
@@ -66,11 +67,15 @@ Cdat = dict({'Sigm' : [],
              'Natm' : [],
              'Eani' : [],
              'Edft' : [],
+             'Qani' : [],
+             'Qdft' : [],
              'Emin' : [],
              'dEani': [],
              'dEdft': [],
              'EMAE' : [],
              'ERMSE': [],
+             'QMAE' : [],
+             'QRMSE': [],
              'dEMAE' : [],
              'dERMSE': [],
              'Fani' : [],
@@ -84,7 +89,7 @@ Fmax = [0.0,0.0,0.0]
 Ferr = []
 # Iterate data set
 for i,data in enumerate(adl):
-    #if (i==10):
+    #if (i==100):
     #    break
 
     # Extract the data
@@ -92,14 +97,17 @@ for i,data in enumerate(adl):
     X  = np.ndarray.astype(data['coordinates'], dtype=np.float32)
     S  = data['species']
     Edft = data['energies']
-    Fdft =  -data['forces']#/(0.52917724900001*0.52917724900001)
+    Qdft = data['hirshfeld']
+    Fdft = data['forces']#/(0.52917724900001*0.52917724900001)
     path = data['path']
+
+    Qdft = Qdft[:,0:len(S)]
 
     # Calculate std. dev. per atom for all conformers
     sigma = anicv.compute_stddev_conformations(X,S)
 
     # Calculate energy deltas
-    Eani, Fani = anicv.compute_energy_conformations(X,S)
+    Eani, Fani, Qani = anicv.compute_energy_conformations(X,S)
 
     # Convert to kcal/mol and reshape if needed
     #Eani = hdn.hatokcal * Eani
@@ -149,6 +157,10 @@ for i,data in enumerate(adl):
     ERMSE = hdn.calculaterootmeansqrerror(Eani,Edft,axis=1)
 
     # Calculate per molecule errors
+    QMAE  = hdn.calculatemeanabserror (Qani.reshape(Ncv,-1),Qdft.reshape(-1),axis=1)
+    QRMSE = hdn.calculaterootmeansqrerror(Qani.reshape(Ncv,-1),Qdft.reshape(-1),axis=1)
+
+    # Calculate per molecule errors
     dEMAE  = hdn.calculatemeanabserror (dEani,dEdft,axis=1)
     dERMSE = hdn.calculaterootmeansqrerror(dEani,dEdft,axis=1)
 
@@ -162,6 +174,10 @@ for i,data in enumerate(adl):
     Cdat['Natm'].append(len(S))
     Cdat['Eani'].append(Eani)
     Cdat['Edft'].append(Edft)
+    Cdat['Qani'].append(Qani)
+    Cdat['Qdft'].append(Qdft)
+    Cdat['QMAE'].append(QMAE)
+    Cdat['QRMSE'].append(QRMSE)
     Cdat['Emin'].append(Emin)
     Cdat['dEani'].append(dEani)
     Cdat['dEdft'].append(dEdft)
@@ -181,6 +197,8 @@ for i,data in enumerate(adl):
     print('   -ERMSE: ',  ERMSE, ':', "{:.2f}".format(ERMSE.mean()))
     print('   -dEMAE: ', dEMAE , ':', "{:.2f}".format(dEMAE.mean()))
     print('   -dERMSE:', dERMSE, ':', "{:.2f}".format(dERMSE.mean()))
+    print('   -QMAE:  ',  1000.0*QMAE, ':', "{:.2f}".format(1000.0*QMAE.mean()))
+    print('   -QRMSE: ',  1000.0*QRMSE, ':', "{:.2f}".format(1000.0*QRMSE.mean()))
     print('   -FMAE:  ',   FMAE, ':', "{:.2f}".format(FMAE.mean()))
     print('   -FRMSE: ',  FRMSE, ':', "{:.2f}".format(FRMSE.mean()))
 
@@ -239,8 +257,11 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
     ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='r', linewidth=3)
 
     # Set labels
-    ax.set_xlabel('$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
-    ax.set_ylabel('$F_{ani}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
+    #ax.set_xlabel('$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
+    #ax.set_ylabel('$F_{ani}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
+
+    ax.set_xlabel('$Q_{dft}$' + r' $(e \times {10}^{-3})$', fontsize=22)
+    ax.set_ylabel('$Q_{ani}$' + r' $(e \times {10}^{-3})$', fontsize=22)
 
     cmap = mpl.cm.viridis
 
@@ -250,7 +271,7 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
     # Build color bar
     #cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
     cb1 = fig.colorbar(bins[-1], cmap=cmap)
-    cb1.set_label('Log(count)', fontsize=16)
+    cb1.set_label('Count', fontsize=16)
 
     # Annotate with errors
     PMAE = hdn.calculatemeanabserror(Xa, Xp)
@@ -286,8 +307,8 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
     #plt.draw()
     plt.show()
 
-Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cdat['Sigm'], 30000.0)
-plot_corr_dist(Fdft, np.mean(Fani, axis=0), True)
+Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Qani'], Cdat['Qdft'], Cdat['Sigm'], 30000.0)
+plot_corr_dist(1000.0*Fdft, 1000.0*np.mean(Fani, axis=0), True)
 
 # ----------------------------------
 
@@ -381,6 +402,11 @@ Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cda
 Cdat['Fani'] = Fani
 Cdat['Fdft'] = Fdft
 
+Qani, Qdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Qani'], Cdat['Qdft'], Cdat['Sigm'], 30000.0)
+Cdat['Qani'] = Qani
+Cdat['Qdft'] = Qdft
+
+
 # Convert arrays
 Cdat['Sigm']   = np.concatenate(Cdat['Sigm'])
 Cdat['Natm']   = np.array(Cdat['Natm'], dtype=np.int)
@@ -416,6 +442,9 @@ Frt = hdn.calculaterootmeansqrerror(Cdat['Fani'],Cdat['Fdft'],axis=1)
 
 Fmte = hdn.calculatemeanabserror(np.mean(Cdat['Fani'], axis=0),Cdat['Fdft'])
 Frte = hdn.calculaterootmeansqrerror(np.mean(Cdat['Fani'], axis=0),Cdat['Fdft'])
+
+Qmte = hdn.calculatemeanabserror(np.mean(Cdat['Qani'], axis=0),Cdat['Qdft'])
+Qrte = hdn.calculaterootmeansqrerror(np.mean(Cdat['Qani'], axis=0),Cdat['Qdft'])
 
 #print('   -', c,'F  MAE:', Fmt, Fmt.mean(), Fmt.std())
 #print('   -', c,'F RMSE:', Frt, Frt.mean(), Frt.std())
@@ -493,6 +522,8 @@ print(Emte)
 print(Erte)
 print(dEmte)
 print(dErte)
+print(Qmte)
+print(Qrte)
 print(Fmte)
 print(Frte)
 print('---------------------------')
