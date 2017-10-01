@@ -42,34 +42,37 @@ import seaborn as sns
 #molfile = '/home/jujuman/Research/Opt_test/1d.pdb'
 #molfile = '/home/jujuman/Research/MD_TEST/helix_test/gly-15/gly-15_solv_gv.pdb'
 #molfile = '/home/jujuman/Research/MD_TEST/methanol_box/MethanolBoxCenter.xyz'
-molfile = '/home/jujuman/Research/MD_TEST/Alanine50_vac/ala_50_gv.pdb'
+#molfile = '/home/jujuman/Research/MD_TEST/WeirdThing/full_box_md_1f-a/initil_105mol_1f-a_115bs.xyz'
+molfile = '/home/jujuman/Research/MD_TEST/WeirdThing/input/1f-methyl_init.xyz'
 
 # Dynamics file
 #xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/Opt_test/mdcrd_1d.xyz'
 #xyzfile = '/home/jujuman/Research/MD_TEST/C_2500/mdcrd.xyz'
-xyzfile = '/home/jujuman/Research/MD_TEST/Alanine50_vac/mdcrd2.xyz'
+#xyzfile = '/home/jujuman/Research/MD_TEST/WeirdThing/full_box_md_1f-a/mdcrd.xyz'
+xyzfile = '/home/jujuman/Research/MD_TEST/WeirdThing/input/mdcrd.xyz'
 
 # Trajectory file
 #trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
 #trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
 #trajfile = '/home/jujuman/Research/Opt_test/traj_1d.dat'
-trajfile = '/home/jujuman/Research/MD_TEST/Alanine50_vac/traj2.dat'
-#trajfile = '/home/jujuman/Research/MD_TEST/taxol/traj.dat'
+#trajfile = '/home/jujuman/Research/MD_TEST/WeirdThing/full_box_md_1f-a/traj.dat'
+trajfile = '/home/jujuman/Research/MD_TEST/WeirdThing/input/traj.dat'
 
-# Optimized structure out
+# Optimized structure out:
 #optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
 #optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
 #optfile = '/home/jujuman/Research/Opt_test/optmol_1d.xyz'
-optfile = '/home/jujuman/Research/MD_TEST/Alanine50_vac/optmol2.xyz'
-#optfile = '/home/jujuman/Research/MD_TEST/taxol/optmol.xyz'
+#optfile = '/home/jujuman/Research/MD_TEST/WeirdThing/full_box_md_1f-a/optmol.xyz'
+optfile = '/home/jujuman/Research/MD_TEST/WeirdThing/input/1f-b_hexyl_opt.xyz'
 
 T = 300.0 # Temperature
-C = 0.001 # Optimization convergence
+C = 0.0001 # Optimization convergence
+steps = 20000000
 
 #wkdir    = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv1/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv3/'
 #wkdir = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
@@ -82,28 +85,26 @@ Nn = 5
 # Load molecule
 mol = read(molfile)
 #print('test')
-#L = 20.0
-#mol.set_cell(([[48.540, 0, 0],
-#               [0, 33.279, 0],
-#               [0, 0, 31.971]]))
+L = 90.0
+mol.set_cell(([[L, 0, 0],
+               [0, L, 0],
+               [0, 0, L]]))
 
-#mol.set_pbc((True, True, True))
+mol.set_pbc((True, True, True))
 
 print(mol.get_chemical_symbols())
 
 # Set NC
 aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 0)
-print('test')
 
 # Set ANI calculator
 mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
-print('test')
 
 # Optimize molecule
-start_time = time.time()
-dyn = LBFGS(mol)
-dyn.run(fmax=C)
-print('[ANI Total time:', time.time() - start_time, 'seconds]')
+#start_time = time.time()
+#dyn = LBFGS(mol)
+#dyn.run(fmax=C)
+#print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
 print(hdt.evtokcal*mol.get_potential_energy())
 
@@ -112,8 +113,6 @@ spc = mol.get_chemical_symbols()
 pos = mol.get_positions(wrap=True).reshape(1,len(spc),3)
 
 hdt.writexyzfile(optfile, pos, spc)
-
-#exit(0)
 
 # Open MD output
 mdcrd = open(xyzfile,'w')
@@ -157,7 +156,7 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
           'Etot = %.3feV' ' StdDev = %.3fKcal/mol/atom' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin, stddev))
 
 # Attach the printer
-dyn.attach(printenergy, interval=10)
+dyn.attach(printenergy, interval=100)
 
 # Run production
 print('Running production...')
@@ -168,7 +167,7 @@ start_time = time.time()
 #    dyn.run(500)  # Do 0.5ns of MD
 
 dyn.set_temperature(300.0 * units.kB)
-dyn.run(25000000) # Do 0.5ns of MD
+dyn.run(steps) # Do 0.5ns of MD
 print('[ANI Total time:', time.time() - start_time, 'seconds]')
 mdcrd.close()
 traj.close()

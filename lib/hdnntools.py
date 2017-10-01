@@ -538,7 +538,6 @@ def generatedmatsd3(crds):
                 #print(a[count],crds[s,i],crds[s,i],crds[s,i]-crds[s,j])
                 count += 1
 
-
     return dmat
 
 def compute_sae(file, spc):

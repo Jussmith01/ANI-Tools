@@ -2,10 +2,17 @@ import gdbsearchtools as gdb
 import pyaniasetools as aat
 import hdnntools as hdn
 
+import rdkit
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
 
+from rdkit.ForceField.rdForceField import *
+
+m = Chem.MolFromSmiles("C=C")
+
+
+exit (0)
 import numpy as np
 
 import os
@@ -121,6 +128,8 @@ while Nt < 1000:
         # Classical Optimization
         for cid in cids:
             _ = AllChem.MMFFOptimizeMolecule(m, confId=cid, maxIters=1000)
+
+
 
         # Align all conformers
         Chem.rdMolAlign.AlignMolConformers(m)

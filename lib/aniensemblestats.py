@@ -3,6 +3,8 @@ import pyanitools as ant
 import hdnntools as hdt
 import pandas as pd
 
+import sys
+
 import numpy as np
 
 import re
@@ -17,7 +19,6 @@ from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 #import seaborn as sns
-
 pd.options.display.float_format = '{:.2f}'.format
 
 # ----------------------------------
@@ -92,71 +93,68 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
         self.tsfiles = tsfiles
 
     '''Stat generator'''
-    def generate_stats(self):
+    def generate_stats(self, maxe = sys.float_info.max):
         self.tdata = dict()
         for key in self.tsfiles.keys():
             print('   -Working on',key,'...')
 
-            cdata = dict({#'Eeani': [],
-                          #'Eestd': [],
-                          'Eani': [],
+            cdata = dict({'Eani': [],
                           'Edft': [],
-                          #'Feani': [],
                           'Fani': [],
                           'Fdft': [],
-                          'Frmse': [],
-                          'Frmae': [],
                           'dEani': [],
                           'dEdft': [],
-                          'Erani': [],
-                          'Erdft': [],
                           'Na': [],})
 
             for file in self.tsfiles[key]:
                 adl = ant.anidataloader(file)
                 for i, data in enumerate(adl):
-                    if i > 5:
-                        break
+                    #if i > 5:
+                    #    break
 
                     Eani, Fani = self.compute_energy_conformations(data['coordinates'], data['species'])
 
+                    midx = np.where( data['energies'] - data['energies'].min() < maxe/hdt.hatokcal )[0]
+
+                    Eani = Eani[:,midx]
+                    Edft = data['energies'][midx]
+                    Fani = Fani[:,midx,:,:]
+                    Fdft = data['forces'][midx]
+
                     #Eestd = np.std(Eani, axis=0)/np.sqrt(len(data['species']))
+                    Eeani = np.mean(Eani, axis=0).reshape(1,-1)
+                    Feani = np.mean(Fani, axis=0).flatten().reshape(1,-1)
 
-                    Eeani = np.mean(Eani, axis=0)
-                    Feani = -np.mean(Fani, axis=0)
-                    Edft = hdt.hatokcal * data['energies']
-                    Fdft = hdt.hatokcal * data['forces']
+                    Fani = Fani.reshape(Fani.shape[0],-1)
 
-                    #Ft = -Fani.reshape(5,-1, 3)
-                    #print(Ft.shape)
-                    #print(np.mean(Ft,axis=0).shape)
+                    Eani = np.vstack([Eani, Eeani])
+                    Fani = np.vstack([Fani, Feani])
+
+                    Edft = hdt.hatokcal * Edft
+                    Fdft = hdt.hatokcal * Fdft.flatten()
 
                     cdata['Na'].append(np.full(Eani.size, len(data['species']), dtype=np.int32))
 
-                    #cdata['Eestd'].append(Eestd)
-                    #cdata['Eeani'].append(Eeani)
                     cdata['Eani'].append(Eani)
                     cdata['Edft'].append(Edft)
 
-                    cdata['Feani'].append(Feani.flatten())
-                    cdata['Fani'].append(-Fani.reshape(5,-1, 3))
-                    cdata['Fdft'].append(Fdft.flatten())
+                    cdata['Fani'].append(Fani)
+                    cdata['Fdft'].append(Fdft)
 
-                    cdata['Frmse'].append(np.sqrt(np.mean((Fani-Fdft).reshape(Fdft.shape[0], -1)**2, axis=1)))
-                    cdata['Frmae'].append(np.sqrt(np.mean(np.abs((Fani - Fdft).reshape(Fdft.shape[0], -1)), axis=1)))
+                    #cdata['Frmse'].append(np.sqrt(np.mean((Fani-Fdft).reshape(Fdft.shape[0], -1)**2, axis=1)))
+                    #cdata['Frmae'].append(np.sqrt(np.mean(np.abs((Fani - Fdft).reshape(Fdft.shape[0], -1)), axis=1)))
 
-                    cdata['dEani'].append(hdt.calculateKdmat(5, Eani))
-                    cdata['dEdft'].append(hdt.calculateKdmat(5, Edft))
+                    cdata['dEani'].append(hdt.calculateKdmat(6, Eani))
+                    cdata['dEdft'].append(hdt.calculatedmat(Edft))
 
-                    cdata['Erani'].append(Eani-Eani.min())
-                    cdata['Erdft'].append(Edft-Edft.min())
+                    #cdata['Erani'].append(Eani-Eani.min())
+                    #cdata['Erdft'].append(Edft-Edft.min())
 
-            for k in ['Na', 'Edft', 'Fdft', 'Frmse', 'Frmae', 'dEani', 'dEdft', 'Erani', 'Erdft']:
+            for k in ['Na', 'Edft', 'Fdft', 'dEdft']:
                 cdata[k] = np.concatenate(cdata[k])
 
-            for k in ['Eani', 'Fani']:
-                cdata[k] = np.stack(cdata[k],axis=1)
-                print(cdata[k].shape)
+            for k in ['Eani', 'Fani', 'dEani']:
+                cdata[k] = np.hstack(cdata[k])
 
             self.tdata.update({key: cdata})
 
@@ -185,16 +183,19 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
 
     ''' Generate total errors '''
     def generate_total_errors(self, ntkey, tskey):
-        idx = np.nonzero(self.fdata[ntkey][tskey]['Erdft'])
-
-        return {'EMAE': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Eani'], self.fdata[ntkey][tskey]['Edft']),
-                'ERMS': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Eani'], self.fdata[ntkey][tskey]['Edft']),
-                'FMAE': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Fani'], self.fdata[ntkey][tskey]['Fdft']),
-                'FRMS': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Fani'], self.fdata[ntkey][tskey]['Fdft']),
-                'dEMAE': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['dEani'], self.fdata[ntkey][tskey]['dEdft']),
-                'dERMS': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['dEani'], self.fdata[ntkey][tskey]['dEdft']),
-                'ERMAE': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Erani'][idx], self.fdata[ntkey][tskey]['Erdft'][idx]),
-                'ERRMS': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Erani'][idx], self.fdata[ntkey][tskey]['Erdft'][idx]),
+        #idx = np.nonzero(self.fdata[ntkey][tskey]['Erdft'])
+        return {'EMAEm': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Eani'][5,:], self.fdata[ntkey][tskey]['Edft']),
+                'EMAEs': np.std(hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Eani'][0:5,:], self.fdata[ntkey][tskey]['Edft'], axis=1)),
+                'ERMSm': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Eani'][5,:], self.fdata[ntkey][tskey]['Edft']),
+                'ERMSs': np.std(hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Eani'][0:5,:], self.fdata[ntkey][tskey]['Edft'], axis=1)),
+                'FMAEm': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Fani'][5,:], self.fdata[ntkey][tskey]['Fdft']),
+                'FMAEs': np.std(hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Fani'][0:5,:], self.fdata[ntkey][tskey]['Fdft'], axis=1)),
+                'FRMSm': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Fani'][5,:], self.fdata[ntkey][tskey]['Fdft']),
+                'FRMSs': np.std(hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Fani'][0:5, :],self.fdata[ntkey][tskey]['Fdft'], axis=1)),
+                #'dEMAE': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['dEani'], self.fdata[ntkey][tskey]['dEdft']),
+                #'dERMS': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['dEani'], self.fdata[ntkey][tskey]['dEdft']),
+                #'ERMAE': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Erani'][idx], self.fdata[ntkey][tskey]['Erdft'][idx]),
+                #'ERRMS': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Erani'][idx], self.fdata[ntkey][tskey]['rdft'][idx]),
                 }
 
     def get_net_keys(self):
@@ -208,7 +209,7 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         return edat
 
     def generate_correlation_plot(self, ntkey, tskey, prop1, prop2, figsize=[13,10]):
-        plot_corr_dist(self.fdata[ntkey][tskey][prop1], self.fdata[ntkey][tskey][prop2], True, figsize)
+        plot_corr_dist(self.fdata[ntkey][tskey][prop1][5,:], self.fdata[ntkey][tskey][prop2], True, figsize)
 
     def generate_violin_distribution(self, tskey, maxstd=0.34):
         import seaborn as sns
@@ -218,12 +219,12 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         vlset = []
 
         for k in self.fdata.keys():
-            np.where
+            #np.where
 
-            p1p = self.fdata[k][tskey]['dEani']
-            p1a = self.fdata[k][tskey]['dEdft']
+            p1p = self.fdata[k][tskey]['Eani'][5,:]
+            p1a = self.fdata[k][tskey]['Edft']
 
-            p2p = self.fdata[k][tskey]['Fani']
+            p2p = self.fdata[k][tskey]['Fani'][5,:]
             p2a = self.fdata[k][tskey]['Fdft']
 
             vlset.append(np.concatenate([np.abs(p1p-p1a), np.abs(p2p-p2a)]))
@@ -246,7 +247,7 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         order.sort()
         print(order)
         ax = sns.violinplot(ax=ax, x="Network", y="Property_value", hue="Properties",
-                            data = ddat[ddat.Property_value < 2.0 * stddev], split=True, scale="area", order=order, bw=.075)
+                            data = ddat[ddat.Property_value < 2.0 * stddev], split=True, scale="count", order=order, bw=.075)
 
         #ax.set_ylim([-1,20])
         plt.show()
@@ -302,23 +303,49 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
 
         for j,(p,ax) in enumerate(zip(props, axes.flatten())):
             bars = dict()
+            errs = dict()
 
-            print(ax)
             width = 0.85/len(keys)  # the width of the bars
 
             colors = cm.viridis(np.linspace(0, 1, len(keys)))
+            if j == len(keys)-1:
+                colors='r'
+
             for i,(k,c) in enumerate(zip(keys,colors)):
                 bars.update({k : []})
+                errs.update({k : []})
 
                 for tk in dsets:
                     if errortype is 'MAE':
-                        bars[k].append(hdt.calculatemeanabserror(self.fdata[k][tk][p[2]], self.fdata[k][tk][p[3]]))
+                        height = hdt.calculatemeanabserror(self.fdata[k][tk][p[2]][5, :], self.fdata[k][tk][p[3]])
+                        error = np.std(hdt.calculatemeanabserror(self.fdata[k][tk][p[2]], self.fdata[k][tk][p[3]], axis=1))
+
+                        #if error > height:
+                        #    error = height
+
+                        bars[k].append(height)
+                        errs[k].append(error)
                     elif errortype is 'RMSE':
-                        bars[k].append(hdt.calculaterootmeansqrerror(self.fdata[k][tk][p[2]], self.fdata[k][tk][p[3]]))
+                        height = hdt.calculaterootmeansqrerror(self.fdata[k][tk][p[2]][5, :], self.fdata[k][tk][p[3]])
+                        error = np.std(hdt.calculaterootmeansqrerror(self.fdata[k][tk][p[2]], self.fdata[k][tk][p[3]], axis=1))
 
+                        #if error > height:
+                        #    error = height
 
-                rects.append(ax.bar(ind+i*width, bars[k], width, color=c))
+                        bars[k].append(height)
+                        errs[k].append(error)
 
+                rects.append(ax.bar(ind+i*width, bars[k], width, color=c, bottom=0.0))
+                ax.errorbar(ind+i*width+width/2.0,
+                            bars[k],
+                            errs[k],
+                            fmt='.',
+                            capsize=8,
+                            elinewidth=3,
+                            color='red',
+                            ecolor='red',
+                            markeredgewidth=2)
+                ax.set_ylim(p[4])
 
             # add some text for labels, title and axes ticks
             ax.set_ylabel(p[1], fontsize=fontsize)

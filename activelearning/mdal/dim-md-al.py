@@ -16,49 +16,48 @@ import time
 
 #--------------Parameters------------------
 # Molecule file
-molfile = '/home/jujuman/Research/GDB_Dimer/test/dimer_gen_'
+molfile = '/home/jujuman/Research/MD_TEST/WeirdThing/input'
 
 # Dynamics file
-xyzfile = '/home/jujuman/Research/GDB_Dimer/test/mdcrd.xyz'
+xyzfile = '/home/jujuman/Research/MD_TEST/WeirdThing/mdcrd.xyz'
 
 # Trajectory file
-trajfile = '/home/jujuman/Research/GDB_Dimer/test/traj.dat'
+trajfile = '/home/jujuman/Research/MD_TEST/WeirdThing/traj.dat'
 
 # Optimized structure out
-optfile = '/home/jujuman/Research/GDB_Dimer/test/optmol.xyz'
+optfile = '/home/jujuman/Research/MD_TEST/WeirdThing/optmol.xyz'
 
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv1/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv3/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix  = wkdircv + 'train'
 
 At = ['C', 'O', 'N'] # Hydrogens added after check
 
-dstore = '/home/jujuman/Research/GDB_Dimer/test/'
+dstore = '/home/jujuman/Research/MD_TEST/WeirdThing/'
 
 N = 15
-T = 400.0
-L = 40.0
-V = 0.04
+T = 300.0
+L = 90.0
+V = 0.0001
 dt = 0.25
-Nm = 200
+Nm = 100
 Nr = 100
 
-Ni = 200
-Ns = 100
+Ni = 5000
+#Ns = 100
 
 
-idir = [(1.00, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/inputs/'),
-        #(1.00, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_1/inputs/'),
-        (1.00, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s02/inputs/'),
-        (1.00, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/'),
-        (1.00, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/inputs/'),
-        (1.00, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/inputs/'),
-        (1.00, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_1/inputs/'),
-        (1.00, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/inputs/'),
-        (1.00, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_3/inputs/'),
-        #(1.00, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_1/inputs/'),
-        #(1.00, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s07/config_2/inputs/'),
+idir = [#(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/inputs/'),
+        #(15000, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/water_input/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s02/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_1/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_3/inputs/'),
+        (1, '/home/jujuman/Research/MD_TEST/WeirdThing/input/input/'),
         ]
 
 #-------------------------------------------
@@ -73,9 +72,10 @@ for di,id in enumerate(idir):
     print(dnfo)
     difo.write(dnfo+'\n')
 
-    for n,m in enumerate(files[0:int(id[0]*len(files))]):
-        data = hdn.read_rcdb_coordsandnm(id[1]+m)
-        mols.append(data)
+    for i in range(id[0]):
+    	for n,m in enumerate(files):
+        	data = hdn.read_rcdb_coordsandnm(id[1]+m)
+       		mols.append(data)
 
 dgen = pmf.dimergenerator(cnstfilecv, saefilecv, nnfprefix, 5, mols)
 
