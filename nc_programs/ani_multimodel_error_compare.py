@@ -18,6 +18,7 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 # Define test file
 #h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+#h5file = '/home/jujuman/Scratch/Research/MD_TEST/methanol/dft_gen/traj.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
@@ -33,8 +34,8 @@ h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-13/gdb11_13_test500
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv6/'
 #wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv1/'
-wkdircv = '/home/jujuman/Research/ForceTrainTesting/train/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv3/'
+#wkdircv = '/home/jujuman/Research/ForceTrainTesting/train/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 #wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-06/cv4/'
@@ -108,6 +109,11 @@ for i,data in enumerate(adl):
 
     # Calculate energy deltas
     Eani, Fani, Qani = anicv.compute_energy_conformations(X,S)
+
+    #Qdft = Qdft[:, 5:6]
+    #Qani = Qani[:, :, 5:6]
+
+    print(Qani.shape)
 
     # Convert to kcal/mol and reshape if needed
     #Eani = hdn.hatokcal * Eani
@@ -308,7 +314,7 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
     plt.show()
 
 Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Qani'], Cdat['Qdft'], Cdat['Sigm'], 30000.0)
-plot_corr_dist(1000.0*Fdft, 1000.0*np.mean(Fani, axis=0), True)
+plot_corr_dist(1000.0*Fdft, 1000.0*np.mean(Fani, axis=0), inset=False)
 
 # ----------------------------------
 

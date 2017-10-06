@@ -42,28 +42,32 @@ import seaborn as sns
 #molfile = '/home/jujuman/Research/Opt_test/1d.pdb'
 #molfile = '/home/jujuman/Research/MD_TEST/helix_test/gly-15/gly-15_solv_gv.pdb'
 #molfile = '/home/jujuman/Research/MD_TEST/methanol_box/MethanolBoxCenter.xyz'
-molfile = '/home/jujuman/Research/MD_TEST/capsaicin/Structure3D_CID_1548943.sdf'
+#molfile = '/home/jujuman/Research/MD_TEST/capsaicin/Structure3D_CID_1548943.sdf'
+molfile = '/home/jujuman/Research/MD_TEST/aPlusTest/aPlusTUnopt.xyz'
 
 # Dynamics file
 #xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
 #xyzfile = '/home/jujuman/Research/Opt_test/mdcrd_1d.xyz'
 #xyzfile = '/home/jujuman/Research/MD_TEST/C_2500/mdcrd.xyz'
-xyzfile = '/home/jujuman/Research/MD_TEST/capsaicin/mdcrd.xyz'
+#xyzfile = '/home/jujuman/Research/MD_TEST/capsaicin/mdcrd.xyz'
+xyzfile = '/home/jujuman/Research/MD_TEST/aPlusTest/mdcrd.xyz'
 
 # Trajectory file
 #trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
 #trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
 #trajfile = '/home/jujuman/Research/Opt_test/traj_1d.dat'
-trajfile = '/home/jujuman/Research/MD_TEST/capsaicin/traj.dat'
+#trajfile = '/home/jujuman/Research/MD_TEST/capsaicin/traj.dat'
 #trajfile = '/home/jujuman/Research/MD_TEST/taxol/traj.dat'
+trajfile = '/home/jujuman/Research/MD_TEST/aPlusTest/traj.dat'
 
 # Optimized structure out
 #optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
 #optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
 #optfile = '/home/jujuman/Research/Opt_test/optmol_1d.xyz'
-optfile = '/home/jujuman/Research/MD_TEST/capsaicin/optmol.xyz'
+#optfile = '/home/jujuman/Research/MD_TEST/capsaicin/optmol.xyz'
 #optfile = '/home/jujuman/Research/MD_TEST/taxol/optmol.xyz'
+optfile = '/home/jujuman/Research/MD_TEST/aPlusTest/optmol.xyz'
 
 T = 300.0 # Temperature
 C = 0.0001 # Optimization convergence
@@ -93,11 +97,9 @@ print(mol.get_chemical_symbols())
 
 # Set NC
 aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 0)
-print('test')
 
 # Set ANI calculator
 mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
-print('test')
 
 # Optimize molecule
 start_time = time.time()
@@ -109,11 +111,11 @@ print(hdt.evtokcal*mol.get_potential_energy())
 
 # Save optimized mol
 spc = mol.get_chemical_symbols()
-pos = mol.get_positions(wrap=True).reshape(1,len(spc),3)
+pos = mol.get_positions(wrap=False).reshape(1,len(spc),3)
 
 hdt.writexyzfile(optfile, pos, spc)
 
-#exit(0)
+exit(0)
 
 # Open MD output
 mdcrd = open(xyzfile,'w')
