@@ -36,40 +36,25 @@ import seaborn as sns
 
 #----------------Parameters--------------------
 
+dir = '/home/jujuman/Research/MD_TEST/trajectories/acetamide/'
+
 # Molecule file
-#molfile = '/home/jujuman/Research/MD_TEST/Chignolin/1uao_H.pdb'
-#molfile = '/home/jujuman/Research/IR_MD/M3/m3.xyz'
-#molfile = '/home/jujuman/Research/Opt_test/1d.pdb'
-#molfile = '/home/jujuman/Research/MD_TEST/helix_test/gly-15/gly-15_solv_gv.pdb'
-#molfile = '/home/jujuman/Research/MD_TEST/methanol_box/MethanolBoxCenter.xyz'
-molfile = '/home/jujuman/Research/MD_TEST/capsaicin/Structure3D_CID_1548943.sdf'
+molfile = dir + 'Acetamide.xyz'
 
 # Dynamics file
-#xyzfile = '/home/jujuman/Research/MD_TEST/Chignolin/mdcrd.xyz'
-#xyzfile = '/home/jujuman/Research/IR_MD/M3/mdcrd.xyz'
-#xyzfile = '/home/jujuman/Research/Opt_test/mdcrd_1d.xyz'
-#xyzfile = '/home/jujuman/Research/MD_TEST/C_2500/mdcrd.xyz'
-xyzfile = '/home/jujuman/Research/MD_TEST/capsaicin/mdcrd.xyz'
+xyzfile = dir + 'mdcrd.xyz'
 
 # Trajectory file
-#trajfile = '/home/jujuman/Research/MD_TEST/Chignolin/traj.dat'
-#trajfile = '/home/jujuman/Research/IR_MD/M3/traj.dat'
-trajfile = '/home/jujuman/Research/Opt_test/traj_1d.dat'
+trajfile = dir + 'traj.dat'
 
 # Optimized structure out:
-#optfile = '/home/jujuman/Research/MD_TEST/Chignolin/optmol.xyz'
-#optfile = '/home/jujuman/Research/IR_MD/M3/optmol.xyz'
-#optfile = '/home/jujuman/Research/Opt_test/optmol_1d.xyz'
-optfile = '/home/jujuman/Research/MD_TEST/capsaicin/optmol.xyz'
-#optfile = '/home/jujuman/Research/MD_TEST/taxol/optmol.xyz'
+optfile = dir + 'optmol.xyz'
 
 T = 300.0 # Temperature
 C = 0.0001 # Optimization convergence
-steps = 20000000
+steps = 1000000
 
-#wkdir    = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
 wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv3/'
-#wkdir = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
 nnfdir   = wkdir + '/train'
@@ -81,28 +66,29 @@ Nn = 5
 # Load molecule
 mol = read(molfile)
 #print('test')
-L = 90.0
-mol.set_cell(([[L, 0, 0],
-               [0, L, 0],
-               [0, 0, L]]))
+#L = 90.0
+#mol.set_cell(([[L, 0, 0],
+#               [0, L, 0],
+#               [0, 0, L]]))
 
-mol.set_pbc((True, True, True))
+#mol.set_pbc((True, True, True))
 
 print(mol.get_chemical_symbols())
 
 # Set NC
-aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 0)
+aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 1)
 
 # Set ANI calculator
 mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
 
 # Optimize molecule
-#start_time = time.time()
-#dyn = LBFGS(mol)
-#dyn.run(fmax=C)
-#print('[ANI Total time:', time.time() - start_time, 'seconds]')
+start_time = time.time()
+dyn = LBFGS(mol)
+dyn.run(fmax=C)
+print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
 print(hdt.evtokcal*mol.get_potential_energy())
+print(hdt.evtokcal*mol.get_forces())
 
 # Save optimized mol
 spc = mol.get_chemical_symbols()
@@ -119,13 +105,13 @@ traj = open(trajfile,'w')
 # We want to run MD with constant energy using the Langevin algorithm
 # with a time step of 0.5 fs, the temperature T and the friction
 # coefficient to 0.02 atomic units.
-dyn = Langevin(mol, 0.25 * units.fs, T * units.kB, 0.1)
+dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.01)
 
 # Run equilibration
-#print('Running equilibration...')
-#start_time = time.time()
-#dyn.run(50000) # Run 100ps equilibration dynamics
-#print('[ANI Total time:', time.time() - start_time, 'seconds]')
+print('Running equilibration...')
+start_time = time.time()
+dyn.run(10000) # Run 100ps equilibration dynamics
+print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
 # Set the momenta corresponding to T=300K
 #MaxwellBoltzmannDistribution(mol, T * units.kB)
@@ -152,7 +138,7 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
           'Etot = %.3feV' ' StdDev = %.3fKcal/mol/atom' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin, stddev))
 
 # Attach the printer
-dyn.attach(printenergy, interval=200)
+dyn.attach(printenergy, interval=1)
 
 # Run production
 print('Running production...')

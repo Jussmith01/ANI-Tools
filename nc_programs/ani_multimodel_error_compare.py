@@ -33,8 +33,8 @@ h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-13/gdb11_13_test500
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08/cv6/'
 #wkdircv = '/home/jujuman/Scratch/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv4/'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv1/'
-wkdircv = '/home/jujuman/Research/ForceTrainTesting/train/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv3/'
+#wkdircv = '/home/jujuman/Research/ForceTrainTesting/train/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb06r/org_cv/cv/'
 #wkdircv = '/home/jujuman/Research/ForceTrainTesting/train_full_al1/'
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-06/cv4/'
@@ -107,7 +107,10 @@ for i,data in enumerate(adl):
     sigma = anicv.compute_stddev_conformations(X,S)
 
     # Calculate energy deltas
-    Eani, Fani, Qani = anicv.compute_energy_conformations(X,S)
+    Eani, Fani = anicv.compute_energy_conformations(X,S)
+
+    # Get the charges
+    #Qani = anicv.get_charges_conformations(X,S)
 
     # Convert to kcal/mol and reshape if needed
     #Eani = hdn.hatokcal * Eani
@@ -157,8 +160,8 @@ for i,data in enumerate(adl):
     ERMSE = hdn.calculaterootmeansqrerror(Eani,Edft,axis=1)
 
     # Calculate per molecule errors
-    QMAE  = hdn.calculatemeanabserror (Qani.reshape(Ncv,-1),Qdft.reshape(-1),axis=1)
-    QRMSE = hdn.calculaterootmeansqrerror(Qani.reshape(Ncv,-1),Qdft.reshape(-1),axis=1)
+    #QMAE  = hdn.calculatemeanabserror (Qani.reshape(Ncv,-1),Qdft.reshape(-1),axis=1)
+    #QRMSE = hdn.calculaterootmeansqrerror(Qani.reshape(Ncv,-1),Qdft.reshape(-1),axis=1)
 
     # Calculate per molecule errors
     dEMAE  = hdn.calculatemeanabserror (dEani,dEdft,axis=1)
@@ -174,10 +177,10 @@ for i,data in enumerate(adl):
     Cdat['Natm'].append(len(S))
     Cdat['Eani'].append(Eani)
     Cdat['Edft'].append(Edft)
-    Cdat['Qani'].append(Qani)
-    Cdat['Qdft'].append(Qdft)
-    Cdat['QMAE'].append(QMAE)
-    Cdat['QRMSE'].append(QRMSE)
+    #Cdat['Qani'].append(Qani)
+    #Cdat['Qdft'].append(Qdft)
+    #Cdat['QMAE'].append(QMAE)
+    #Cdat['QRMSE'].append(QRMSE)
     Cdat['Emin'].append(Emin)
     Cdat['dEani'].append(dEani)
     Cdat['dEdft'].append(dEdft)
@@ -197,8 +200,8 @@ for i,data in enumerate(adl):
     print('   -ERMSE: ',  ERMSE, ':', "{:.2f}".format(ERMSE.mean()))
     print('   -dEMAE: ', dEMAE , ':', "{:.2f}".format(dEMAE.mean()))
     print('   -dERMSE:', dERMSE, ':', "{:.2f}".format(dERMSE.mean()))
-    print('   -QMAE:  ',  1000.0*QMAE, ':', "{:.2f}".format(1000.0*QMAE.mean()))
-    print('   -QRMSE: ',  1000.0*QRMSE, ':', "{:.2f}".format(1000.0*QRMSE.mean()))
+    #print('   -QMAE:  ',  1000.0*QMAE, ':', "{:.2f}".format(1000.0*QMAE.mean()))
+    #print('   -QRMSE: ',  1000.0*QRMSE, ':', "{:.2f}".format(1000.0*QRMSE.mean()))
     print('   -FMAE:  ',   FMAE, ':', "{:.2f}".format(FMAE.mean()))
     print('   -FRMSE: ',  FRMSE, ':', "{:.2f}".format(FRMSE.mean()))
 
@@ -307,8 +310,8 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
     #plt.draw()
     plt.show()
 
-Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Qani'], Cdat['Qdft'], Cdat['Sigm'], 30000.0)
-plot_corr_dist(1000.0*Fdft, 1000.0*np.mean(Fani, axis=0), True)
+Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cdat['Sigm'], 30000.0)
+plot_corr_dist(Fdft, np.mean(Fani, axis=0), True)
 
 # ----------------------------------
 
@@ -402,9 +405,9 @@ Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cda
 Cdat['Fani'] = Fani
 Cdat['Fdft'] = Fdft
 
-Qani, Qdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Qani'], Cdat['Qdft'], Cdat['Sigm'], 30000.0)
-Cdat['Qani'] = Qani
-Cdat['Qdft'] = Qdft
+#Qani, Qdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Qani'], Cdat['Qdft'], Cdat['Sigm'], 30000.0)
+#Cdat['Qani'] = Qani
+#Cdat['Qdft'] = Qdft
 
 
 # Convert arrays
@@ -522,8 +525,8 @@ print(Emte)
 print(Erte)
 print(dEmte)
 print(dErte)
-print(Qmte)
-print(Qrte)
+#print(Qmte)
+#print(Qrte)
 print(Fmte)
 print(Frte)
 print('---------------------------')
