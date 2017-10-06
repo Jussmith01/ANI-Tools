@@ -22,7 +22,7 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
-#h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
+h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-07/gdb11_07_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-11/gdb11_11_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-12/gdb11_12_test500.h5'
 h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-13/gdb11_13_test500.h5'
@@ -108,7 +108,10 @@ for i,data in enumerate(adl):
     sigma = anicv.compute_stddev_conformations(X,S)
 
     # Calculate energy deltas
-    Eani, Fani, Qani = anicv.compute_energy_conformations(X,S)
+    Eani, Fani = anicv.compute_energy_conformations(X,S)
+
+    # Get the charges
+    #Qani = anicv.get_charges_conformations(X,S)
 
     #Qdft = Qdft[:, 5:6]
     #Qani = Qani[:, :, 5:6]
@@ -163,8 +166,8 @@ for i,data in enumerate(adl):
     ERMSE = hdn.calculaterootmeansqrerror(Eani,Edft,axis=1)
 
     # Calculate per molecule errors
-    QMAE  = hdn.calculatemeanabserror (Qani.reshape(Ncv,-1),Qdft.reshape(-1),axis=1)
-    QRMSE = hdn.calculaterootmeansqrerror(Qani.reshape(Ncv,-1),Qdft.reshape(-1),axis=1)
+    #QMAE  = hdn.calculatemeanabserror (Qani.reshape(Ncv,-1),Qdft.reshape(-1),axis=1)
+    #QRMSE = hdn.calculaterootmeansqrerror(Qani.reshape(Ncv,-1),Qdft.reshape(-1),axis=1)
 
     # Calculate per molecule errors
     dEMAE  = hdn.calculatemeanabserror (dEani,dEdft,axis=1)
@@ -180,10 +183,10 @@ for i,data in enumerate(adl):
     Cdat['Natm'].append(len(S))
     Cdat['Eani'].append(Eani)
     Cdat['Edft'].append(Edft)
-    Cdat['Qani'].append(Qani)
-    Cdat['Qdft'].append(Qdft)
-    Cdat['QMAE'].append(QMAE)
-    Cdat['QRMSE'].append(QRMSE)
+    #Cdat['Qani'].append(Qani)
+    #Cdat['Qdft'].append(Qdft)
+    #Cdat['QMAE'].append(QMAE)
+    #Cdat['QRMSE'].append(QRMSE)
     Cdat['Emin'].append(Emin)
     Cdat['dEani'].append(dEani)
     Cdat['dEdft'].append(dEdft)
@@ -203,8 +206,8 @@ for i,data in enumerate(adl):
     print('   -ERMSE: ',  ERMSE, ':', "{:.2f}".format(ERMSE.mean()))
     print('   -dEMAE: ', dEMAE , ':', "{:.2f}".format(dEMAE.mean()))
     print('   -dERMSE:', dERMSE, ':', "{:.2f}".format(dERMSE.mean()))
-    print('   -QMAE:  ',  1000.0*QMAE, ':', "{:.2f}".format(1000.0*QMAE.mean()))
-    print('   -QRMSE: ',  1000.0*QRMSE, ':', "{:.2f}".format(1000.0*QRMSE.mean()))
+    #print('   -QMAE:  ',  1000.0*QMAE, ':', "{:.2f}".format(1000.0*QMAE.mean()))
+    #print('   -QRMSE: ',  1000.0*QRMSE, ':', "{:.2f}".format(1000.0*QRMSE.mean()))
     print('   -FMAE:  ',   FMAE, ':', "{:.2f}".format(FMAE.mean()))
     print('   -FRMSE: ',  FRMSE, ':', "{:.2f}".format(FRMSE.mean()))
 
@@ -313,8 +316,8 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
     #plt.draw()
     plt.show()
 
-Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Qani'], Cdat['Qdft'], Cdat['Sigm'], 30000.0)
-plot_corr_dist(1000.0*Fdft, 1000.0*np.mean(Fani, axis=0), inset=False)
+Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cdat['Sigm'], 30000.0)
+plot_corr_dist(Fdft, np.mean(Fani, axis=0), True)
 
 # ----------------------------------
 
@@ -408,9 +411,9 @@ Fani, Fdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Fani'], Cdat['Fdft'], Cda
 Cdat['Fani'] = Fani
 Cdat['Fdft'] = Fdft
 
-Qani, Qdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Qani'], Cdat['Qdft'], Cdat['Sigm'], 30000.0)
-Cdat['Qani'] = Qani
-Cdat['Qdft'] = Qdft
+#Qani, Qdft, Nd, Nt = aat.getcvconformerdata(Ncv, Cdat['Qani'], Cdat['Qdft'], Cdat['Sigm'], 30000.0)
+#Cdat['Qani'] = Qani
+#Cdat['Qdft'] = Qdft
 
 
 # Convert arrays
@@ -528,8 +531,8 @@ print(Emte)
 print(Erte)
 print(dEmte)
 print(dErte)
-print(Qmte)
-print(Qrte)
+#print(Qmte)
+#print(Qrte)
 print(Fmte)
 print(Frte)
 print('---------------------------')

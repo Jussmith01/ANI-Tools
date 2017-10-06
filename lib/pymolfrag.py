@@ -58,6 +58,7 @@ def rand_rotation_matrix(deflection=1.0, randnums=None):
     M = (np.outer(V, V) - np.eye(3)).dot(R)
     return M
 
+'''Molecule fragmentation class'''
 class molfrag():
     def __init__(self,xyz,spc):
         self.xyz = xyz
@@ -114,6 +115,7 @@ class molfrag():
         self.order_by_type(fragments)
         return fragments
 
+'''Dimer generator'''
 class dimergenerator():
     def __init__(self, cnstfile, saefile, nnfprefix, Nnet, molecule_list, gpuid=0, sinet=False):
         # Molecules list
@@ -138,33 +140,37 @@ class dimergenerator():
         self.ctd = []
 
         pos = 0
+        plc = 0
         for idx, j in enumerate(rint):
             x = self.mols[j]['coordinates']
             s = self.mols[j]['species']
 
-            maxd = hdn.generatedmatsd3(x).flatten().max() / 2.0
-
             # Apply a random rotation
             M = rand_rotation_matrix()
             x = np.dot(x,M.T)
+
+            maxd = hdn.generatedmatsd3(x).flatten().max() / 2.0
+            #print('after:', maxd)
 
             fail = True
             while fail:
                 ctr = np.random.uniform(2.0*maxd + 1.0, L - 2.0*maxd - 1.0, (3))
                 fail = False
                 for cid,c in enumerate(self.ctd):
-                    if np.linalg.norm(c[0] - ctr) < maxd + c[1] + 4.0:
+                    if np.linalg.norm(c[0] - ctr) < maxd + c[1] + 10.0:
                         # search for atoms within r angstroms
-                        minv = 10.0
+                        minv = 1000.0
                         for xi in self.X[c[2]:c[2]+self.Na[cid],:]:
                             for xj in x + ctr:
                                 dij = np.linalg.norm(xi-xj)
                                 if dij < minv:
                                     minv = dij
-                        if minv < 1.75:
+                        if minv < 3.5:
                             fail = True
 
                 if not fail:
+                    plc += 1
+                    print('Added:',plc)
                     self.ctd.append((ctr, maxd, pos))
                     self.X = np.vstack([self.X, x + ctr])
                     self.Na[idx] = len(s)
@@ -279,7 +285,7 @@ class dimergenerator():
                                     if v < min:
                                         min = v
 
-                            if min < 3.0 and min > 1.1:
+                            if min < 3.5 and min > 1.1:
                                 Xf = np.vstack([Xi, Xj])
                                 Sf = self.S[si:si+Nai]
                                 Sf.extend(self.S[sj:sj+Naj])
@@ -295,7 +301,7 @@ class dimergenerator():
                                 sig = np.std(hdn.hatokcal*E)/np.sqrt(Nai+Naj)
 
                                 self.Nt += 1
-                                if sig > 0.1:
+                                if sig > 0.25:
                                     self.Nd += 1
                                     hdn.writexyzfile(file+str(i).zfill(4)+'-'+str(j).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
                                     self.frag_list.append(dict({'coords': Xf,'spec': Sf}))

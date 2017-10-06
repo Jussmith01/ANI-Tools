@@ -12,7 +12,7 @@ def interval(v,S):
             return s
         ps = ps + ds
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv1/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv4/'
 #wkdir ='/home/jujuman/Research/HIPNN-MD-Traj/ANI-Traj-test/cv1/'
 saef   = wkdir + "sae_6-31gd.dat"
 #saef   = wkdir + "sae_ccsd_cbs.dat"
@@ -21,12 +21,16 @@ h5files = ['/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
            '/home/jujuman/Research/GDB_Dimer/dimer_gen_2/dimers2.h5',
            '/home/jujuman/Research/GDB_Dimer/dimer_gen_3/dimers3.h5',
            '/home/jujuman/Research/GDB_Dimer/dimer_gen_4/dimers4.h5',
+           '/home/jujuman/Research/GDB_Dimer/dimer_gen_5/dimers5.h5',
+           '/home/jujuman/Research/GDB_Dimer/dimer_gen_6/dimers6.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/DA_rxn_1/DA_rxn_1.h5',
+           '/home/jujuman/Research/ReactionGeneration/reactiondata/DA_rxn_1/DA_rxn_1_2.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1/comb_rxn_1.h5',
-<<<<<<< HEAD
-=======
-           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/gdb_r06_comb09_01_1.h5',
->>>>>>> 4d65f05e41e21fce5026cde80f2972a32b07a51d
+           '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1/comb_rxn_1_2.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.4.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.3.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.2.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.1.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_4.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_3.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_2.h5',
@@ -138,12 +142,16 @@ for f,fn in enumerate(h5files):
                         v.insertdata(X_v, E_v, list(S))
 
                 ## Store testset
-                if tv_split[1].size > 0:
-                    X_te = np.array(X[tv_split[1]], order='C', dtype=np.float32)
-                    F_te = np.array(F[tv_split[1]], order='C', dtype=np.float32)
-                    E_te = np.array(E[tv_split[1]], order='C', dtype=np.float64)
-                    if E_te.shape[0] != 0:
-                        te.store_data(Pn, coordinates=X_te, forces=F_te, energies=E_te, species=list(S))
+                #if split[i].size > 0:
+                #if tv_split[1].size > 0:
+                    #X_te = np.array(X[tv_split[1]], order='C', dtype=np.float32)
+                    #F_te = np.array(F[tv_split[1]], order='C', dtype=np.float32)
+                    #E_te = np.array(E[tv_split[1]], order='C', dtype=np.float64)
+                    #X_te = np.array(X[split[i]], order='C', dtype=np.float32)
+                    #F_te = np.array(F[split[i]], order='C', dtype=np.float32)
+                    #E_te = np.array(E[split[i]], order='C', dtype=np.float64)
+                    #if E_te.shape[0] != 0:
+                    #    te.store_data(Pn, coordinates=X_te, forces=F_te, energies=E_te, species=list(S))
 
     sys.stdout.write("\r%d%%" % int(100))
     sys.stdout.flush()

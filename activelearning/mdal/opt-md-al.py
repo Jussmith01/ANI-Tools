@@ -11,20 +11,20 @@ import random
 import os
 
 #--------------Parameters------------------
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv3/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv4/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile = wkdir + 'sae_6-31gd.dat'
 
 At = ['C', 'O', 'N'] # Hydrogens added after check
 
-dstore = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_4/'
+dstore = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_5/'
 
-N = 2
+N = 3
 T = 800.0
 dt = 0.5
 
-idir = [(0.50,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_1/inputs/'),
-        (1.00,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_2/inputs/'),
+idir = [(0.25,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_1/inputs/'),
+        (0.50,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_2/inputs/'),
         (1.00,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/h2o_cluster/inputs/'),
         (0.60,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_1/inputs/'),
         (0.50,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/inputs/'),
@@ -37,6 +37,7 @@ idir = [(0.50,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_1/in
         (0.30,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_2/inputs/'),
         (0.30,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_3/inputs/'),
         (0.30,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s08/config_4/inputs/'),
+        (0.25,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s09/config_1/inputs/'),
         (1.00,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/inputs/'),
         (1.00,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s02/inputs/'),
         (1.00,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/'),
@@ -71,7 +72,7 @@ for di,id in enumerate(idir):
         activ.setmol(data["coordinates"], S)
 
         # Generate conformations
-        X = activ.generate_conformations(N, T, dt, 700, 10, dS = 0.3)
+        X = activ.generate_conformations(N, T, dt, 700, 10, dS = 0.34)
 
         nfo = activ._infostr_
         difo.write('  -'+m+': '+nfo+'\n')

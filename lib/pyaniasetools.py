@@ -129,14 +129,22 @@ class anicrossvalidationconformer(object):
     ''' Compute the energy of a set of conformers for the CV networks '''
     def compute_energy_conformations(self,X,S):
         energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
-        charges  = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
+        #charges  = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
         forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
         for i,nc in enumerate(self.ncl):
             nc.setConformers(confs=X,types=list(S))
             energies[i] = nc.energy().copy()
-            charges[i] = nc.charge().copy()
+            #charges[i] = nc.charge().copy()
             forces[i] = nc.force().copy()
-        return hdt.hatokcal*energies, hdt.hatokcal*forces, charges
+        return hdt.hatokcal*energies, -hdt.hatokcal*forces#, charges
+
+    ''' Compute the energy of a set of conformers for the CV networks '''
+    def get_charges_conformations(self,X,S):
+        charges  = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
+        for i,nc in enumerate(self.ncl):
+            #nc.setConformers(confs=X,types=list(S))
+            charges[i] = nc.charge().copy()
+        return charges
 
     ''' Compute the std. dev. of rdkit conformers '''
     def compute_stddev_rdkitconfs(self,mrdk):
