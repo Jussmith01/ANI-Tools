@@ -6,10 +6,11 @@ import re
 import os.path
 import math
 import time as tm
+import linecache
 import pandas as pd
 
 hatokcal = 627.509469
-evtokcal = 27.2107
+evtokcal = 27.21138505
 AtoBohr = 1.88973
 
 convert = hatokcal  # Ha to Kcal/mol
@@ -180,18 +181,27 @@ def readxyz2 (file):
     xyz = []
     typ = []
     Na  = []
+    ct = []
 
     fd = open(file, 'r').read()
 
+    #print(fd)
+
     #rb = re.compile('\s*?\n?\s*?(\d+?)\s*?\n((?:\s*?[A-Z][a-z]?.+(?:\n|))+)')
-    rb = re.compile('((?:[A-Z][a-z]? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+?\s*?(?:\n|$))+)')
-    ra = re.compile('([A-Z][a-z]?) +?([-+]?\d+?\.\S+?) +?([-+]?\d+?\.\S+?) +?([-+]?\d+?\.\S+?)\s*?(?:\n|$)')
+    #rb = re.compile('((?:[A-Z][a-z]? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+? +?[-+]?\d+?\.\S+?\s*?(?:\n|$))+)')
+    rb = re.compile('(\d+?)\n(.+?)\n((?:[A-Z][a-z]?.+?(?:\n|$))+)')
+    #rb = re.compile('(\d+?)(\n)((?:[A-Z][a-z]?.+?(?:\n|$))+)')
+    ra = re.compile('([A-Z][a-z]?)\s+?([-+]?\d+?\.\S+?)\s+?([-+]?\d+?\.\S+?)\s+?([-+]?\d+?\.\S+?)\s*?(?:\n|$)')
 
     s = rb.findall(fd)
     Nc = len(s)
-    for i in s:
+    if Nc == 0:
+        raise ValueError('No coordinates found in file. Check formatting of '+file+'.')
 
-        c = ra.findall(i)
+    for i in s:
+        ct.append(i[1])
+
+        c = ra.findall(i[2])
         Na = len(c)
         for j in c:
             typ.append(j[0])
@@ -202,16 +212,43 @@ def readxyz2 (file):
     xyz = np.asarray(xyz,dtype=np.float32)
     xyz = xyz.reshape((Nc,Na,3))
 
-    return xyz,typ[0:Na],Na
+    return xyz,typ[0:Na],Na, ct
 
+def readrcdbstruct (file):
+    xyz = []
+    typ = []
+    Na  = []
 
+    fd = open(file, 'r').read()
 
-def writexyzfile (fn,xyz,typ):
+    ro = re.compile('optimize=\s*?(\d+?)\s*?[!|\n]')
+    o = ro.findall(fd)
+    opt = bool(int(o[0]))
+
+    ra = re.compile('\$coordinates\s*?\n([\s\S]+?)&')
+    rb = re.compile('([A-Z][a-z]?)\s+?[A-Z][a-z]?\s+?([+,-]?\d+?\.\d+?)\s+?([+,-]?\d+?\.\d+?)\s+?([+,-]?\d+?\.\d+?)\s*?(\n|$)')
+
+    s = ra.findall(fd)[0]
+    c = rb.findall(s)
+
+    Na = len(c)
+    for l in c:
+        typ.append(l[0])
+        xyz.append(float(l[1]))
+        xyz.append(float(l[2]))
+        xyz.append(float(l[3]))
+
+    xyz = np.asarray(xyz,dtype=np.float32)
+    xyz = xyz.reshape((Na,3))
+
+    return xyz,typ[0:Na],Na,opt
+
+def writexyzfile (fn,xyz,typ,cmt=''):
     f = open(fn, 'w')
     N = len(typ)
     #print('N ATOMS: ',typ)
     for m in xyz:
-        f.write(str(N)+'\n comment \n')
+        f.write(str(N)+'\n comment:' + cmt + '\n')
         #print(m)
         for i in range(N):
             x = m[i,0]
@@ -220,6 +257,60 @@ def writexyzfile (fn,xyz,typ):
             f.write(typ[i] + ' ' + "{:.7f}".format(x) + ' ' + "{:.7f}".format(y) + ' ' + "{:.7f}".format(z) + '\n')
         #f.write('\n')
     f.close()
+
+def readncdatall(file,N = 0):
+    rdat = dict()
+    if os.path.isfile(file):
+        fd = open(file, 'r').read()
+        fd = fd.split("\n",3)
+        lot = fd[0]
+        nda = int(fd[1])
+        nat = int(fd[2].split(",")[0])
+        spc = fd[2].split(",")[1:-1]
+
+        elm = nat*3*3 + nat*4 + 1
+
+        rdat.update({'lot':[lot],'species':spc})
+
+        np.empty((nda,elm))
+
+        Xi = []
+        Ei = []
+        Fi = []
+        C1 = []
+        C2 = []
+        SD = []
+        DP = []
+        for l in fd[3].split("\n")[0:-1]:
+            data = l.split(",")[0:-1]
+            Xi.append(np.array(data[0:nat * 3], dtype=np.float32).reshape(nat,3))
+            Ei.append(data[nat*3])
+            Fi.append(np.array(data[nat*3+1:nat*3+nat*3+1],dtype=np.float32).reshape(nat,3))
+            C1.append(np.array(data[nat*3+nat*3+1:nat*3+nat*3+(nat+1)+1],dtype=np.float32))
+            C2.append(np.array(data[nat*3+nat*3+(nat+1)+1:nat*3+nat*3+2*(nat+1)+1],dtype=np.float32))
+            SD.append(np.array(data[nat*3+nat*3+2*(nat+1)+1:nat*3+nat*3+3*(nat+1)+1],dtype=np.float32))
+            DP.append(np.array(data[nat*3+nat*3+3*(nat+1)+1:nat*3+nat*3+4*(nat+1)+(nat+1)*3+1],dtype=np.float32).reshape(nat+1,3))
+    else:
+        exit(FileNotFoundError)
+
+    Xi = np.stack(Xi)
+    Ei = np.array(Ei,dtype=np.float64)
+    Fi = np.stack(Fi)
+    C1 = np.stack(C1)
+    C2 = np.stack(C2)
+    SD = np.stack(SD)
+    DP = np.stack(DP)
+    rdat.update({'coordinates':Xi,
+                 'energies':Ei,
+                 'forces':Fi,
+                 'hirshfeld':C1,
+                 'cm5':C2,
+                 'spindensities':SD,
+                 'hirdipole':DP})
+
+    return rdat
+
+
 
 def readncdatwforce (file,N = 0):
     xyz = []
@@ -253,6 +344,10 @@ def readncdatwforce (file,N = 0):
             frc.append(list(map(float,sd[3*Na+1:2*3*Na+1])))
             if cnt >= N and N > 0:
                 break
+
+    Eact = np.array(Eact, dtype = np.float64)
+    xyz = np.array(xyz,dtype=np.float32).reshape(Eact.size,Na,3)
+    frc = np.array(frc,dtype=np.float32).reshape(Eact.size,Na,3)
 
 
     return xyz,frc,typ,Eact,readf
@@ -440,6 +535,7 @@ def generatedmatsd3(crds):
         for i in range(0,Na):
             for j in range(i+1, Na):
                 a[count] = np.linalg.norm(crds[s,i]-crds[s,j])
+                #print(a[count],crds[s,i],crds[s,i],crds[s,i]-crds[s,j])
                 count += 1
 
     return dmat
@@ -466,9 +562,13 @@ def calculatemeansqrerror(data1, data2):
     data = np.power(data1 - data2, 2)
     return np.mean(data)
 
-def calculaterootmeansqrerror(data1, data2):
+def calculaterootmeansqrerror(data1, data2, axis=0):
     data = np.power(data1 - data2, 2)
-    return np.sqrt(np.mean(data))
+    return np.sqrt(np.mean(data, axis=axis))
+
+def calculatemeanabserror(data1, data2, axis=0):
+    data = np.abs(data1 - data2)
+    return np.mean(data,axis=axis)
 
 # ----------------------------
 # Calculate Mean Squared Diff
@@ -558,6 +658,38 @@ def calculateabsdiff(data1):
 
     return data
 
+def nsum(n):
+    return int(( n * ( n - 1 ) ) / 2)
+
+def index_triangle(i, j, n):
+    if j < i:
+        return int(nsum(n) - nsum(n-j) + i - j - 1)
+    else:
+        return int(nsum(n) - nsum(n-i) + j - i - 1)
+
+def calculatedmat(data):
+    N = data.size
+    d = np.empty(nsum(N))
+
+    for i in range(N):
+        for j in range(i+1,N):
+            idx = index_triangle(i,j,N)
+            d[idx] = data[i] - data[j]
+
+    return d
+
+def calculateKdmat(K, data):
+    N = data.shape[1]
+    d = np.empty((K, nsum(N)))
+
+    for k in range(K):
+        for i in range(N):
+            for j in range(i+1,N):
+                idx = index_triangle(i,j,N)
+                d[k,idx] = data[k,i] - data[k,j]
+
+    return d
+
 # -----------------------
 
 # ----------------------------
@@ -638,9 +770,42 @@ def to_precision(x,p):
 
     return "".join(out)
 
-def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1'):
+def read_rcdb_coordsandnm(file):
+    f = open(file,'r').read()
 
-    f = open(wkdir + 'inputs/' + fpf + '-' + str(Nc).zfill(4) + '.ipt', 'w')
+    rc = re.compile("(?:\$coordinates)\s*?\n([\s\S]+?)&")
+    S = rc.search(f)
+
+    output = dict()
+    if S:
+        elements = np.vstack([np.array(list(filter(None,i.split(" ")))) for i in S.group(1).split("\n")][0:-1])
+        spc = [str(e) for e in elements[:, 0]]
+        xyz = np.array(elements[:,2:5],dtype=np.float32)
+        output.update({"coordinates":xyz,"species":spc})
+
+    rn = re.compile("FREQUEN=(.+)\nREDMASS=(.+)\nFRCCNST=(.+)\s*?{\s*?\n([\s\S]+?)}")
+    M = rn.findall(f)
+
+    if M:
+        freq = np.empty(len(M) ,dtype=np.float32)
+        rmas = np.empty(len(M), dtype=np.float32)
+        frcn = np.empty(len(M), dtype=np.float32)
+
+        nmcd = []
+        for i,m in enumerate(M):
+            freq[i] = float(m[0])
+            rmas[i] = float(m[1])
+            frcn[i] = float(m[2])
+            nmcd.append(np.vstack([np.array(list(filter(None, x.split(" "))),dtype=np.float32) for x in [s for s in m[3].split("\n") if s != '']]))
+
+        nmcd = np.stack(nmcd)
+        output.update({"frequency":freq,"reducedmass":rmas,"forceconstant":frcn,"nmdisplacements":nmcd})
+
+    return output
+
+def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1',fill=1,comment=""):
+
+    f = open(wkdir + 'inputs/' + fpf + '-' + str(Nc).zfill(fill) + '.ipt', 'w')
 
     Na = len(typ)
 
@@ -662,13 +827,15 @@ def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmra
     f.write('rdm=' + rdm + '\n')
     f.write('type=' + type + '\n')
     f.write('Temp=' + Temp + '\n')
-    f.write('mem=' + '1024' + '\n')
+    f.write('mem=' + '16000' + '\n')
     f.write('SCF=' + SCF + '\n')
     f.write('dfname=' + dfname + ' \n')
     f.write('vdfname=' + vdfname + ' \n')
     f.write('edfname=' + edfname + ' \n')
     f.write('optimize='+ opt + ' \n')
     f.write('frequency='+ freq + ' \n')
+
+    f.write('\n#'+comment+'\n')
 
     f.write('\n\n')
     f.write('$coordinates\n')

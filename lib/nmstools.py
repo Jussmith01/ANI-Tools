@@ -42,6 +42,15 @@ class nmsgenerator():
                     return True
         return False
 
+    # Checks for large changes in atomic distance from eq
+    def __check_distance_from_eq__(self,rxyz):
+        for i in range(0,self.Na):
+            Rii = np.linalg.norm(self.xyz[i]-rxyz[i])
+            if Rii > 2.0:
+                #print(Rii)
+                return True
+        return False
+
     # Generate a structure
     def __genrandomstruct__(self):
         rdt = np.random.random(self.Nf+1)
@@ -56,7 +65,7 @@ class nmsgenerator():
             Ki = mDynetoMet * self.fcc[i]
             ci = rdt[i+1]-rdt[i]
             Sn = -1.0 if np.random.binomial(1,0.5,1) else 1.0
-            Ri = Sn * MtoA * np.sqrt((3.0 * ci * float(self.Na) * Kb * self.T)/Ki)
+            Ri = Sn * MtoA * np.sqrt((3.0 * ci * Kb * float(self.Nf) * self.T)/(Ki))
             oxyz = oxyz + Ri * self.nmo[i]
         return oxyz
 
@@ -65,5 +74,12 @@ class nmsgenerator():
         gs = True
         while gs:
             rxyz = self.__genrandomstruct__()
-            gs = self.__check_atomic_distances__(rxyz)
+            gs = self.__check_atomic_distances__(rxyz) or self.__check_distance_from_eq__(rxyz)
         return rxyz
+
+    # Call this to return a random structure
+    def get_Nrandom_structures(self, N):
+        a_xyz = np.empty((N,self.Na,3),dtype=np.float32)
+        for i in range(N):
+            a_xyz[i] = self.get_random_structure()
+        return a_xyz

@@ -43,13 +43,19 @@ class anitrainer(object):
 
     def train_network(self,LR,LA,CV,ST,PS=1):
         # Initialize training variables
-        best_valid = 100.0
+        best_valid_E = 1000.0
+        best_valid_dE = 1000.0
+        best_valid_F = 1000.0
         Epoch = 1
         Toler = ST
 
         # Loop until LR is converged
-        Avg_t_err = 0
-        Avg_v_err = 0
+        Avg_t_err_E = 0
+        Avg_v_err_E = 0
+        Avg_t_err_dE = 0
+        Avg_v_err_dE = 0
+        Avg_t_err_F = 0
+        Avg_v_err_F = 0
         while LR > CV:
             # Loop until tol is 0
             while Toler is not 0:
@@ -63,12 +69,20 @@ class anitrainer(object):
                 train_cost = self.ani.gettcost()
                 valid_cost = self.ani.getvcost()
 
-                Avg_t_err = Avg_t_err + np.sqrt(train_cost)
-                Avg_v_err = Avg_v_err + np.sqrt(valid_cost)
+                Avg_t_err_E = Avg_t_err_E + np.sqrt(train_cost['Ecost'])
+                Avg_v_err_E = Avg_v_err_E + np.sqrt(valid_cost['Ecost'])
+
+                Avg_t_err_dE = Avg_t_err_dE + np.sqrt(train_cost['dEcost'])
+                Avg_v_err_dE = Avg_v_err_dE + np.sqrt(valid_cost['dEcost'])
+
+                Avg_t_err_F = Avg_t_err_F + np.sqrt(train_cost['Fcost'])
+                Avg_v_err_F = Avg_v_err_F + np.sqrt(valid_cost['Fcost'])
 
                 # Check for better validation
-                if (valid_cost < best_valid):
-                    best_valid = valid_cost
+                if Epoch > 1 and (valid_cost['Ecost'] + valid_cost['dEcost'] + valid_cost['Fcost']) < (best_valid_E + best_valid_dE + best_valid_F):
+                    best_valid_E = valid_cost['Ecost']
+                    best_valid_dE = valid_cost['dEcost']
+                    best_valid_F = valid_cost['Fcost']
 
                     Toler = ST
 
@@ -81,18 +95,25 @@ class anitrainer(object):
 
                 # Print some informations
                 if Epoch%PS == 0:
-                    self.tr_lc.append(hdn.hatokcal * Avg_t_err/float(PS))
-                    self.va_lc.append(hdn.hatokcal * Avg_t_err/float(PS))
+                    self.tr_lc.append(hdn.hatokcal * Avg_t_err_E/float(PS))
+                    self.va_lc.append(hdn.hatokcal * Avg_t_err_E/float(PS))
 
                     print('Epoch(', str(Epoch).zfill(4), ') Errors:',
-                          "{:7.3f}".format(hdn.hatokcal * Avg_t_err/float(PS)), ':',
-                          "{:7.3f}".format(hdn.hatokcal * Avg_v_err/float(PS)), ':',
-                          "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid)), 'Time:',
+                          "{:7.3f}".format(hdn.hatokcal * Avg_t_err_E/float(PS)), ':',
+                          "{:7.3f}".format(hdn.hatokcal * Avg_v_err_E/float(PS)), ':',
+                          "{:7.3f}".format(hdn.hatokcal * Avg_v_err_F/float(PS)), ':',
+                          "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_E)), ':',
+                          "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_dE)), ':',
+                          "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_F)), 'Time:',
                           "{:.3f}".format(tm.time() - _timeloop) + 's',
                           'LR:', "{:.3e}".format(LR), 'Tol:', str(Toler).zfill(3))
 
-                    Avg_t_err = 0
-                    Avg_v_err = 0
+                    Avg_t_err_E = 0
+                    Avg_v_err_E = 0
+                    Avg_t_err_dE = 0
+                    Avg_v_err_dE = 0
+                    Avg_t_err_F = 0
+                    Avg_v_err_F = 0
 
                 Epoch = Epoch + 1
 
@@ -103,7 +124,9 @@ class anitrainer(object):
             Toler = ST
 
         print('Final - Epoch(', str(Epoch).zfill(4), ') Errors:',
-              "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid)))
+              "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_E)),
+              "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_dE)),
+              "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_F)))
 
 class anitester (object):
     def __init__(self, cnstfile, saefile, nnfdir, gpuid, sinet):
@@ -119,11 +142,13 @@ class anitester (object):
         # Declare containers
         Eact = []
         Ecmp = []
+        Fcmp = []
         Nmt = 0
 
         for data in adl:
             # Extract the data
             xyz = data['coordinates']
+            frc = data['forces']
             Eqm = data['energies']
             spc = data['species']
 
@@ -149,21 +174,28 @@ class anitester (object):
 
                     # copy array subset
                     Eact_t = Eqm[i1:i2]
+                    Fact_t = frc[i1:i2]
 
                     # Set the conformers in NeuroChem
                     self.nc.setConformers(confs=xyz[i1:i2], types=list(spc))
 
                     Ecmp_t = self.nc.energy()
+                    Fcmp_t = self.nc.force()
+
+                    #print(hdn.hatokcal*np.abs(Fact_t-Fcmp_t).sum()/Ecmp_t.size)
 
                     Ecmp.append(np.sum(np.power(hdn.hatokcal * Ecmp_t - hdn.hatokcal * Eact_t,2)))
+                    Fcmp.append(np.sum(np.power(hdn.hatokcal * Fcmp_t.flatten() - hdn.hatokcal * Fact_t.flatten(), 2))/float(3.0*Fact_t.shape[1]))
+
                     Nmt = Nmt + Ecmp_t.size
                     #Eact.append(Eact_t)
 
                     #print(hdn.hatokcal * np.sum(np.abs(Ecmp_t-Eact_t))/float(Ecmp_t.size))
 
         Ecmp = np.array(Ecmp, dtype=np.float64)
+        Fcmp = np.array(Fcmp, dtype=np.float64)
 
-        return np.sqrt(np.sum(Ecmp) / float(Nmt))
+        return np.sqrt(np.sum(Ecmp) / float(Nmt)), np.sqrt(np.sum(Fcmp) / float(Nmt))
 
     def test_for_bad (self, xyz, Eact_W, spc, index, Emax):
         mNa = 100
@@ -280,8 +312,9 @@ class anitester (object):
 class ActiveANI (object):
 
     '''' -----------Constructor------------ '''
-    def __init__(self, hdf5files, saef, output,storecac, storetest, Naev):
+    def __init__(self, hdf5files, saef, output, storecac, storetest, Naev):
         self.xyz = []
+        self.frc = []
         self.Eqm = []
         self.spc = []
         self.idx = []
@@ -302,6 +335,7 @@ class ActiveANI (object):
         for f in hdf5files:
             # Construct the data loader class
             adl = pyt.anidataloader(f)
+            print('Loading file:',f)
 
             # Declare test cache
             if os.path.exists(storetest):
@@ -310,32 +344,52 @@ class ActiveANI (object):
             dpack = pyt.datapacker(storetest)
 
             for i, data in enumerate(adl):
-                xyz = np.array_split(data['coordinates'], 10)
-                eng = np.array_split(data['energies'], 10)
+
+                xyz = data['coordinates']
+                frc = data['forces']
+                eng = data['energies']
                 spc = data['species']
-                nme = data['parent']
+                nme = data['path']
 
-                self.prt.append(nme)
+                # Toss out high forces
+                Mv = np.max(np.linalg.norm(frc, axis=2), axis=1)
+                index = np.where(Mv > 1.75)[0]
+                indexk = np.where(Mv <= 1.75)[0]
 
-                self.xyz.append( np.concatenate(xyz[0:9]) )
-                self.Eqm.append( np.concatenate(eng[0:9]) )
-                self.spc.append(spc)
+                # CLear forces
+                xyz = xyz[indexk]
+                frc = frc[indexk]
+                eng = eng[indexk]
 
-                Nd = np.concatenate(eng[0:9]).shape[0]
+                idx = np.random.uniform(0.0, 1.0, eng.size)
+                tr_idx = np.asarray(np.where(idx < 0.9))[0]
+                te_idx = np.asarray(np.where(idx >= 0.9))[0]
 
-                self.idx.append( np.arange(Nd) )
-                self.kid.append( np.array([], dtype=np.int) )
-                self.gid.append( np.array([], dtype=np.int))
+                #print(tr_idx)
+                if tr_idx.size > 0:
+                    self.prt.append(nme)
 
-                self.tf = self.tf + Nd
+                    self.xyz.append( np.ndarray.astype(xyz[tr_idx], dtype=np.float32) )
+                    self.frc.append( np.ndarray.astype(frc[tr_idx], dtype=np.float32) )
+                    self.Eqm.append( np.ndarray.astype(eng[tr_idx], dtype=np.float64) )
+                    self.spc.append(spc)
 
-                self.nt.append(Nd)
-                self.nc.append(0)
+                    Nd = eng[tr_idx].size
+                    #print(Nd)
+
+                    self.idx.append( np.arange(Nd) )
+                    self.kid.append( np.array([], dtype=np.int) )
+                    self.gid.append( np.array([], dtype=np.int))
+
+                    self.tf = self.tf + Nd
+
+                    self.nt.append(Nd)
+                    self.nc.append(0)
 
                 # Prepare and store the test data set
-                if xyz[9].size != 0:
-                    t_xyz = xyz[9].reshape(xyz[9].shape[0], xyz[9].shape[1] * xyz[9].shape[2])
-                    dpack.store_data(nme + '/mol' + str(i), coordinates=t_xyz, energies=np.array(eng[9]), species=spc)
+                if xyz[te_idx].size != 0:
+                    #t_xyz = xyz[te_idx].reshape(te_idx.size, xyz[te_idx].shape[1] * xyz[te_idx].shape[2])
+                    dpack.store_data(nme + '/mol' + str(i), coordinates=xyz[te_idx], forces=frc[te_idx], energies=np.array(eng[te_idx]), species=spc)
 
             # Clean up
             adl.cleanup()
@@ -360,13 +414,13 @@ class ActiveANI (object):
     def get_percent_bad(self):
         return 100.0 * (self.Nbad/float(self.tf))
 
-    def init_dataset(self, P, T=0.8, V=0.2):
+    def init_dataset(self, P, T=0.9, V=0.2):
 
         # Declare data cache
         cachet = cg('_train', self.saef, self.storecac, False)
         cachev = cg('_valid', self.saef, self.storecac, False)
 
-        for i,(X,E,S) in enumerate(zip(self.xyz,self.Eqm,self.spc)):
+        for i,(X,F,E,S) in enumerate(zip(self.xyz,self.frc,self.Eqm,self.spc)):
 
             N = E.shape[0]
 
@@ -377,8 +431,12 @@ class ActiveANI (object):
             np.random.shuffle(self.idx[i])
 
             # get indicies
-            idxt = self.idx[i][0:Tp].copy()
-            idxv = self.idx[i][Tp+1:Tp+Vp].copy()
+            iix = np.random.uniform(0.0, 1.0, self.idx[i].size)
+            tr_idx = np.asarray(np.where(iix < T*P))[0]
+            vd_idx = np.asarray(np.where(iix >= 1.0-(V*P)))[0]
+
+            idxt = self.idx[i][tr_idx].copy()
+            idxv = self.idx[i][vd_idx].copy()
 
             self.kid[i] = np.concatenate([self.kid[i], idxt, idxv])
 
@@ -392,10 +450,10 @@ class ActiveANI (object):
 
             # Add data to the cache
             if idxt.shape[0] != 0:
-                cachet.insertdata(X[idxt], E[idxt], list(S))
+                cachet.insertdata(X[idxt], F[idxt], E[idxt], list(S))
 
             if idxv.shape[0] != 0:
-                cachev.insertdata(X[idxv], E[idxv], list(S))
+                cachev.insertdata(X[idxv], F[idxv], E[idxv], list(S))
 
         print('Full: ', self.tf)
         print('Used: ', self.ts,':',self.vs, ':', self.ts+self.vs)
@@ -404,7 +462,7 @@ class ActiveANI (object):
         cachet.makemetadata()
         cachev.makemetadata()
 
-    def store_diverse(self, cache, atest, X, E, S, index, P, T):
+    def store_diverse(self, cache, atest, X, F, E, S, index, P, T):
         #print(index.shape, index.size)
         if index.size != 0:
             cur_index, new_index = atest.compute_diverse(X, S, index, P * T, self.Naev)
@@ -414,7 +472,7 @@ class ActiveANI (object):
                 #cur_index = index[cur_index]
 
                 # Add data to the cache
-                cache.insertdata(X[cur_index], E[cur_index], list(S))
+                cache.insertdata(X[cur_index], F[cur_index], E[cur_index], list(S))
 
             if new_index.size != 0:
                 return np.array(new_index), np.array(cur_index), cur_index.size
@@ -423,22 +481,22 @@ class ActiveANI (object):
         return np.array([]), np.array([]), 0
 
 
-    def store_random(self, cache, X, E, S, index, P, T):
+    def store_random(self, cache, X, F, E, S, index, P, T):
         #print(index, index.shape, index.size)
         if index.size != 0:
             # Array of random floats from 0 to 1
             selection = np.random.uniform(low=0.0, high=1.0, size=index.shape[0])
 
             # Obtain the sample
-            new_index = np.array([n for n, i in enumerate(selection) if i > P * T])
-            cur_index = np.array([n for n, i in enumerate(selection) if i <= P * T])
+            new_index = np.asarray(np.where(selection > P * T))[0]
+            cur_index = np.asarray(np.where(selection <=  P * T))[0]
 
             if cur_index.shape[0] != 0:
                 # Get the new index
                 cur_index = index[cur_index]
 
                 # Add data to the cache
-                cache.insertdata(X[cur_index], E[cur_index], list(S))
+                cache.insertdata(X[cur_index], F[cur_index], E[cur_index], list(S))
 
             if new_index.size != 0:
                 return np.array(index[new_index]), np.array(cur_index), cur_index.size
@@ -462,7 +520,7 @@ class ActiveANI (object):
         Nkid = 0
         Ngid = 0
 
-        for i, (X, E, S) in enumerate(zip(self.xyz, self.Eqm, self.spc)):
+        for i, (X, F, E, S) in enumerate(zip(self.xyz, self.frc, self.Eqm, self.spc)):
 
             if self.idx[i].size != 0:
                 #print('Parent:', self.prt[i])
@@ -484,8 +542,11 @@ class ActiveANI (object):
                 Nbad = Nbad + self.idx[i].size
 
                 # Store a random subset of the bad for training
-                self.idx[i], kat, Nt = self.store_diverse(cachet, atest, X, E, S, self.idx[i], P, T)
-                self.idx[i], kav, Nv = self.store_diverse(cachev, atest, X, E, S, self.idx[i], P, V)
+                self.idx[i], kat, Nt = self.store_random(cachet, X, F, E, S, self.idx[i], P, T)
+                self.idx[i], kav, Nv = self.store_random(cachev, X, F, E, S, self.idx[i], P, V)
+
+                #self.idx[i], kat, Nt = self.store_diverse(cachet, atest, X, F, E, S, self.idx[i], P, T)
+                #self.idx[i], kav, Nv = self.store_diverse(cachev, atest, X, F, E, S, self.idx[i], P, V)
 
                 # Add the training data to kid
                 self.kid[i] = np.array(np.concatenate([self.kid[i],kat,kav]),dtype=np.int)
@@ -515,7 +576,7 @@ class ActiveANI (object):
 
         print(output)
         self.of.write(output)
-
+        self.of.flush()
         # Make meta data file for caches
         cachet.makemetadata()
         cachev.makemetadata()
@@ -526,15 +587,16 @@ class ActiveANI (object):
 
         dpack = pyt.datapacker(path)
 
-        for j, (i,X,E,S,P) in enumerate(zip(self.kid,self.xyz,self.Eqm,self.spc,self.prt)):
+        for j, (i,X,F,E,S,P) in enumerate(zip(self.kid,self.xyz,self.frc,self.Eqm,self.spc,self.prt)):
             xyz = X[i]
+            frc = F[i]
             eng = E[i]
             spc = S
             nme = P
 
             # Prepare and store the test data set
             if xyz.size != 0:
-                dpack.store_data(nme + '/mol' + str(j), coordinates=xyz, energies=eng, species=spc)
+                dpack.store_data(nme + '/mol' + str(j), coordinates=xyz, forces=frc, energies=eng, species=spc)
 
         # Cleanup the disk
         dpack.cleanup()
