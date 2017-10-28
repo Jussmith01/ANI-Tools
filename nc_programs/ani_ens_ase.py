@@ -75,7 +75,7 @@ mol.set_pbc((True, True, True))
 #print(mol.get_chemical_symbols())
 
 # Set NC
-aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 1)
+aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 0)
 
 # Set ANI calculator
 mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
@@ -91,7 +91,7 @@ print(hdt.evtokcal*mol.get_forces())
 
 # Save optimized mol
 spc = mol.get_chemical_symbols()
-pos = mol.get_positions(wrap=True).reshape(1,len(spc),3)
+pos = mol.get_positions(wrap=False).reshape(1,len(spc),3)
 
 hdt.writexyzfile(optfile, pos, spc)
 

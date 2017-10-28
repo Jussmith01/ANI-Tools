@@ -18,6 +18,7 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 # Define test file
 #h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/drugbank/drugbank_testset.h5'
+#h5file = '/home/jujuman/Scratch/Research/MD_TEST/methanol/dft_gen/traj.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-10/gdb11_10_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-09/gdb11_09_test500.h5'
 #h5file = '/home/jujuman/Research/extensibility_test_sets/gdb-08/gdb11_08_test500.h5'
@@ -111,6 +112,11 @@ for i,data in enumerate(adl):
 
     # Get the charges
     #Qani = anicv.get_charges_conformations(X,S)
+
+    #Qdft = Qdft[:, 5:6]
+    #Qani = Qani[:, :, 5:6]
+
+    print(Qani.shape)
 
     # Convert to kcal/mol and reshape if needed
     #Eani = hdn.hatokcal * Eani
