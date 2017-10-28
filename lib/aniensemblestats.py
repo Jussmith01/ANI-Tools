@@ -91,6 +91,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
     def __init__(self, networks, tsfiles, gpu=0):
         super().__init__(networks['cns'], networks['sae'], networks['nnf'], networks['nts'], gpu )
         self.tsfiles = tsfiles
+        self.Nn = networks['nts']
 
     '''Stat generator'''
     def generate_stats(self, maxe = sys.float_info.max):
@@ -118,7 +119,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
 
                     Eani = Eani[:,midx]
                     Edft = data['energies'][midx]
-                    Fani = Fani[:,midx,:,:]
+                    Fani = -Fani[:,midx,:,:]
                     Fdft = data['forces'][midx]
 
                     #Eestd = np.std(Eani, axis=0)/np.sqrt(len(data['species']))
@@ -144,7 +145,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                     #cdata['Frmse'].append(np.sqrt(np.mean((Fani-Fdft).reshape(Fdft.shape[0], -1)**2, axis=1)))
                     #cdata['Frmae'].append(np.sqrt(np.mean(np.abs((Fani - Fdft).reshape(Fdft.shape[0], -1)), axis=1)))
 
-                    cdata['dEani'].append(hdt.calculateKdmat(6, Eani))
+                    cdata['dEani'].append(hdt.calculateKdmat(self.Nn+1, Eani))
                     cdata['dEdft'].append(hdt.calculatedmat(Edft))
 
                     #cdata['Erani'].append(Eani-Eani.min())
@@ -184,14 +185,19 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
     ''' Generate total errors '''
     def generate_total_errors(self, ntkey, tskey):
         #idx = np.nonzero(self.fdata[ntkey][tskey]['Erdft'])
-        return {'EMAEm': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Eani'][5,:], self.fdata[ntkey][tskey]['Edft']),
-                'EMAEs': np.std(hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Eani'][0:5,:], self.fdata[ntkey][tskey]['Edft'], axis=1)),
-                'ERMSm': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Eani'][5,:], self.fdata[ntkey][tskey]['Edft']),
-                'ERMSs': np.std(hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Eani'][0:5,:], self.fdata[ntkey][tskey]['Edft'], axis=1)),
-                'FMAEm': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Fani'][5,:], self.fdata[ntkey][tskey]['Fdft']),
-                'FMAEs': np.std(hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Fani'][0:5,:], self.fdata[ntkey][tskey]['Fdft'], axis=1)),
-                'FRMSm': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Fani'][5,:], self.fdata[ntkey][tskey]['Fdft']),
-                'FRMSs': np.std(hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Fani'][0:5, :],self.fdata[ntkey][tskey]['Fdft'], axis=1)),
+        Nn = self.fdata[ntkey][tskey]['Eani'].shape[0]-1
+        return {'EMAEm': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Eani'][Nn,:], self.fdata[ntkey][tskey]['Edft']),
+                'EMAEs': np.std(hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Eani'][0:Nn,:], self.fdata[ntkey][tskey]['Edft'], axis=1)),
+                'ERMSm': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Eani'][Nn,:], self.fdata[ntkey][tskey]['Edft']),
+                'ERMSs': np.std(hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Eani'][0:Nn,:], self.fdata[ntkey][tskey]['Edft'], axis=1)),
+                'dEMAEm': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['dEani'][Nn,:], self.fdata[ntkey][tskey]['dEdft']),
+                'dEMAEs': np.std(hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['dEani'][0:Nn,:], self.fdata[ntkey][tskey]['dEdft'], axis=1)),
+                'dERMSm': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['dEani'][Nn,:], self.fdata[ntkey][tskey]['dEdft']),
+                'dERMSs': np.std(hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['dEani'][0:Nn,:], self.fdata[ntkey][tskey]['dEdft'], axis=1)),
+                'FMAEm': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Fani'][Nn,:], self.fdata[ntkey][tskey]['Fdft']),
+                'FMAEs': np.std(hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Fani'][0:Nn,:], self.fdata[ntkey][tskey]['Fdft'], axis=1)),
+                'FRMSm': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Fani'][Nn,:], self.fdata[ntkey][tskey]['Fdft']),
+                'FRMSs': np.std(hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Fani'][0:Nn, :],self.fdata[ntkey][tskey]['Fdft'], axis=1)),
                 #'dEMAE': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['dEani'], self.fdata[ntkey][tskey]['dEdft']),
                 #'dERMS': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['dEani'], self.fdata[ntkey][tskey]['dEdft']),
                 #'ERMAE': hdt.calculatemeanabserror(self.fdata[ntkey][tskey]['Erani'][idx], self.fdata[ntkey][tskey]['Erdft'][idx]),
@@ -209,7 +215,8 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         return edat
 
     def generate_correlation_plot(self, ntkey, tskey, prop1, prop2, figsize=[13,10]):
-        plot_corr_dist(self.fdata[ntkey][tskey][prop1][5,:], self.fdata[ntkey][tskey][prop2], True, figsize)
+        Nn = self.fdata[ntkey][tskey][prop1].shape[0]-1
+        plot_corr_dist(self.fdata[ntkey][tskey][prop1][Nn,:], self.fdata[ntkey][tskey][prop2], True, figsize)
 
     def generate_violin_distribution(self, tskey, maxstd=0.34):
         import seaborn as sns
@@ -252,6 +259,9 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         #ax.set_ylim([-1,20])
         plt.show()
 
+    def get_size(self, ntkey, tskey):
+        return self.fdata[ntkey][tskey]['Eani'].shape
+
     def plot_2d_error(self, ntkey, tskey, maxstd=10.0):
         x = self.fdata[ntkey][tskey]['Eani']-self.fdata[ntkey][tskey]['Edft']
         y = self.fdata[ntkey][tskey]['Frmse']
@@ -285,7 +295,7 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
 
         plt.show()
 
-    def plot_bar_propsbynet(self, props, dsets, fontsize=14, bbox_to_anchor=(1.0, 1.1), figsize=(15.0, 12.0), ncol=1, errortype='MAE'):
+    def plot_bar_propsbynet(self, props, dsets, ntwks=[], fontsize=14, bbox_to_anchor=(1.0, 1.1), figsize=(15.0, 12.0), ncol=1, errortype='MAE'):
 
         N = len(dsets)
         ind = np.arange(N)  # the x locations for the groups
@@ -298,8 +308,11 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
 
         fig, axes = plt.subplots(len(props), 1, figsize=(30.0, 24.0))
 
-        keys = list(self.fdata.keys())
-        keys.sort()
+        if len(ntwks) == 0:
+            keys = list(self.fdata.keys())
+            keys.sort()
+        else:
+            keys=ntwks
 
         for j,(p,ax) in enumerate(zip(props, axes.flatten())):
             bars = dict()
@@ -354,5 +367,94 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
             ax.set_xticklabels([d for d in dsets])
             if j == 0:
                 ax.legend(rects, keys, fontsize=fontsize, bbox_to_anchor=bbox_to_anchor, ncol=ncol)
+
+        plt.show()
+
+    def plot_error_by_net(self, props, dsets, ntwks=[], fontsize=14, bbox_to_anchor=(1.0, 1.1), figsize=(15.0, 12.0), ncol=1, errortype='MAE'):
+
+        N = len(dsets)
+        ind = np.arange(N)  # the x locations for the groups
+        rects = []
+        nets = []
+
+        label_size = fontsize
+        mpl.rcParams['xtick.labelsize'] = label_size
+        mpl.rcParams['ytick.labelsize'] = label_size
+
+        colors = cm.viridis(np.linspace(0, 1, len(props)))
+
+        fig, axes = plt.subplots(3, 2, figsize=figsize)
+
+        if len(ntwks) == 0:
+            keys = list(self.fdata.keys())
+            keys.sort()
+        else:
+            keys=ntwks
+
+        for j,(ds,ax) in enumerate(zip(dsets, axes.flatten())):
+            higt = dict()
+            errs = dict()
+
+
+
+            for i,(tk,c) in enumerate(zip(props,colors)):
+                higt.update({tk[0] : []})
+                errs.update({tk[0] : []})
+
+                for k in keys:
+                    if errortype is 'MAE':
+                        Nn = self.fdata[k][ds][tk[2]].shape[0]-1
+                        height = hdt.calculatemeanabserror(self.fdata[k][ds][tk[2]][Nn, :], self.fdata[k][ds][tk[3]])
+                        error = np.std(hdt.calculatemeanabserror(self.fdata[k][ds][tk[2]], self.fdata[k][ds][tk[3]], axis=1))
+
+                        higt[tk[0]].append(height)
+                        errs[tk[0]].append(error)
+                    elif errortype is 'RMSE':
+                        Nn = self.fdata[k][ds][tk[2]].shape[0] - 1
+                        height = hdt.calculaterootmeansqrerror(self.fdata[k][ds][tk[2]][Nn, :], self.fdata[k][ds][tk[3]])
+                        error = np.std(hdt.calculaterootmeansqrerror(self.fdata[k][ds][tk[2]], self.fdata[k][ds][tk[3]], axis=1))
+
+                        higt[tk[0]].append(height)
+                        errs[tk[0]].append(error)
+
+                x_axis = np.arange(len(higt[tk[0]][:-1]))
+                #ax.set_yscale("log", nonposy='clip')
+                rects.append(ax.plot(x_axis,
+                                     higt[tk[0]][:-1],
+                                     '-o',
+                                     color=c,
+                                     linewidth=5,
+                                     label=tk[0]))
+                ax.errorbar(x_axis,
+                            higt[tk[0]][:-1],
+                            yerr=errs[tk[0]][:-1],
+                            fmt='.',
+                            capsize=8,
+                            elinewidth=3,
+                            color=c,
+                            ecolor=c,
+                            markeredgewidth=2)
+
+                ax.plot([-0.1,len(higt[tk[0]][:-1])-1+0.1],
+                        [higt[tk[0]][-1],higt[tk[0]][-1]],
+                        '--',
+                        color=c,
+                        linewidth=5)
+
+                ax.legend(fontsize=fontsize, bbox_to_anchor=bbox_to_anchor, ncol=ncol)
+
+                ax.set_title(ds, fontsize=fontsize+2)
+                ax.set_xticks(x_axis)
+                ax.set_xticklabels([d for d in keys[:-1]])
+                ax.set_ylabel(errortype, fontsize=fontsize)
+
+                #ax.set_ylim([0.1,100])
+
+            # add some text for labels, title and axes ticks
+            #ax.set_title(p[0], fontsize=fontsize)
+            #ax.set_xticks(ind + ((len(keys)+3)*width) / len(props))
+
+            #if j == 0:
+            #ax.legend(rects, keys, fontsize=fontsize, bbox_to_anchor=bbox_to_anchor, ncol=ncol)
 
         plt.show()

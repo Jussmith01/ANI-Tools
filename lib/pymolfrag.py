@@ -15,6 +15,8 @@ from ase.md.langevin import Langevin
 from ase import units
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 
+import random
+
 # Snagged from here: http://blog.lostinmyterminal.com/python/2015/05/12/random-rotation-matrix.html
 def rand_rotation_matrix(deflection=1.0, randnums=None):
     """
@@ -165,12 +167,12 @@ class dimergenerator():
                                 dij = np.linalg.norm(xi-xj)
                                 if dij < minv:
                                     minv = dij
-                        if minv < 3.5:
+                        if minv < 1.75:
                             fail = True
 
                 if not fail:
                     plc += 1
-                    print('Added:',plc)
+                    #print('Added:',plc)
                     self.ctd.append((ctr, maxd, pos))
                     self.X = np.vstack([self.X, x + ctr])
                     self.Na[idx] = len(s)
@@ -213,7 +215,7 @@ class dimergenerator():
         self.mol.set_velocities(vel)
 
         # Declare Dyn
-        self.dyn = Langevin(self.mol, dt * units.fs, T * units.kB, 0.01)
+        self.dyn = Langevin(self.mol, dt * units.fs, T * units.kB, 0.1)
 
     def run_dynamics(self, Ni, xyzfile, trajfile):
         # Open MD output
@@ -306,3 +308,218 @@ class dimergenerator():
                                     hdn.writexyzfile(file+str(i).zfill(4)+'-'+str(j).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
                                     self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
                                     #print(dc, Sf, sig)
+
+'''Cluster generator'''
+class clustergenerator():
+    def __init__(self, cnstfile, saefile, nnfprefix, Nnet, molecule_list, gpuid=0, sinet=False):
+        # Molecules list
+        self.mols = molecule_list
+
+        # Number of networks
+        self.Nn = Nnet
+
+        # Build ANI ensemble
+        self.aens = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)
+
+        self.edgepad = 1.0
+        self.mindist = 2.0
+
+        # Construct pyNeuroChem class
+        #self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
+
+    def __generategarbagebox__(self,Nm, L):
+        self.X = np.empty((0, 3), dtype=np.float32)
+        self.S = []
+        self.C = np.zeros((Nm, 3), dtype=np.float32)
+
+        rint = np.random.randint(len(self.mols), size=Nm)
+        self.Na = np.zeros(Nm, dtype=np.int32)
+        self.ctd = []
+
+        pos = 0
+        plc = 0
+        for idx, j in enumerate(rint):
+            x = self.mols[j]['coordinates']
+            s = self.mols[j]['species']
+
+            # Apply a random rotation
+            M = rand_rotation_matrix()
+            x = np.dot(x,M.T)
+
+            maxd = hdn.generatedmatsd3(x).flatten().max() / 2.0
+            #print('after:', maxd)
+
+            Nf = 0
+            fail = True
+            while fail:
+                ctr = np.random.uniform(2.0*maxd + self.edgepad, L - 2.0*maxd - self.edgepad, (3))
+                fail = False
+                for cid,c in enumerate(self.ctd):
+                    if np.linalg.norm(c[0] - ctr) < maxd + c[1] + 10.0:
+                        # search for atoms within r angstroms
+                        minv = 1000.0
+                        for xi in self.X[c[2]:c[2]+self.Na[cid],:]:
+                            for xj in x + ctr:
+                                dij = np.linalg.norm(xi-xj)
+                                if dij < minv:
+                                    minv = dij
+                        if minv < self.mindist:
+                            fail = True
+                            Nf += 1
+
+                if not fail:
+                    plc += 1
+                    #print('Added:',plc)
+                    self.ctd.append((ctr, maxd, pos))
+                    self.X = np.vstack([self.X, x + ctr])
+                    self.Na[idx] = len(s)
+                    pos += len(s)
+                    print('Placement Complete...',plc,'-',Nf)
+                    self.S.extend(s)
+
+    def init_dynamics(self, Nm, V, L, dt, T):
+        self.L = L
+
+        # Generate the box of junk
+        self.__generategarbagebox__(Nm, L)
+
+        # Make mol
+        self.mol = Atoms(symbols=self.S, positions=self.X)
+
+        # Set box and PBC
+        self.mol.set_cell(([[L, 0, 0],
+                            [0, L, 0],
+                            [0, 0, L]]))
+
+        self.mol.set_pbc((True, True, True))
+
+        # Set ANI calculator
+        # Set ANI calculator
+        self.mol.set_calculator(ANIENS(self.aens))
+        #self.mol.set_calculator(ANI(False))
+        #self.mol.calc.setnc(self.ncl[0])
+
+
+        # Give molecules random velocity
+        acc_idx = 0
+        vel = np.empty_like(self.X)
+        for n in self.Na:
+            rv = np.random.uniform(-V, V, size=(3))
+            for k in range(n):
+                vel[acc_idx + k, :] = rv
+            acc_idx += n
+        #print(vel)
+
+        self.mol.set_velocities(vel)
+
+        # Declare Dyn
+        self.dyn = Langevin(self.mol, dt * units.fs, T * units.kB, 0.1)
+
+    def run_dynamics(self, Ni, xyzfile, trajfile):
+
+        for id, nc in enumerate(self.aens.ncl):
+            nc.setMolecule(coords=np.array(self.mol.get_positions(), dtype=np.float32), types=self.mol.get_chemical_symbols())
+
+        # Open MD output
+        mdcrd = open(xyzfile, 'w')
+
+        # Open MD output
+        traj = open(trajfile, 'w')
+
+        # Define the printer
+        def printenergy(a=self.mol, d=self.dyn, b=mdcrd, t=traj):  # store a reference to atoms in the definition.
+            """Function to print the potential, kinetic and total energy."""
+            epot = a.get_potential_energy() / len(a)
+            ekin = a.get_kinetic_energy() / len(a)
+
+            stddev = hdn.evtokcal * a.calc.stddev
+
+            t.write(str(d.get_number_of_steps()) + ' ' + str(ekin / (1.5 * units.kB)) + ' ' + str(epot) + ' ' + str(
+                ekin) + ' ' + str(epot + ekin) + '\n')
+            b.write(str(len(a)) + '\n' + str(ekin / (1.5 * units.kB)) + ' Step: ' + str(d.get_number_of_steps()) + '\n')
+            c = a.get_positions(wrap=True)
+            for j, i in zip(a, c):
+                b.write(str(j.symbol) + ' ' + str(i[0]) + ' ' + str(i[1]) + ' ' + str(i[2]) + '\n')
+
+            #print('Step: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
+            #      'Etot = %.3feV' ' StdDev = %.3fKcal/mol/atom' % (
+            #      d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin, stddev))
+
+        # Attach the printer
+        self.dyn.attach(printenergy, interval=4)
+
+        self.dyn.run(Ni) # Do Ni steps
+
+        # Open MD output
+        mdcrd.close()
+
+        # Open MD output
+        traj.close()
+
+    def __fragmentbox__(self, file):
+        self.X = self.mol.get_positions()
+
+        self.frag_list = []
+
+        self.Nd = 0
+        self.Nt = 0
+
+        for i in range(len(self.Na)):
+            si = self.ctd[i][2]
+            di = self.ctd[i][1]
+            Nai = self.Na[i]
+            Xci = np.sum(self.X[si:si+Nai,:], axis=0)/ Nai
+            Xi = self.X[si:si + Nai, :]
+
+            if np.all( Xci > 4.5 ) and np.all( Xci <= self.L-4.5 ):
+
+                if np.all(Xci > di) and np.all(Xci < self.L-di):
+                    Xf = Xi
+                    Sf = self.S[si:si + Nai]
+
+                    Nmax = random.randint(2, 12)
+                    Nmol = 0
+                    for j in range(len(self.Na)):
+                        if i != j:
+                            sj = self.ctd[j][2]
+                            dj = self.ctd[j][1]
+                            Naj = self.Na[j]
+                            Xcj = np.sum(self.X[sj:sj+Naj,:], axis=0)/ Naj
+                            Xj = self.X[sj:sj+Naj,:]
+
+                            if np.all(Xcj > dj) and np.all(Xcj < self.L - dj):
+                                dc = np.linalg.norm(Xci - Xcj)
+                                if dc < di + dj + 5.0:
+                                    min = 10.0
+                                    for ii in range(Nai):
+                                        Xiii = Xi[ii]
+                                        for jj in range(Naj):
+                                            Xjjj = Xj[jj]
+                                            v = np.linalg.norm(Xiii-Xjjj)
+                                            if v < min:
+                                                min = v
+
+                                    if min < 4.25 and min > 0.70:
+                                        Xf = np.vstack([Xf, Xj])
+                                        Sf.extend(self.S[sj:sj+Naj])
+                                        Nmol += 1
+                            if Nmol >= Nmax:
+                                break
+
+                    Xcf = np.sum(Xf, axis=0) / float(len(Sf))
+                    Xf = Xf - Xcf
+
+                    E = np.empty(5, dtype=np.float64)
+                    for id,nc in enumerate(self.aens.ncl):
+                        nc.setMolecule(coords=np.array(Xf,dtype=np.float32), types=Sf)
+                        E[id] = nc.energy()[0]
+
+                    sig = np.std(hdn.hatokcal*E)/np.sqrt(Nai+Naj)
+                    #print('Mol(',i,'): sig=',sig)
+
+                    self.Nt += 1
+                    if sig > 0.34:
+                        self.Nd += 1
+                        hdn.writexyzfile(file+str(i).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
+                        self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
+                        #print(dc, Sf, sig)
