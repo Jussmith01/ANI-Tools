@@ -3,7 +3,7 @@ import pyanitrainer as atr
 import os
 
 # Network 1 Files
-wkdir = '/home/jujuman/Research/DataReductionMethods/model_force_reduce_al1/train/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model_9.0.5_reduce/train/'
 cnstf = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saenf = 'sae_6-31gd.dat'
 nfdir = 'networks/'
@@ -11,15 +11,32 @@ nfdir = 'networks/'
 opt = 'active_output.opt'
 
 # Data Dir
-datadir = '/home/jujuman/Research/DataReductionMethods/model_force_reduce_al1/cache/'
+datadir = '/home/jujuman/Research/DataReductionMethods/model_9.0.5_reduce/cache/'
 testdata = datadir + 'testset/testset.h5'
-trainh5 = wkdir + 'ani_red_ALfull.h5'
+trainh5 = wkdir + 'ani_red9.0.5_ALfull.h5'
 
 # Test data
-test_files = ['/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
-              '/home/jujuman/Research/GDB_Dimer/dimer_gen_2/dimers2.h5',
+test_files = ['/home/jujuman/Research/GDB_Dimer/dimers1_fix.h5',
+              '/home/jujuman/Research/GDB_Dimer/dimers2_fix.h5',
+              '/home/jujuman/Research/GDB_Dimer/dimers3_fix.h5',
+              '/home/jujuman/Research/GDB_Dimer/dimers4_fix.h5',
+              '/home/jujuman/Research/GDB_Dimer/dimers5_fix.h5',
+              '/home/jujuman/Research/GDB_Dimer/dimers6_fix.h5',
+              '/home/jujuman/Research/GDB_Dimer/dimers7_fix.h5',
               '/home/jujuman/Research/ReactionGeneration/reactiondata/DA_rxn_1/DA_rxn_1.h5',
+              '/home/jujuman/Research/ReactionGeneration/reactiondata/DA_rxn_1/DA_rxn_1_2.h5',
               '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1/comb_rxn_1.h5',
+              '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1/comb_rxn_1_2.h5',
+              '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.5.h5',
+              '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.4.h5',
+              '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.3.h5',
+              '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.2.h5',
+              '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.1.h5',
+              '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_4.h5',
+              '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_3.h5',
+              '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_2.h5',
+              '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_1.h5',
+              '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_02_4.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_02_3.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_02_2.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_02_1.h5',
@@ -52,18 +69,18 @@ test_files = ['/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S04_06r.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S05_06r.h5',
               '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S06_06r.h5',
-              ]
+            ]
 
 #---- Parameters ----
-GPU = 0
-LR  = 0.001
-LA  = 0.25
-CV  = 1.0e-6
-ST  = 100
+GPU = 0 # GPU ID
+LR  = 0.001 # Initial learning rate
+LA  = 0.25 # LR annealing
+CV  = 1.0e-6 # LR converg
+ST  = 100 # ????
 M   = 0.08 # Max error per atom in kcal/mol
-P   = 0.01
-ps  = 20
-Naev = 384
+P   = 0.01 # Percent to keep
+ps  = 20 # Print step
+Naev = 384 #
 sinet= False
 #--------------------
 
@@ -73,28 +90,30 @@ d = dict({'wkdir'         : wkdir,
           'ntwkStoreDir'  : wkdir+'networks/',
           'atomEnergyFile': saenf,
           'datadir'       : datadir,
-          'tbtchsz'       : '256',
-          'vbtchsz'       : '128',
+          'tbtchsz'       : '64',
+          'vbtchsz'       : '64',
           'gpuid'         : str(GPU),
           'ntwshr'        : '0',
           'nkde'          : '2',
+          'force'         : '0',
+          'fmult'         : '0.01',
           'runtype'       : 'ANNP_CREATE_HDNN_AND_TRAIN',
           'adptlrn'       : 'OFF',
           'moment'        : 'ADAM',})
 
-l1 = dict({'nodes'      : '256',
+l1 = dict({'nodes'      : '128',
            'activation' : '5',
            'maxnorm'    : '1',
            'norm'       : '3.0',
            'btchnorm'   : '0',})
 
-l2 = dict({'nodes'      : '256',
+l2 = dict({'nodes'      : '128',
            'activation' : '5',
            'maxnorm'    : '1',
            'norm'       : '3.0',
            'btchnorm'   : '0',})
 
-l3 = dict({'nodes'      : '256',
+l3 = dict({'nodes'      : '64',
            'activation' : '5',
            'maxnorm'    : '1',
            'norm'       : '3.0',

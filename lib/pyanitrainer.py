@@ -362,8 +362,8 @@ class ActiveANI (object):
                 eng = eng[indexk]
 
                 idx = np.random.uniform(0.0, 1.0, eng.size)
-                tr_idx = np.asarray(np.where(idx < 0.9))[0]
-                te_idx = np.asarray(np.where(idx >= 0.9))[0]
+                tr_idx = np.asarray(np.where(idx < 0.99))[0]
+                te_idx = np.asarray(np.where(idx >= 0.99))[0]
 
                 #print(tr_idx)
                 if tr_idx.size > 0:
