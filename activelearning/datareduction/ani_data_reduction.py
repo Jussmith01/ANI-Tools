@@ -35,7 +35,7 @@ M   = 0.08 # Max error per atom in kcal/mol
 P   = 0.025
 ps  = 25
 Naev = 384
-SINet= False
+sinet= False
 #--------------------
 
 # Training varibles
