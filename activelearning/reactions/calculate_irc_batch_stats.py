@@ -75,6 +75,8 @@ def plot_irc(axes, i, d, f):
 
         axes.errorbar(Rc[:, 1], energies2[::-1]-energies2[::-1][0], yerr=modl_std2, fmt='--',color='red',label="ANI-1: "+"{:.1f}".format(bar2[-1]),linewidth=2)
         axes.errorbar(Rc[:, 1], energies1[::-1]-energies1[::-1][0], yerr=modl_std1, fmt='--',color='blue',label="["+str(i)+"]: "+"{:.1f}".format(bar1[-1]),linewidth=2)
+        #axes.set_xlabel("Reaction Coordinate $\AA$")
+        #axes.set_ylabel(r"$\Delta E$ $ (kcal \times mol^{-1})$")
         #axes.plot(Rc[:, 1], energies2[::-1]-energies2[::-1][0],'--',color='red',label="["+str(i)+"]: "+"{:.1f}".format(bar2[-1]),linewidth=3)
         #axes.plot(Rc[:, 1], energies1[::-1]-energies1[::-1][0],'--',color='green',label="["+str(i)+"]: "+"{:.1f}".format(bar1[-1]),linewidth=3)
 
@@ -104,17 +106,17 @@ fp = 'DA_IRC'
 #cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 #saefile1 = 'sae_6-31gd.dat'
 
-wkdircv1 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv1/'
-cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
-saefile1 = 'sae_6-31gd.dat'
+wkdircv2 = '/home/jujuman/Research/ANI-validation/'
+cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
+saefile2 = 'sae_6-31gd.dat'
 
 #wkdircv2 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_2/cv2/'
 #cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
 #saefile2 = 'sae_6-31gd.dat'
 
-wkdircv2 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv2/'
-cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
-saefile2 = 'sae_6-31gd.dat'
+wkdircv1 = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv4_2/'
+cnstfile1 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
+saefile1 = 'sae_6-31gd.dat'
 
 #wkdircv2 = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk-cv/'
 #cnstfile2 = 'rHCNO-4.6A_16-3.1A_a4-8.params'
@@ -122,7 +124,7 @@ saefile2 = 'sae_6-31gd.dat'
 
 Nnc = 5
 
-files = os.listdir(d)
+files = os.listdir(d)[0:3]
 files.sort()
 #random.shuffle(files)
 #files = files[0:9]

@@ -68,8 +68,8 @@ Cdat = dict({'Sigm' : [],
              'Natm' : [],
              'Eani' : [],
              'Edft' : [],
-             'Qani' : [],
-             'Qdft' : [],
+             #'Qani' : [],
+             #'Qdft' : [],
              'Emin' : [],
              'dEani': [],
              'dEdft': [],
@@ -116,7 +116,7 @@ for i,data in enumerate(adl):
     #Qdft = Qdft[:, 5:6]
     #Qani = Qani[:, :, 5:6]
 
-    print(Qani.shape)
+    #print(Qani.shape)
 
     # Convert to kcal/mol and reshape if needed
     #Eani = hdn.hatokcal * Eani
