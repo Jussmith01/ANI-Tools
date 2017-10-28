@@ -22,12 +22,12 @@ def gendipeptidelist(AAlist):
     return fasta,nlist
 
 #--------------Parameters------------------
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv4/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile = wkdir + 'sae_6-31gd.dat'
 
 # Store dir
-sdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_5/'
+sdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_6/'
 
 At = ['C', 'O', 'N'] # Hydrogens added after check
 

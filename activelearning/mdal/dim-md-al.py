@@ -27,7 +27,7 @@ trajfile = '/home/jujuman/Research/GDB_Dimer/test/traj.dat'
 # Optimized structure out
 optfile = '/home/jujuman/Research/GDB_Dimer/test/optmol.xyz'
 
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv4/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix  = wkdircv + 'train'
@@ -36,28 +36,31 @@ At = ['C', 'O', 'N'] # Hydrogens added after check
 
 dstore = '/home/jujuman/Research/GDB_Dimer/test/'
 
-N = 15
-T = 300.0
-L = 250.0
-V = 0.0001
+N = 20
+T = 400.0
+L = 20.0
+V = 0.04
 dt = 0.25
-Nm = 2000
-Nr = 100
+Nm = 220
+Nr = 15
 
-Ni = 5000
+Ni = 3000
 #Ns = 100
 
 
-idir = [(1000, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/inputs/'),
-        #(1500, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/water_input/'),
-        (100, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s02/inputs/'),
-        (10, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/'),
-        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/inputs/'),
-        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/inputs/'),
-        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_1/inputs/'),
-        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/inputs/'),
-        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_3/inputs/'),
+idir = [#(7500, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/inputs/'),
+        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/water_input/'),
+        #(2000, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s02/inputs/'),
+        #(10, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/'),
+        #(5, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/inputs/'),
+        #(2, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_1/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_2/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_3/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_1/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_2/inputs/'),
         #(1, '/home/jujuman/Research/MD_TEST/WeirdThing/input/input/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/C2_test/'),
         ]
 
 #-------------------------------------------

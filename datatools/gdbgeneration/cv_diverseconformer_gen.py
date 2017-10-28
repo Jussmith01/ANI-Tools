@@ -48,13 +48,13 @@ idir = ['/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_2/inputs/'
         '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/',
         ]
 
-cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_4/'
+cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_5/'
 
 dc = aat.diverseconformers(cnstfile, saefile, nnfdir, aevsize, 0, False)
 
 #wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model3-5/cv1/cv32/'
 #cnstfilecv = wkdircv + '../rHCNO-4.6A_16-3.1A_a4-8.params'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv3/'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv4_2/'
 cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix   = wkdircv + 'train'

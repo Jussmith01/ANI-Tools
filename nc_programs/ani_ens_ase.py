@@ -2,7 +2,6 @@ from ase_interface import ANIENS
 from ase_interface import ensemblemolecule
 
 import pyNeuroChem as pync
-
 import pyaniasetools as pya
 import hdnntools as hdt
 
@@ -36,10 +35,10 @@ import seaborn as sns
 
 #----------------Parameters--------------------
 
-dir = '/home/jujuman/Research/MD_TEST/trajectories/acetamide/'
+dir = '/home/jujuman/Research/MD_TEST/water/'
 
 # Molecule file
-molfile = dir + 'Acetamide.xyz'
+molfile = dir + 'waterbox_30_tol.xyz'
 
 # Dynamics file
 xyzfile = dir + 'mdcrd.xyz'
@@ -48,13 +47,13 @@ xyzfile = dir + 'mdcrd.xyz'
 trajfile = dir + 'traj.dat'
 
 # Optimized structure out:
-optfile = dir + 'optmol.xyz'
+optfile = dir + 'optmolbox.xyz'
 
-T = 300.0 # Temperature
-C = 0.0001 # Optimization convergence
+T = 275.0 # Temperature
+C = 1. # Optimization convergence
 steps = 1000000
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv3/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
 nnfdir   = wkdir + '/train'
@@ -66,14 +65,14 @@ Nn = 5
 # Load molecule
 mol = read(molfile)
 #print('test')
-#L = 90.0
-#mol.set_cell(([[L, 0, 0],
-#               [0, L, 0],
-#               [0, 0, L]]))
+L = 30.0
+mol.set_cell(([[L, 0, 0],
+               [0, L, 0],
+               [0, 0, L]]))
 
-#mol.set_pbc((True, True, True))
+mol.set_pbc((True, True, True))
 
-print(mol.get_chemical_symbols())
+#print(mol.get_chemical_symbols())
 
 # Set NC
 aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 1)
@@ -82,10 +81,10 @@ aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 1)
 mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
 
 # Optimize molecule
-start_time = time.time()
-dyn = LBFGS(mol)
-dyn.run(fmax=C)
-print('[ANI Total time:', time.time() - start_time, 'seconds]')
+#start_time = time.time()
+#dyn = LBFGS(mol)
+#dyn.run(fmax=C)
+#print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
 print(hdt.evtokcal*mol.get_potential_energy())
 print(hdt.evtokcal*mol.get_forces())
@@ -105,13 +104,13 @@ traj = open(trajfile,'w')
 # We want to run MD with constant energy using the Langevin algorithm
 # with a time step of 0.5 fs, the temperature T and the friction
 # coefficient to 0.02 atomic units.
-dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.01)
+dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.02)
 
 # Run equilibration
-print('Running equilibration...')
-start_time = time.time()
-dyn.run(10000) # Run 100ps equilibration dynamics
-print('[ANI Total time:', time.time() - start_time, 'seconds]')
+#print('Running equilibration...')
+#start_time = time.time()
+#dyn.run(10000) # Run 100ps equilibration dynamics
+#print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
 # Set the momenta corresponding to T=300K
 #MaxwellBoltzmannDistribution(mol, T * units.kB)
@@ -125,7 +124,6 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
     epot = a.get_potential_energy() / len(a)
     ekin = a.get_kinetic_energy() / len(a)
 
-    #print()
     stddev =  hdt.evtokcal*a.calc.stddev
 
     t.write(str(d.get_number_of_steps()) + ' ' + str(ekin / (1.5 * units.kB)) + ' ' + str(epot) + ' ' + str(ekin) + ' ' + str(epot+ekin) + '\n')
@@ -138,18 +136,18 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
           'Etot = %.3feV' ' StdDev = %.3fKcal/mol/atom' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin, stddev))
 
 # Attach the printer
-dyn.attach(printenergy, interval=1)
+dyn.attach(printenergy, interval=10)
 
 # Run production
 print('Running production...')
 start_time = time.time()
-#for i in range(int(T)):
-#    print('Set temp:',i,'K')
-#    dyn.set_temperature(float(i) * units.kB)
-#    dyn.run(500)  # Do 0.5ns of MD
+for i in range(int(T)):
+    print('Set temp:',i,'K')
+    dyn.set_temperature(float(i) * units.kB)
+    dyn.run(50) 
 
-dyn.set_temperature(300.0 * units.kB)
-dyn.run(steps) # Do 0.5ns of MD
+dyn.set_temperature(T * units.kB)
+dyn.run(steps)
 print('[ANI Total time:', time.time() - start_time, 'seconds]')
 mdcrd.close()
 traj.close()

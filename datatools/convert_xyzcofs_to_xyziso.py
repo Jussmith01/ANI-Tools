@@ -12,13 +12,17 @@ def convert_eformula(sstr):
         rtn += z+str(N)
     return rtn
 
-sdir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_4/confs/"
-ndir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_4/confs_iso/"
-#sdir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_5/confs/"
-#ndir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_5/confs_iso/"
+#sdir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_5/confs/"
+#ndir = "/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_5/confs_iso/"
+#sdir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_7/confs/"
+#ndir = "/home/jujuman/Research/GDB_Dimer/dimer_gen_7/confs_iso/"
+
+sdir = "/home/jujuman/Research/Cluster_AL/water/confs/"
+ndir = "/home/jujuman/Research/Cluster_AL/water/confs_iso/"
+
 
 #prefix = 'dimers'
-prefix = 'comb09'
+prefix = 'watercluster'
 
 files = os.listdir(sdir)
 files = [f for f in files if f.rsplit('.',maxsplit=1)[-1] == 'xyz']
