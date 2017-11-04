@@ -22,7 +22,7 @@ test_files = ['/home/jujuman/Research/GDB_Dimer/dimers1_fix.h5',
               '/home/jujuman/Research/GDB_Dimer/dimers4_fix.h5',
               '/home/jujuman/Research/GDB_Dimer/dimers5_fix.h5',
               '/home/jujuman/Research/GDB_Dimer/dimers6_fix.h5',
-              '/home/jujuman/Research/GDB_Dimer/dimers7_fix.h5',
+              '/home/jujuman/Research/GDB_Dimer/dimer_gen_7/dimers7.h5',
               '/home/jujuman/Research/ReactionGeneration/reactiondata/DA_rxn_1/DA_rxn_1.h5',
               '/home/jujuman/Research/ReactionGeneration/reactiondata/DA_rxn_1/DA_rxn_1_2.h5',
               '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1/comb_rxn_1.h5',
@@ -77,7 +77,7 @@ LR  = 0.001 # Initial learning rate
 LA  = 0.25 # LR annealing
 CV  = 1.0e-6 # LR converg
 ST  = 100 # ????
-M   = 0.08 # Max error per atom in kcal/mol
+M   = 0.34 # Max error per atom in kcal/mol
 P   = 0.01 # Percent to keep
 ps  = 20 # Print step
 Naev = 384 #
@@ -90,8 +90,8 @@ d = dict({'wkdir'         : wkdir,
           'ntwkStoreDir'  : wkdir+'networks/',
           'atomEnergyFile': saenf,
           'datadir'       : datadir,
-          'tbtchsz'       : '64',
-          'vbtchsz'       : '64',
+          'tbtchsz'       : '1024',
+          'vbtchsz'       : '1024',
           'gpuid'         : str(GPU),
           'ntwshr'        : '0',
           'nkde'          : '2',

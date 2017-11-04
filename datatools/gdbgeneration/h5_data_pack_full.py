@@ -16,9 +16,11 @@ def file_len(fname):
 #path = '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1.h5'
 #path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S06_06r.h5'
 #path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_3.h5'
-path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/gdb_r06_comb09_01_3.h5'
+#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/gdb_r06_comb09_01_3.h5'
+path = '/home/jujuman/Research/extensibility_test_sets/ani_md_benchmark/ani_md_bench.h5'
 
-dtdirs = ['/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_3/data/',
+dtdirs = ['/home/jujuman/Research/extensibility_test_sets/ani_md_benchmark/data/data/',
+          #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_3/data/',
           #'/home/jujuman/Scratch/Research/ReactionGeneration/DA_rxn_1/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_3/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/confs_4/data/',
@@ -77,7 +79,7 @@ for i,d in enumerate(dtdirs):
 
             #print(f)
             fn = f[0] +'-'+ str(i).zfill(3) + "/mol" + f[1].split(".")[0]
-            #fn = f[1] + "/mol" + f[2].split(".")[0]
+            #fn = f[1] + "/mol" + f[0].split(".")[0]
 
             #print(fn)
             print('Storing: ',fn,' data:',Ne)

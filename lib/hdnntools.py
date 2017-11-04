@@ -543,7 +543,7 @@ def generatedmatsd3(crds):
 def compute_sae(file, spc):
     f = open(file,'r').read()
 
-    p = re.compile('([A-Z][a-z]?)=(.+?)(?=\n|$)')
+    p = re.compile('([A-Z][a-z]?),\d+?=(.+?)(?=\n|$)')
     m = dict(re.findall(p,f))
 
     sae = 0.0
