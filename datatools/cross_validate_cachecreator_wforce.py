@@ -18,21 +18,27 @@ def interval(v,S):
             return s
         ps = ps + ds
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
 saef   = wkdir + "sae_6-31gd.dat"
 
-h5files = ['/home/jujuman/Research/GDB_Dimer/dimers1_fix.h5',
-           '/home/jujuman/Research/GDB_Dimer/dimers2_fix.h5',
-           '/home/jujuman/Research/GDB_Dimer/dimers3_fix.h5',
-           '/home/jujuman/Research/GDB_Dimer/dimers4_fix.h5',
-           '/home/jujuman/Research/GDB_Dimer/dimers5_fix.h5',
-           '/home/jujuman/Research/GDB_Dimer/dimers6_fix.h5',
-           '/home/jujuman/Research/GDB_Dimer/dimers7_fix.h5',
+h5files = [#'/home/jujuman/Research/GDB_Dimer/dimers1_fix.h5',
+           #'/home/jujuman/Research/GDB_Dimer/dimers2_fix.h5',
+           #'/home/jujuman/Research/GDB_Dimer/dimers3_fix.h5',
+           #'/home/jujuman/Research/GDB_Dimer/dimers4_fix.h5',
+           #'/home/jujuman/Research/GDB_Dimer/dimers5_fix.h5',
+           #'/home/jujuman/Research/GDB_Dimer/dimers6_fix.h5',
+           '/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
+           '/home/jujuman/Research/GDB_Dimer/dimer_gen_2/dimers2.h5',
+           '/home/jujuman/Research/GDB_Dimer/dimer_gen_3/dimers3.h5',
+           '/home/jujuman/Research/GDB_Dimer/dimer_gen_4/dimers4.h5',
+           '/home/jujuman/Research/GDB_Dimer/dimer_gen_5/dimers5.h5',
+           '/home/jujuman/Research/GDB_Dimer/dimer_gen_6/dimers6.h5',
+           #'/home/jujuman/Research/GDB_Dimer/dimer_gen_7/dimers7.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/DA_rxn_1/DA_rxn_1.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/DA_rxn_1/DA_rxn_1_2.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1/comb_rxn_1.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1/comb_rxn_1_2.h5',
-           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.5.h5',
+           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.5.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.4.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.3.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.2.h5',
@@ -89,15 +95,15 @@ for i in range(N):
     if not os.path.exists(store_dir + str(i)):
         os.mkdir(store_dir + str(i))
 
-    if os.path.exists(store_dir + str(i) + '/testset/testset.h5'):
-        os.remove(store_dir + str(i) + '/testset/testset.h5')
+    if os.path.exists(store_dir + str(i) + '/../testset/testset'+str(i)+'.h5'):
+        os.remove(store_dir + str(i) + '/../testset/testset'+str(i)+'.h5')
 
-    if not os.path.exists(store_dir + str(i) + '/testset'):
-        os.mkdir(store_dir + str(i) + '/testset')
+    if not os.path.exists(store_dir + str(i) + '/../testset'):
+        os.mkdir(store_dir + str(i) + '/../testset')
 
 cachet = [cg('_train', saef, store_dir + str(r) + '/',False) for r in range(N)]
 cachev = [cg('_valid', saef, store_dir + str(r) + '/',False) for r in range(N)]
-testh5 = [pyt.datapacker(store_dir + str(r) + '/testset/testset.h5') for r in range(N)]
+testh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/testset'+str(r)+'.h5') for r in range(N)]
 
 Nd = np.zeros(N,dtype=np.int32)
 Nbf = 0
@@ -112,7 +118,9 @@ for f,fn in enumerate(h5files):
     for c, data in enumerate(adl):
         #if c == 2 or c == 2 or c == 2:
         # Get test store name
-        Pn = fn.split('/')[-1].split('.')[0] + data['path']
+        #Pn = fn.split('/')[-1].split('.')[0] + data['path']
+        Pn = data['path']+'_'+str(f).zfill(6)+'_'+str(c).zfill(6)
+        #print(Pn)
 
         # Progress indicator
         sys.stdout.write("\r%d%% %s" % (int(100*c/float(To)), Pn))
@@ -209,12 +217,12 @@ for f,fn in enumerate(h5files):
                         v.insertdata(X_v, F_v, E_v, list(S))
 
                 ## Store testset
-                #if tv_split[1].size > 0:
-                #    X_te = np.array(X[tv_split[1]], order='C', dtype=np.float32)
-                #    F_te = np.array(F[tv_split[1]], order='C', dtype=np.float32)
-                #    E_te = np.array(E[tv_split[1]], order='C', dtype=np.float64)
-                #    if E_te.shape[0] != 0:
-                #        te.store_data(Pn, coordinates=X_te, forces=F_te, energies=E_te, species=list(S))
+                if tv_split[1].size > 0:
+                    X_te = np.array(X[split[i]], order='C', dtype=np.float32)
+                    F_te = np.array(F[split[i]], order='C', dtype=np.float32)
+                    E_te = np.array(E[split[i]], order='C', dtype=np.float64)
+                    if E_te.shape[0] != 0:
+                        te.store_data(Pn, coordinates=X_te, forces=F_te, energies=E_te, species=list(S))
 
     #plt.hist(np.concatenate(Fmt), bins=150)
     #plt.show()

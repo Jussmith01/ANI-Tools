@@ -35,10 +35,10 @@ import seaborn as sns
 
 #----------------Parameters--------------------
 
-dir = '/home/jujuman/Research/MD_TEST/water/'
+dir = '/home/jujuman/Research/extensibility_test_sets/ani_md_benchmark/'
 
 # Molecule file
-molfile = dir + 'waterbox_30_tol.xyz'
+molfile = dir + 'ChignolinNeutral.xyz'
 
 # Dynamics file
 xyzfile = dir + 'mdcrd.xyz'
@@ -47,13 +47,14 @@ xyzfile = dir + 'mdcrd.xyz'
 trajfile = dir + 'traj.dat'
 
 # Optimized structure out:
-optfile = dir + 'optmolbox.xyz'
+optfile = dir + 'ChignolinNeutral_opt.xyz'
 
-T = 275.0 # Temperature
-C = 1. # Optimization convergence
-steps = 1000000
+T = 300.0 # Temperature
+dt = 1.0
+C = 0.0001 # Optimization convergence
+steps = 10000
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv4/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
 nnfdir   = wkdir + '/train'
@@ -65,12 +66,12 @@ Nn = 5
 # Load molecule
 mol = read(molfile)
 #print('test')
-L = 30.0
-mol.set_cell(([[L, 0, 0],
-               [0, L, 0],
-               [0, 0, L]]))
+#L = 30.0
+#mol.set_cell(([[L, 0, 0],
+#               [0, L, 0],
+#               [0, 0, L]]))
 
-mol.set_pbc((True, True, True))
+#mol.set_pbc((True, True, True))
 
 #print(mol.get_chemical_symbols())
 
@@ -81,10 +82,10 @@ aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 0)
 mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
 
 # Optimize molecule
-#start_time = time.time()
-#dyn = LBFGS(mol)
-#dyn.run(fmax=C)
-#print('[ANI Total time:', time.time() - start_time, 'seconds]')
+start_time = time.time()
+dyn = LBFGS(mol)
+dyn.run(fmax=C)
+print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
 print(hdt.evtokcal*mol.get_potential_energy())
 print(hdt.evtokcal*mol.get_forces())
@@ -104,7 +105,7 @@ traj = open(trajfile,'w')
 # We want to run MD with constant energy using the Langevin algorithm
 # with a time step of 0.5 fs, the temperature T and the friction
 # coefficient to 0.02 atomic units.
-dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.02)
+dyn = Langevin(mol, dt * units.fs, T * units.kB, 0.02)
 
 # Run equilibration
 #print('Running equilibration...')
@@ -140,11 +141,11 @@ dyn.attach(printenergy, interval=10)
 
 # Run production
 print('Running production...')
-start_time = time.time()
-for i in range(int(T)):
-    print('Set temp:',i,'K')
-    dyn.set_temperature(float(i) * units.kB)
-    dyn.run(50) 
+#start_time = time.time()
+#for i in range(int(T)):
+#    print('Set temp:',i,'K')
+#    dyn.set_temperature(float(i) * units.kB)
+#    dyn.run(50)
 
 dyn.set_temperature(T * units.kB)
 dyn.run(steps)

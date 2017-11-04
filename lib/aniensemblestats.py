@@ -211,6 +211,7 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         errors = dict()
         for k in self.fdata.keys():
             errors[k] = pd.Series(self.generate_total_errors(k,tskey))
+        pd.set_option('expand_frame_repr', False)
         edat = pd.DataFrame(errors).transpose()
         return edat
 

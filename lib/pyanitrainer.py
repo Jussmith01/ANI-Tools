@@ -229,7 +229,7 @@ class anitester (object):
                 Ecmp_t = self.nc.energy()
 
                 deltas = hdn.hatokcal * np.abs(Ecmp_t - np.array(Eact_t, dtype=float))
-                deltas = deltas/float(Na)
+                deltas = deltas/np.sqrt(float(Na))
                 bad_l.extend([ n for n, i in zip(index, deltas) if i > Emax ])
                 god_l.extend([ n for n, i in zip(index, deltas) if i <= Emax ])
 
@@ -414,7 +414,7 @@ class ActiveANI (object):
     def get_percent_bad(self):
         return 100.0 * (self.Nbad/float(self.tf))
 
-    def init_dataset(self, P, T=0.9, V=0.2):
+    def init_dataset(self, P, T=0.9, V=0.1):
 
         # Declare data cache
         cachet = cg('_train', self.saef, self.storecac, False)
@@ -504,7 +504,7 @@ class ActiveANI (object):
                 return np.array([]), np.array([]), cur_index.size
         return np.array([]), np.array([]), 0
 
-    def add_bad_data (self, cnstfile, saefile, nnfdir, gpuid, sinet, P, T=0.8, V=0.2, M=0.06):
+    def add_bad_data (self, cnstfile, saefile, nnfdir, gpuid, sinet, P, T=0.9, V=0.1, M=0.3):
         atest = anitester(cnstfile, saefile, nnfdir, gpuid, sinet)
 
         # Declare data cache
