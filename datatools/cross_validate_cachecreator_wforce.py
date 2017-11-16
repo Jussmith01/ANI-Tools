@@ -18,10 +18,11 @@ def interval(v,S):
             return s
         ps = ps + ds
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
-saef   = wkdir + "sae_6-31gd.dat"
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5/'
+saef   = wkdir + "sae_wb97x6-31gd.dat"
 
-h5files = [#'/home/jujuman/Research/GDB_Dimer/dimers1_fix.h5',
+h5files = ['/home/jujuman/Research/Cluster_AL/waterclusters1.h5',
+           #'/home/jujuman/Research/GDB_Dimer/dimers1_fix.h5',
            #'/home/jujuman/Research/GDB_Dimer/dimers2_fix.h5',
            #'/home/jujuman/Research/GDB_Dimer/dimers3_fix.h5',
            #'/home/jujuman/Research/GDB_Dimer/dimers4_fix.h5',
@@ -33,12 +34,12 @@ h5files = [#'/home/jujuman/Research/GDB_Dimer/dimers1_fix.h5',
            '/home/jujuman/Research/GDB_Dimer/dimer_gen_4/dimers4.h5',
            '/home/jujuman/Research/GDB_Dimer/dimer_gen_5/dimers5.h5',
            '/home/jujuman/Research/GDB_Dimer/dimer_gen_6/dimers6.h5',
-           #'/home/jujuman/Research/GDB_Dimer/dimer_gen_7/dimers7.h5',
+           '/home/jujuman/Research/GDB_Dimer/dimer_gen_7/dimers7.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/DA_rxn_1/DA_rxn_1.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/DA_rxn_1/DA_rxn_1_2.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1/comb_rxn_1.h5',
            '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1/comb_rxn_1_2.h5',
-           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.5.h5',
+           '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.5.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.4.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.3.h5',
            '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/ani_al-9.0.2.h5',
@@ -138,8 +139,8 @@ for f,fn in enumerate(h5files):
         Emt.append(E)
         Mv = np.max(np.linalg.norm(F,axis=2),axis=1)
         #print(Mv.shape,X.shape)
-        index = np.where(Mv > 1.5)[0]
-        indexk = np.where(Mv <= 1.5)[0]
+        index = np.where(Mv > 10.6)[0]
+        indexk = np.where(Mv <= 10.6)[0]
         #if index.size > 0:
             #print(Mv[index])
             #hdn.writexyzfile(bddir+'mols_'+str(c).zfill(3)+'_'+str(f).zfill(3)+'.xyz',X[index],S)

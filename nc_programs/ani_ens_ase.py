@@ -35,10 +35,11 @@ import seaborn as sns
 
 #----------------Parameters--------------------
 
-dir = '/home/jujuman/Research/extensibility_test_sets/ani_md_benchmark/'
+#dir = '/home/jujuman/Research/extensibility_test_sets/ani_md_benchmark/'
+dir = '/home/jujuman/Research/MD_TEST/TrpCage/'
 
 # Molecule file
-molfile = dir + 'ChignolinNeutral.xyz'
+molfile = dir + '2luf_opt_neutral.xyz'
 
 # Dynamics file
 xyzfile = dir + 'mdcrd.xyz'
@@ -47,14 +48,14 @@ xyzfile = dir + 'mdcrd.xyz'
 trajfile = dir + 'traj.dat'
 
 # Optimized structure out:
-optfile = dir + 'ChignolinNeutral_opt.xyz'
+optfile = dir + '2luf_reopt.xyz'
 
 T = 300.0 # Temperature
 dt = 1.0
 C = 0.0001 # Optimization convergence
-steps = 10000
+steps = 1000000
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv4/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv4_2/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
 nnfdir   = wkdir + '/train'
@@ -137,7 +138,7 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
           'Etot = %.3feV' ' StdDev = %.3fKcal/mol/atom' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin, stddev))
 
 # Attach the printer
-dyn.attach(printenergy, interval=10)
+dyn.attach(printenergy, interval=25)
 
 # Run production
 print('Running production...')
