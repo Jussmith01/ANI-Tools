@@ -9,19 +9,19 @@ import numpy as np
 
 import os
 
-fpf = 'gdb11_s09' #Filename prefix
-wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s09/config_1/' #working directory
-smfile = '/home/jujuman/Research/RawGDB11Database/gdb11_size09.smi' # Smiles file
+fpf = 'gdbSFCl_s03' #Filename prefix
+wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0001/config/' #working directory
+smfile = '/home/jujuman/Research/RawGDB11Database/SFCl/gdb11SFClsize03.smi' # Smiles file
 #smfile = '/home/jujuman/Research/Drug_moles_raw/chembl_22_clean_1576904_sorted_std_final.smi'
 Nc = 10
 
 LOT='wb97x/6-31g*' # Level of theory
 SCF='Tight' #
 
-wkdir = '/home/jujuman/Gits/ANI-Networks/networks/ANI-c08f-ntwk/'
-cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
-saefile  = wkdir + 'sae_6-31gd.dat'
-nnfdir   = wkdir + 'networks/'
+wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0000/cv7/'
+cnstfile = wkdir + 'rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
+saefile  = wkdir + 'sae_wb97x-631gd.dat'
+nnfdir   = wkdir + 'train0/networks/'
 
 if not os.path.exists(wdir):
     os.mkdir(wdir)
@@ -31,12 +31,9 @@ if not os.path.exists(wdir+'inputs'):
 
 ani = aat.anicomputetool(cnstfile, saefile, nnfdir)
 
-#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6/model0.05me/cv/cv1/'
-wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb08_3/cv3/'
-cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
-#wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-6-ext/model-6e1/'
-#cnstfilecv = wkdircv + 'rHCNO-3.9A_16-3.0A_a4-8.params'
-saefilecv  = wkdircv + 'sae_6-31gd.dat'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0000/cv7/'
+cnstfilecv = wkdircv + 'rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
+saefilecv  = wkdircv + 'sae_wb97x-631gd.dat'
 nnfprefix   = wkdircv + 'train'
 
 anicv = aat.anicrossvalidationconformer(cnstfilecv,saefilecv,nnfprefix,5,0,False)
@@ -54,7 +51,7 @@ for n,m in enumerate(molecules):
     except Exception as ex:
         print('Error:',ex)
 
-    if not any(x in s for x in ['F', 'S', 'Br', 'I', 'Cl', 's', 'P']) and s != '':
+    if not any(x in s for x in ['Br', 'I', 'P']) and s != '':
         print(n,') Working on', s,'... Na: ',m.GetNumAtoms())
 
         # Add hydrogens
@@ -109,7 +106,7 @@ for n,m in enumerate(molecules):
         if len(X) > 0:
             S = gdb.get_symbols_rdkitmol(m)
 
-        P = np.random.binomial(1, 0.25, Ns)
+        P = np.random.binomial(1, 1.0, Ns)
         for i,(x,p) in enumerate(zip(X,P)):
             print('       -Keep:', p)
             if p:

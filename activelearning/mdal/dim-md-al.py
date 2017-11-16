@@ -32,7 +32,7 @@ cnstfilecv = wkdircv + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'sae_6-31gd.dat'
 nnfprefix  = wkdircv + 'train'
 
-At = ['C', 'O', 'N'] # Hydrogens added after check
+At = ['C', 'O', 'N', 'S', 'F', 'Cl'] # Hydrogens added after check
 
 dstore = '/home/jujuman/Research/GDB_Dimer/test/'
 
@@ -48,10 +48,13 @@ Ni = 3000
 #Ns = 100
 
 
-idir = [#(7500, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/inputs/'),
-        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/water_input/'),
-        #(2000, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s02/inputs/'),
-        #(10, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/'),
+idir = [(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/inputs/'),
+        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s02/inputs/'),
+        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s03/inputs/'),
+        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size1/inputs/'),
+        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size2/inputs/'),
+        (1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size3/inputs/'),
+        #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s01/water_input/'),
         #(5, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s04/inputs/'),
         #(2, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s05/inputs/'),
         #(1, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_s06/config_1/inputs/'),

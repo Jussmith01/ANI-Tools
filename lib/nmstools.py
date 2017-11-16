@@ -29,6 +29,12 @@ class nmsgenerator():
             return 7.0
         elif type is 'O':
             return 8.0
+        elif type is 'F':
+            return 9.0
+        elif type is 'S':
+            return 8.0
+        elif type == 'Cl':
+            return 9.0
         else:
             print('Unknown atom type! ',type)
             exit(1)
@@ -38,7 +44,9 @@ class nmsgenerator():
         for i in range(0,self.Na):
             for j in range(i+1,self.Na):
                 Rij = np.linalg.norm(rxyz[i]-rxyz[j])
-                if Rij < 0.0075 * (self.chg[i] * self.chg[j]) + 0.65:
+                #print(0.006 * (self.chg[i] * self.chg[j]) + 0.65)
+                if Rij < 0.006 * (self.chg[i] * self.chg[j]) + 0.65:
+                    print(0.006 * (self.chg[i] * self.chg[j]) + 0.65)
                     return True
         return False
 
