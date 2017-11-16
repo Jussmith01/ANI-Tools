@@ -103,6 +103,7 @@ class anicrossvalidationconformer(object):
 
         # Construct pyNeuroChem class
         self.ncl = [pync.conformers(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
+        #self.ncl = [pync.conformers(cnstfile, saefile, nnfprefix+str(1)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
 
     ''' Compute the std. dev. from cross validation networks on a set of comformers '''
     def compute_stddev_conformations(self,X,S):
@@ -126,7 +127,7 @@ class anicrossvalidationconformer(object):
         deltas = deltas
         return deltas,energies
 
-    ''' Compute the energy of a set of conformers for the CV networks '''
+    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_energy_conformations(self,X,S):
         energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
         #charges  = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
@@ -136,7 +137,27 @@ class anicrossvalidationconformer(object):
             energies[i] = nc.energy().copy()
             #charges[i] = nc.charge().copy()
             forces[i] = nc.force().copy()
-        return hdt.hatokcal*energies, -hdt.hatokcal*forces#, charges
+        return hdt.hatokcal*energies, hdt.hatokcal*forces#, charges
+
+    ''' Compute the weighted average energy and forces of a set of conformers for the CV networks '''
+    def compute_wa_energy_conformations(self,X,S):
+        energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
+        #charges  = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
+        forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
+        for i,nc in enumerate(self.ncl):
+            nc.setConformers(confs=X,types=list(S))
+            energies[i] = nc.energy().copy()
+            #charges[i] = nc.charge().copy()
+            forces[i] = nc.force().copy()
+
+        # Compute distribution weighted average
+        mu = np.mean(energies, axis=0)
+        sg = np.std(energies, axis=0)
+        gamma = sg / np.sqrt(np.abs(mu - energies + 1.0e-40))
+        gamma = gamma / np.sum(gamma, axis=0)
+        energies = np.sum(energies * gamma, axis=0)
+
+        return hdt.hatokcal*energies, hdt.hatokcal*np.mean(forces, axis=0)#, charges
 
     ''' Compute the energy of a set of conformers for the CV networks '''
     def get_charges_conformations(self,X,S):
@@ -340,8 +361,10 @@ class moldynactivelearning(object):
         if len(self.X) > 0:
             X = np.stack(self.X)
 
+        self.failtime = fsteps * dt
+
         self._infostr_ = 'New confs: ' + str(Ng)+' of ' + str(Nr) + ' - ' + \
-                          str(Nc * Ns * dt) + 'fs trajectories. Failed within '+"{:.2f}".format(fsteps*dt)+'fs on average.'
+                          str(Nc * Ns * dt) + 'fs trajectories. Failed within '+"{:.2f}".format(self.failtime)+'fs on average.'
 
         return np.array(self.X)
 ##--------------------------------

@@ -8,11 +8,6 @@ from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
 
 from rdkit.ForceField.rdForceField import *
-
-m = Chem.MolFromSmiles("C=C")
-
-
-exit (0)
 import numpy as np
 
 import os
@@ -30,11 +25,12 @@ def mapcount(filename):
         lines += 1
     return lines
 
-fpf = 'gdb11_s13' #Filename prefix
-wdir = '/home/jujuman/Research/extensibility_test_sets/gdb-13/' #working directory
-smfile = '/home/jujuman/Research/RawGDB13Database/13.smi' # Smiles file
+fpf = 'gdbSFCl_s11' #Filename prefix
+wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size4/' #working directory
+smfile = '/home/jujuman/Research/RawGDB11Database/SFCl/gdb11SFClsize04.smi' # Smiles file
 
-Nc = 10
+Nc = 1
+Nsmiles = 1000 # number of randomly selected molecules
 
 LOT='wb97x/6-31g*' # Level of theory
 SCF='Tight' #
@@ -54,6 +50,8 @@ if not os.path.exists(wdir+'images'):
 nl = mapcount(smfile)
 print('Total smiles:',nl)
 
+Nsmiles = nl
+
 #print('Smile supplier...')
 #molecules = Chem.SmilesMolSupplier(smfile, nameColumn=0)
 #print('Generate list...')
@@ -63,21 +61,17 @@ print('Total smiles:',nl)
 #np.random.shuffle(ridx)
 #molecules = np.array(molecules)[ridx[0:500]]
 
-
-
 Nd = 0
 Nt = 0
 n = 0
 
-ind = np.full(1000, nl+1, dtype=np.int64)
+ind = np.full(Nsmiles, nl+1, dtype=np.int64)
 
 f = open(smfile,'r+')
 mm = mmap.mmap(f.fileno(),0)
 
 molnfo = open(wdir+'molecule_information.nfo','w')
-while Nt < 1000:
-
-
+while Nt < Nsmiles:
     ridx = np.random.randint( 0, nl, 1 )[0]
     mm.seek(0)
     print('Finding line...')
@@ -99,7 +93,7 @@ while Nt < 1000:
     #smstr = linecache.getline(smfile, ridx)
     #print(Nt,smstr)
 
-    if 'S' not in smstr and 'Cl' not in smstr and ridx not in ind:
+    if ridx not in ind or True:
         ind[Nt] = ridx
         m = Chem.MolFromSmiles(smstr)
 

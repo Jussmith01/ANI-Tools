@@ -281,8 +281,10 @@ def readncdatall(file,N = 0):
         C2 = []
         SD = []
         DP = []
-        for l in fd[3].split("\n")[0:-1]:
+        #print('File: ',file)
+        for i,l in enumerate(fd[3].split("\n")[0:-1]):
             data = l.split(",")[0:-1]
+            #print(i,len(l))
             Xi.append(np.array(data[0:nat * 3], dtype=np.float32).reshape(nat,3))
             Ei.append(data[nat*3])
             Fi.append(np.array(data[nat*3+1:nat*3+nat*3+1],dtype=np.float32).reshape(nat,3))
