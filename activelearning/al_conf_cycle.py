@@ -1,6 +1,7 @@
 import anialservertools as ast
 import anialtools as alt
 from time import sleep
+import os
 
 hostname = "comet.sdsc.xsede.org"
 #hostname = "moria.chem.ufl.edu"
@@ -9,12 +10,11 @@ username = "jsmith48"
 root_dir = '/home/jujuman/Research/test_auto_al/'
 
 swkdir = '/home/jsmith48/scratch/test_autoal/'# server working directory
-ldtdir = root_dir# local data directories
-datdir = 'confs_1'
+datdir = 'ANI-AL-0605.0001.00'
 
-h5stor = root_dir + '/h5files/'# h5store location
+h5stor = root_dir + 'h5files/'# h5store location
 
-optlfile = root_dir + '/optimized_input_files.dat'
+optlfile = root_dir + 'optimized_input_files.dat'
 
 mae = 'module load gnu/4.9.2\n' +\
       'module load gaussian\n' +\
@@ -27,30 +27,31 @@ aevsize = 1008
 wkdir = '/home/jujuman/Research/test_auto_al/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/'
 
 #---- Training Parameters ----
-GPU = 0 # GPU ID
-LR  = 0.001 # Initial learning rate
-LA  = 0.25 # LR annealing
-CV  = 1.0e-6 # LR converg
-ST  = 100 # ????
-M   = 0.34 # Max error per atom in kcal/mol
-P   = 0.01 # Percent to keep
-ps  = 20 # Print step
-Naev = 384 #
-sinet= False
+GPU = [0,1] # GPU IDs
 
-saefile = '/home/jujuman/Research/test_auto_al/modelCNOSFCl/'
-cstfile = '/home/jujuman/Research/test_auto_al/modelCNOSFCl/'
+trdict = dict({'learningrate' : 0.001,
+               'lrannealing' : 0.5,
+               'lrconvergence' : 1.0e-4,
+               'ST' : 10,
+               'printstep' : 1,
+                })
+
+M   = 0.34 # Max error per atom in kcal/mol
+Nnets = 2 # networks in ensemble
+
+saefile = '/home/jujuman/Research/test_auto_al/modelCNOSFCl/sae_wb97x-631gd.dat'
+cstfile = '/home/jujuman/Research/test_auto_al/modelCNOSFCl/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
 #-----------0---------
 
 # Training varibles
-d = dict({'wkdir'         : wkdir,
+d = dict({#'wkdir'         : wkdir,
           'sflparamsfile' : cstfile,
-          'ntwkStoreDir'  : wkdir+'networks/',
+          #'ntwkStoreDir'  : wkdir+'networks/',
           'atomEnergyFile': saefile,
-          'datadir'       : datadir,
-          'tbtchsz'       : '256',
-          'vbtchsz'       : '256',
-          'gpuid'         : str(GPU),
+          #'datadir'       : datadir,
+          'tbtchsz'       : '64',
+          'vbtchsz'       : '64',
+          #'gpuid'         : str(GPU),
           'ntwshr'        : '0',
           'nkde'          : '2',
           'force'         : '0',
@@ -71,7 +72,7 @@ l2 = dict({'nodes'      : '32',
            'norm'       : '3.0',
            'btchnorm'   : '0',})
 
-l3 = dict({'nodes'      : '64',
+l3 = dict({'nodes'      : '16',
            'activation' : '5',
            'maxnorm'    : '1',
            'norm'       : '3.0',
@@ -82,38 +83,45 @@ l4 = dict({'nodes'      : '1',
 
 layers = [l1, l2, l3, l4,]
 
-### BEGIN LOOP HERE ###
+#### Sampling parameters ####
+nmsparams = {'T': 1000.0,
+             'Ngen': 400,
+             'Nkep': 100,
+             }
 
-N = 1
+mdsparams = {'N': 10,
+             'T': 800,
+             'dt': 0.5,
+             'Nc': 500,
+             'Ns': 5,
+             }
+
+### BEGIN LOOP HERE ###
+N = 2
 
 for i in range(N):
-    netdir = wkdir+'ANI-AL-0605.0001.'+str(N).zfill(4)
+    netdir = wkdir+'ANI-AL-0605.0001.'+str(i).zfill(4)+'/'
+    if not os.path.exists(netdir):
+        os.mkdir(netdir)
+
     nnfprefix   = netdir + 'train'
 
-    nmsparams = {'T' : 1000.0,
-                 'Ngen' : 400,
-                 'Nkep' : 100,
-                 }
-
-    mdsparams = {'N' : 10,
-                 'T' : 800,
-                 'dt' : 0.5,
-                 'Nc' : 500,
-                 'Ns' : 5,
-                 }
-
-
-
-    netdict = {'cnstfile' : cnstfile,
+    netdict = {'cnstfile' : cstfile,
                'saefile': saefile,
-               'nnfprefix': nnfprefix,
+               'nnfprefix': netdir+'train',
                'aevsize': aevsize,
-               'num_nets': 5,
+               'num_nets': Nnets,
                }
 
-    alt.alaniensembletrainer()
+    aet = alt.alaniensembletrainer(netdir, netdict, 'train', h5stor, Nnets)
 
-    #acs = alt.alconformationalsampler(ldtdir, datdir, optlfile, fpatoms, netdict)
-    #acs.run_sampling(nmsparams, mdsparams, [0, 1])
+    aet.build_training_cache()
+    aet.train_ensemble(GPU, d, trdict, layers)
 
-    #ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae)
+    ldtdir = root_dir  # local data directories
+    if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
+        os.mkdir(root_dir + datdir + str(i+1).zfill(2))
+    acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict)
+    acs.run_sampling(nmsparams, mdsparams, GPU)
+
+    ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae)

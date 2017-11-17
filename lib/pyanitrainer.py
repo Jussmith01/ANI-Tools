@@ -23,6 +23,7 @@ class anitrainer(object):
     #-----------------------------
     def __init__(self, build_dict, layers):
         # Declare the trainer class
+
         self.ani = pyani(build_dict)
 
         # Add layers
@@ -41,7 +42,9 @@ class anitrainer(object):
             o.write(str(i) + ' ' + "{:.5f}".format(t) + ' ' + "{:.5f}".format(v) + '\n')
         o.close()
 
-    def train_network(self,LR,LA,CV,ST,PS=1):
+    def train_network(self,LR,LA,CV,ST,OP,PS=1):
+        f = open(OP,'w')
+
         # Initialize training variables
         best_valid_E = 1000.0
         best_valid_dE = 1000.0
@@ -79,7 +82,7 @@ class anitrainer(object):
                 Avg_v_err_F = Avg_v_err_F + np.sqrt(valid_cost['Fcost'])
 
                 # Check for better validation
-                if Epoch > 1 and (valid_cost['Ecost'] + valid_cost['dEcost'] + valid_cost['Fcost']) < (best_valid_E + best_valid_dE + best_valid_F):
+                if Epoch > 1 and (valid_cost['Ecost'] + valid_cost['dEcost']) < (best_valid_E + best_valid_dE):
                     best_valid_E = valid_cost['Ecost']
                     best_valid_dE = valid_cost['dEcost']
                     best_valid_F = valid_cost['Fcost']
@@ -98,15 +101,18 @@ class anitrainer(object):
                     self.tr_lc.append(hdn.hatokcal * Avg_t_err_E/float(PS))
                     self.va_lc.append(hdn.hatokcal * Avg_t_err_E/float(PS))
 
-                    print('Epoch(', str(Epoch).zfill(4), ') Errors:',
-                          "{:7.3f}".format(hdn.hatokcal * Avg_t_err_E/float(PS)), ':',
-                          "{:7.3f}".format(hdn.hatokcal * Avg_v_err_E/float(PS)), ':',
-                          "{:7.3f}".format(hdn.hatokcal * Avg_v_err_F/float(PS)), ':',
-                          "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_E)), ':',
-                          "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_dE)), ':',
-                          "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_F)), 'Time:',
-                          "{:.3f}".format(tm.time() - _timeloop) + 's',
-                          'LR:', "{:.3e}".format(LR), 'Tol:', str(Toler).zfill(3))
+                    output = ('Epoch(' + str(Epoch).zfill(4) + ') Errors: ' +
+                             "{:7.3f}".format(hdn.hatokcal * Avg_t_err_E/float(PS)) + ' : ' +
+                             "{:7.3f}".format(hdn.hatokcal * Avg_v_err_E/float(PS)) + ' : ' +
+                             #"{:7.3f}".format(hdn.hatokcal * Avg_v_err_F/float(PS)), ':',
+                             "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_E)) + ' : ' +
+                             "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_dE)) +  ' : ' +
+                             #"{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_F)), 'Time:',
+                             "{:.3f}".format(tm.time() - _timeloop) + 's' +
+                             ' LR: ' + "{:.3e}".format(LR) + ' Tol: ' + str(Toler).zfill(3))
+
+                    f.write(output+'\n')
+                    f.flush()
 
                     Avg_t_err_E = 0
                     Avg_v_err_E = 0
@@ -123,10 +129,12 @@ class anitrainer(object):
             # Reset Tol
             Toler = ST
 
-        print('Final - Epoch(', str(Epoch).zfill(4), ') Errors:',
-              "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_E)),
-              "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_dE)),
-              "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_F)))
+        output = ('Final - Epoch(' + str(Epoch).zfill(4) + ') Errors:'+
+                 "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_E))+ ' ' +
+                 "{:7.3f}".format(hdn.hatokcal * np.sqrt(best_valid_dE)))
+
+        f.write(output + '\n')
+        f.flush()
 
 class anitester (object):
     def __init__(self, cnstfile, saefile, nnfdir, gpuid, sinet):
