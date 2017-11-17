@@ -85,8 +85,8 @@ layers = [l1, l2, l3, l4,]
 
 #### Sampling parameters ####
 nmsparams = {'T': 1000.0,
-             'Ngen': 400,
-             'Nkep': 100,
+             'Ngen': 100,
+             'Nkep': 50,
              }
 
 mdsparams = {'N': 10,

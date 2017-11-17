@@ -35,7 +35,7 @@ class alconformationalsampler():
         self.netdict = netdict
 
     def run_sampling(self, nmsparams, mdparams, gpus=[0]):
-
+        print('Running sampling...')
         p1 = Process(target=self.normal_mode_sampling, args=(nmsparams['T'],
                                                              nmsparams['Ngen'],
                                                              nmsparams['Nkep'],
@@ -53,6 +53,7 @@ class alconformationalsampler():
 
         p1.join()
         p2.join()
+        print('Finished sampling.')
 
     def normal_mode_sampling(self, T, Ngen, Nkep, gpuid):
         of = open(self.ldtdir + self.datdir + '/info_data_nms.nfo', 'w')
@@ -145,7 +146,7 @@ class alconformationalsampler():
             for n, m in enumerate(files):
                 data = hdt.read_rcdb_coordsandnm(id + m)
                 S = data["species"]
-                print(n, ') Working on', m, '...')
+                #print(n, ') Working on', m, '...')
 
                 # Set mols
                 activ.setmol(data["coordinates"], S)
@@ -159,7 +160,7 @@ class alconformationalsampler():
                 nfo = activ._infostr_
                 difo.write('  -' + m + ': ' + nfo + '\n')
                 difo.flush()
-                print(nfo)
+                #print(nfo)
 
                 if X.size > 0:
                     hdt.writexyzfile(self.cdir + 'mds_' + m.split('.')[0] + '_' + str(di).zfill(4) + '.xyz', X, S)
