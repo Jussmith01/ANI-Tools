@@ -35,24 +35,37 @@ class alconformationalsampler():
         self.netdict = netdict
 
     def run_sampling(self, nmsparams, mdparams, gpus=[0]):
-        print('Running sampling...')
-        p1 = Process(target=self.normal_mode_sampling, args=(nmsparams['T'],
-                                                             nmsparams['Ngen'],
-                                                             nmsparams['Nkep'],
-                                                             gpus[0],))
+        print('Running NMS sampling...')
+	#self.normal_mode_sampling(nmsparams['T'],
+        #                          nmsparams['Ngen'],
+        #                          nmsparams['Nkep'],
+        #                          gpus[0])
 
-        p2 = Process(target=self.mol_dyn_sampling, args=(mdparams['N'],
-                                                         mdparams['T'],
-                                                         mdparams['dt'],
-                                                         mdparams['Nc'],
-                                                         mdparams['Ns'],
-                                                         gpus[1],))
+        md_work = []
+        for di, id in enumerate(self.idir):
+            files = os.listdir(id)
+            for f in files:
+                md_work.append(id+f)
 
-        p1.start()
-        p2.start()
+        md_work = np.array(md_work)
+        np.random.shuffle(md_work)
+        md_work = np.array_split(md_work,len(gpus))
+	
+        proc = []
+        for i,(md,g) in enumerate(zip(md_work,gpus)):
+            proc.append(Process(target=self.mol_dyn_sampling, args=(md,i,
+                                                                    mdparams['N'],
+                                                                    mdparams['T'],
+                                                                    mdparams['dt'],
+                                                                    mdparams['Nc'],
+                                                                    mdparams['Ns'],
+                                                                    g)))
+        print('Running MD Sampling...')
+        for p in proc:
+            p.start()
 
-        p1.join()
-        p2.join()
+        for p in proc:
+            p.join()
         print('Finished sampling.')
 
     def normal_mode_sampling(self, T, Ngen, Nkep, gpuid):
@@ -103,6 +116,7 @@ class alconformationalsampler():
                 sigma = anicv.compute_stddev_conformations(conformers,spc)
                 #print(sigma)
                 sid = np.where( sigma >  0.3 )[0]
+                #print(sid)
                 #print('  -', fi, 'of', len(files), ') File:', f, 'keep:', sid.size,'percent:',"{:.2f}".format(100.0*sid.size/Ngen))
 
 
@@ -124,49 +138,44 @@ class alconformationalsampler():
         #print('\nGrand Total:', Nkt, 'of', Ntt,'percent:',"{:.2f}".format(100.0*Nkt/Ntt), 'Kept',Nkp)
         of.close()
 
-    def mol_dyn_sampling(self, N, T, dt, Nc, Ns, gpuid):
+    def mol_dyn_sampling(self,md_work, i, N, T, dt, Nc, Ns, gpuid):
         activ = aat.moldynactivelearning(self.netdict['cnstfile'],
                                          self.netdict['saefile'],
                                          self.netdict['nnfprefix'],
                                          self.netdict['num_nets'],
                                          gpuid)
 
-        difo = open(self.ldtdir + self.datdir + '/info_data_mdso.nfo', 'w')
+        difo = open(self.ldtdir + self.datdir + '/info_data_mdso-'+str(i)+'.nfo', 'w')
         Nmol = 0
         ftme = 0.0
-        for di, id in enumerate(self.idir):
-            files = os.listdir(id)
-            #random.shuffle(files)
+        dnfo = 'MD Sampler running: ' + str(md_work.size)
+        #print(dnfo)
+        difo.write(dnfo + '\n')
+        Nmol = md_work.size
+        ftme_t = 0.0
+        for di, id in enumerate(md_work):
+            data = hdt.read_rcdb_coordsandnm(id)
+            S = data["species"]
+            #print(di, ') Working on', id, '...')
 
-            dnfo = str(di) + ' of ' + str(len(self.idir)) + ') dir: ' + str(id) + ' Selecting: ' + str(id * len(files))
-            print(dnfo)
-            Nmol += len(files)
-            difo.write(dnfo + '\n')
-            ftme_t = 0.0
-            for n, m in enumerate(files):
-                data = hdt.read_rcdb_coordsandnm(id + m)
-                S = data["species"]
-                #print(n, ') Working on', m, '...')
+            # Set mols
+            activ.setmol(data["coordinates"], S)
 
-                # Set mols
-                activ.setmol(data["coordinates"], S)
+            # Generate conformations
+            X = activ.generate_conformations(N, T, dt, Nc, Ns, dS=0.3)
 
-                # Generate conformations
-                X = activ.generate_conformations(N, T, dt, Nc, Ns, dS=0.3)
+            ftme_t += activ.failtime
 
-                ftme += activ.failtime
-                ftme_t += activ.failtime
+            nfo = activ._infostr_
+            m = id.rsplit('/',1)[1].rsplit('.',1)[0]
+            difo.write('  -' + m + ': ' + nfo + '\n')
+            difo.flush()
+            #print(nfo)
 
-                nfo = activ._infostr_
-                difo.write('  -' + m + ': ' + nfo + '\n')
-                difo.flush()
-                #print(nfo)
-
-                if X.size > 0:
-                    hdt.writexyzfile(self.cdir + 'mds_' + m.split('.')[0] + '_' + str(di).zfill(4) + '.xyz', X, S)
-            difo.write('Class mean fail time: ' + "{:.2f}".format(ftme_t / float(len(files))) + '\n')
+            if X.size > 0:
+                hdt.writexyzfile(self.cdir + 'mds_' + m.split('.')[0] + '_' + str(i).zfill(2) + str(di).zfill(4) + '.xyz', X, S)
         difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme / float(Nmol)) + '\n')
-        print(Nmol)
+        #print(Nmol)
         difo.close()
 
 def interval(v,S):

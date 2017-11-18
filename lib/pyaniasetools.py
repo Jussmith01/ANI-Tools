@@ -326,7 +326,7 @@ class moldynactivelearning(object):
         for i in range(Nc):
             dyn.run(Ns)  # Do Ns steps of MD
 
-            xyz = np.array(mol.get_positions(wrap=True), dtype=np.float32).reshape(len(spc), 3)
+            xyz = np.array(mol.get_positions(wrap=self.pbc), dtype=np.float32).reshape(len(spc), 3)
             energies = np.zeros((self.Nn), dtype=np.float64)
             N = 0
             for comp in self.ncl:
@@ -336,7 +336,7 @@ class moldynactivelearning(object):
 
             energies = hdt.hatokcal * energies
             sigma = np.std(energies) / np.sqrt(float(len(spc)))
-            #print('s:', sigma)
+            #print('E:', energies)
             if sigma > dS:
                 self.Nbad += 1
                 self.X.append(mol.get_positions())
