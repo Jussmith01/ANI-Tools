@@ -35,10 +35,10 @@ import seaborn as sns
 
 #----------------Parameters--------------------
 
-dir = '/home/jujuman/Research/extensibility_test_sets/ani_md_benchmark/initial/'
+dir = '/home/jujuman/ANIData4TB/Parkhill_IR_MOLS/cholesterol/'
 
 # Molecule file
-molfile = dir + '1L2Y_prepped.pdb'
+molfile = dir + 'cholesterol.sdf'
 
 # Dynamics file
 xyzfile = dir + 'mdcrd.xyz'
@@ -47,12 +47,12 @@ xyzfile = dir + 'mdcrd.xyz'
 trajfile = dir + 'traj.dat'
 
 # Optimized structure out:
-optfile = dir + '1L2Y_prepped.xyz'
+optfile = dir + 'optmol.xyz'
 
 T = 300.0 # Temperature
-dt = 0.25
+dt = 0.1
 C = 0.0001 # Optimization convergence
-steps = 4000000
+steps = 1000000
 
 wkdir = '/home/jujuman/Research/DataReductionMethods/train_test/ANI-9.0.4_netarch8/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
@@ -76,7 +76,7 @@ mol = read(molfile)
 #print(mol.get_chemical_symbols())
 
 # Set NC
-aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 0)
+aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 1)
 
 # Set ANI calculator
 mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
@@ -108,10 +108,10 @@ traj = open(trajfile,'w')
 dyn = Langevin(mol, dt * units.fs, T * units.kB, 0.02)
 
 # Run equilibration
-#print('Running equilibration...')
-#start_time = time.time()
-#dyn.run(10000) # Run 100ps equilibration dynamics
-#print('[ANI Total time:', time.time() - start_time, 'seconds]')
+print('Running equilibration...')
+start_time = time.time()
+dyn.run(10000) # Run 100ps equilibration dynamics
+print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
 # Set the momenta corresponding to T=300K
 #MaxwellBoltzmannDistribution(mol, T * units.kB)
@@ -120,7 +120,7 @@ ekin = mol.get_kinetic_energy() / len(mol)
 print('Temp: ', ekin / (1.5 * units.kB))
 
 # Define the printer
-def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in the definition.
+def storeenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in the definition.
     """Function to print the potential, kinetic and total energy."""
     epot = a.get_potential_energy() / len(a)
     ekin = a.get_kinetic_energy() / len(a)
@@ -133,10 +133,23 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
     for j, i in zip(a, c):
         b.write(str(j.symbol) + ' ' + str(i[0]) + ' ' + str(i[1]) + ' ' + str(i[2]) + '\n')
 
+    #print('Step: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
+    #      'Etot = %.3feV' ' StdDev = %.3fKcal/mol/atom' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin, stddev))
+
+# Define the printer
+def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in the definition.
+    """Function to print the potential, kinetic and total energy."""
+    epot = a.get_potential_energy() / len(a)
+    ekin = a.get_kinetic_energy() / len(a)
+
+    stddev =  hdt.evtokcal*a.calc.stddev
+
     print('Step: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
           'Etot = %.3feV' ' StdDev = %.3fKcal/mol/atom' % (d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin, stddev))
 
+
 # Attach the printer
+dyn.attach(storeenergy, interval=1)
 dyn.attach(printenergy, interval=100)
 
 # Run production

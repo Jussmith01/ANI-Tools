@@ -97,7 +97,7 @@ mdsparams = {'N': 10,
              }
 
 ### BEGIN LOOP HERE ###
-N = 2
+N = 3
 
 for i in range(N):
     netdir = wkdir+'ANI-AL-0605.0001.'+str(i).zfill(4)+'/'
