@@ -48,7 +48,7 @@ def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, vmin=0, vmax=0):
     # Annotate with errors
     PMAE = hdt.calculatemeanabserror(Xa, Xp)
     PRMS = hdt.calculaterootmeansqrerror(Xa, Xp)
-    ax.text(0.75*((Fmx-Fmn))+Fmn, 0.1*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=20,
+    ax.text(0.65*((Fmx-Fmn))+Fmn, 0.1*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=20,
             bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
 
     '''
@@ -194,7 +194,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                     Edft = hdt.hatokcal * Edft
                     Fdft = hdt.hatokcal * Fdft.flatten()
 
-                    cdata['Na'].append(np.full(Eani.size, len(data['species']), dtype=np.int32))
+                    cdata['Na'].append(np.full(Edft.size, len(data['species']), dtype=np.int32))
 
                     cdata['Eani'].append(Eani)
                     cdata['Edft'].append(Edft)
@@ -330,6 +330,84 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
                 #'ERRMS': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Erani'][idx], self.fdata[ntkey][tskey]['rdft'][idx]),
                 }
 
+    def determine_min_error_by_sigma(self, ntkey, minerror, percent, tskeys = ['GDB07to09'], figsize=(15.0, 12.0), labelx='', labely='', xymax=(10.0,10.0), storepath=''):
+        #tskeys = self.fdata[ntkey].keys()
+
+        Nn = self.fdata[ntkey][list(tskeys)[0]]['Eani'].shape[0]-1
+
+        Eani = np.hstack([self.fdata[ntkey][tskey]['Eani'][0:Nn, :] for tskey in tskeys])
+        Eanimu = np.hstack([self.fdata[ntkey][tskey]['Eani'][Nn, :] for tskey in tskeys])
+
+        #Eani = np.hstack([self.fdata[ntkey][tskey]['Eani'][Nn, :] for tskey in tskeys])
+        Edft = np.concatenate([self.fdata[ntkey][tskey]['Edft'] for tskey in tskeys])
+        #print(Eani.shape, Edft.shape, )
+        #print(np.max(Eerr.shape, axis=0))
+        Sani = np.concatenate([np.std(self.fdata[ntkey][tskey]['Eani'][0:Nn, :], axis=0) for tskey in tskeys])
+        Na = np.concatenate([self.fdata[ntkey][tskey]['Na'] for tskey in tskeys])
+
+        #print(Sani.shape, Na.shape)
+        Sani = Sani / np.sqrt(Na)
+        Eerr = np.max(np.abs(Eani - Edft),axis=0) / np.sqrt(Na)
+        #Eerr = np.abs(Eani - Edft) / np.sqrt(Na)
+
+        Nmax = np.where(Eerr > minerror)[0].size
+
+        perc = 0
+        dS = Sani.max()
+        step = 0
+        while perc < percent:
+            S = dS - step*0.001
+            Sidx = np.where(Sani > S)
+            step += 1
+
+            perc = 100.0*np.where(Eerr[Sidx] > minerror)[0].size/Nmax
+        print('Step:',step, 'S:',S,'  -Perc over:',perc,'Total',100.0*Sidx[0].size/Edft.size)
+
+        #dE = np.max(Eerr, axis=0) / np.sqrt(Na)
+        #print(Eerr.shape,Eerr)
+
+        So = np.where(Sani > S)
+        Su = np.where(Sani <= S)
+
+        print('RMSE Over:  ', hdt.calculaterootmeansqrerror(Eanimu[So],Edft[So]))
+        print('RMSE Under: ', hdt.calculaterootmeansqrerror(Eanimu[Su],Edft[Su]))
+
+        fig, ax = plt.subplots(figsize=figsize)
+        cmap = mpl.cm.viridis
+
+        poa = np.where(Eerr[So] > minerror)[0].size / So[0].size
+        pob = np.where(Eerr > minerror)[0].size / Eerr.size
+
+        ax.text(0.61*xymax[0], 0.04*xymax[1], 'Total Captured:    ' + str(int(100.0 * Sidx[0].size / Edft.size)) + '%' +
+                '\n' + r'($\mathrm{\mathcal{E}>}$'+ "{:.1f}".format(minerror) + r'$\mathrm{) \forall \rho}$:           ' + str(int(100*pob)) + '%' +
+                '\n' + r'($\mathrm{\mathcal{E}>}$'+ "{:.1f}".format(minerror) + r'$\mathrm{) \forall \rho >}$' + "{:.2f}".format(S) + ': ' + str(int(100*poa)) + '%' +
+                '\n' + r'$\mathrm{E_t}$ RMSE ($\mathrm{\rho>}$'+ "{:.2f}".format(S) + r'$\mathrm{)}$: ' + "{:.1f}".format(hdt.calculaterootmeansqrerror(Eanimu[So],Edft[So])) +
+                '\n' + r'$\mathrm{E_t}$ RMSE ($\mathrm{\rho\leq}$' + "{:.2f}".format(S) + r'$\mathrm{)}$: ' + "{:.1f}".format(hdt.calculaterootmeansqrerror(Eanimu[Su], Edft[Su])),
+                bbox={'facecolor':'grey', 'alpha':0.5, 'pad':10}, fontsize=14)
+
+        plt.axvline(x=S,linestyle='--',color='r',linewidth=5, label="{:.2f}".format(S) + ' value that captures '+ str(int(percent)) + '% of errors over ' + "{:.1f}".format(minerror))
+        #)
+        # Set labels
+        ax.set_xlabel(labelx, fontsize=22)
+        ax.set_ylabel(labely, fontsize=22)
+
+        # Plot 2d Histogram
+        bins = ax.hist2d(Sani, Eerr, bins=400, norm=LogNorm(), range=[[0.0, xymax[0]], [0.0, xymax[1]]], cmap=cmap)
+
+        # Build color bar
+        # cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
+        cb1 = fig.colorbar(bins[-1], cmap=cmap)
+        cb1.set_label('Count', fontsize=16)
+        plt.legend(loc='upper center',fontsize=14)
+
+        if storepath:
+            pp = PdfPages(storepath)
+            pp.savefig(fig)
+            pp.close()
+        else:
+            plt.show()
+
+
     def get_net_keys(self):
         return self.fdata.keys()
 
@@ -393,6 +471,7 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
 
         #ax.set_ylim([-1,20])
         plt.show()
+
 
     def get_size(self, ntkey, tskey):
         return self.fdata[ntkey][tskey]['Eani'].shape

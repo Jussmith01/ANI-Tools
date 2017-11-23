@@ -196,6 +196,24 @@ class anicrossvalidationmolecule(object):
         sigma = hdt.hatokcal * np.std(energies, axis=0) / float(X.shape[0])
         return sigma, hdt.hatokcal *energies
 
+    def compute_stats_multi_molecule(self, X, S):
+        Nd = X.shape[0]
+        Na = X.shape[1]
+        for nc in self.ncl:
+            nc.setMolecule(coords=X[0], types=list(S))
+
+        energies = np.zeros((self.Nn, Nd), dtype=np.float64)
+        forces = np.zeros((self.Nn, Nd, Na, 3), dtype=np.float32)
+
+        for i, x in enumerate(X):
+            for j, nc in enumerate(self.ncl):
+                nc.setCoordinates(coords=x)
+                energies[j,i] = nc.energy()[0]
+                forces[j,i,:,:] = nc.force()
+
+        sigma = hdt.hatokcal * np.std(energies, axis=0) / np.sqrt(float(X.shape[0]))
+        return hdt.hatokcal * energies, hdt.hatokcal * forces, sigma
+
 ##--------------------------------
 ## Class for ANI compute tools
 ##--------------------------------
