@@ -10,7 +10,7 @@ username = "jsmith48"
 root_dir = '/home/jsmith48/scratch/auto_al/'
 
 swkdir = '/home/jsmith48/scratch/auto_al_cycles/'# server working directory
-datdir = 'ANI-AL-0605.0001.00'
+datdir = 'ANI-AL-0606.0201.04'
 
 h5stor = root_dir + 'h5files/'# h5store location
 
@@ -22,94 +22,50 @@ mae = 'module load gnu/4.9.2\n' +\
       'export LD_LIBRARY_PATH="/home/$USER/Gits/RCDBuilder/build/lib:$LD_LIBRARY_PATH"\n'
 
 fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
-aevsize = 1008
-
-wkdir = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/'
 
 #---- Training Parameters ----
 GPU = [3,4,5,6,7] # GPU IDs
 
-trdict = dict({'learningrate' : 0.001,
-               'lrannealing' : 0.5,
-               'lrconvergence' : 1.0e-5,
-               'ST' : 50,
-               'printstep' : 1,
-                })
-
 M   = 0.34 # Max error per atom in kcal/mol
 Nnets = 5 # networks in ensemble
+aevsize = 1008
 
+wkdir = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/ANI-AL-0606/ANI-AL-0606.0201/'
+iptfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/inputtrain.ipt'
 saefile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/sae_wb97x-631gd.dat'
 cstfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
 #-----------0---------
 
 # Training varibles
-d = dict({#'wkdir'         : wkdir,
-          'sflparamsfile' : cstfile,
-          #'ntwkStoreDir'  : wkdir+'networks/',
-          'atomEnergyFile': saefile,
-          #'datadir'       : datadir,
-          'tbtchsz'       : '1024',
-          'vbtchsz'       : '1024',
-          #'gpuid'         : str(GPU),
-          'ntwshr'        : '0',
-          'nkde'          : '2',
-          'force'         : '0',
-          'fmult'         : '0.01',
-          'runtype'       : 'ANNP_CREATE_HDNN_AND_TRAIN',
-          'adptlrn'       : 'OFF',
-          'moment'        : 'ADAM',})
-
-l1 = dict({'nodes'      : '32',
-           'activation' : '5',
-           'maxnorm'    : '1',
-           'norm'       : '3.0',
-           'btchnorm'   : '0',})
-
-l2 = dict({'nodes'      : '32',
-           'activation' : '5',
-           'maxnorm'    : '1',
-           'norm'       : '3.0',
-           'btchnorm'   : '0',})
-
-l3 = dict({'nodes'      : '32',
-           'activation' : '5',
-           'maxnorm'    : '1',
-           'norm'       : '3.0',
-           'btchnorm'   : '0',})
-
-l4 = dict({'nodes'      : '1',
-           'activation' : '6',})
-
-layers = [l1, l2, l3, l4,]
 
 #### Sampling parameters ####
-nmsparams = {'T': 1000.0,
-             'Ngen': 100,
-             'Nkep': 50,
+nmsparams = {'T': 800.0,
+             'Ngen': 80,
+             'Nkep': 10,
              }
 
-mdsparams = {'N': 5,
-             'T': 800,
-             'dt': 0.5,
-             'Nc': 600,
-             'Ns': 5,
+mdsparams = {'N': 4,
+             'T': 600,
+             'dt': 1.0,
+             'Nc': 1000,
+             'Ns': 2,
              }
 
 ### BEGIN CONFIGURATIONAL REFINEMENT LOOP HERE ###
 # TBDone
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [2,3,4]
+N = [0,1,2,3,4,5,6,7,8,9,10]
 
 for i in N:
-    netdir = wkdir+'ANI-AL-0605.0001.'+str(i).zfill(4)+'/'
+    netdir = wkdir+'ANI-AL-0606.0201.04'+str(i).zfill(2)+'/'
     if not os.path.exists(netdir):
         os.mkdir(netdir)
 
     nnfprefix   = netdir + 'train'
 
-    netdict = {'cnstfile' : cstfile,
+    netdict = {'iptfile' : iptfile,
+               'cnstfile' : cstfile,
                'saefile': saefile,
                'nnfprefix': netdir+'train',
                'aevsize': aevsize,
@@ -119,7 +75,7 @@ for i in N:
     ## Train the ensemble ##
     aet = alt.alaniensembletrainer(netdir, netdict, 'train', h5stor, Nnets)
     aet.build_training_cache()
-    aet.train_ensemble(GPU, d, trdict, layers)
+    aet.train_ensemble(GPU)
 
     ldtdir = root_dir  # local data directories
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
@@ -127,7 +83,8 @@ for i in N:
 
     ## Run active learning sampling ##
     acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict)
-    acs.run_sampling(nmsparams, mdsparams, GPU)
+    acs.run_sampling_nms(nmsparams, GPU)
+    acs.run_sampling_md(mdsparams, GPU)
 
     ## Submit jobs, return and pack data
     ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae)

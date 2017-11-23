@@ -17,6 +17,7 @@ import os
 import pyaniasetools as aat
 
 from multiprocessing import Process
+import shutil
 
 class alconformationalsampler():
     def __init__(self, ldtdir, datdir, optlfile, fpatoms, netdict):
@@ -34,13 +35,16 @@ class alconformationalsampler():
 
         self.netdict = netdict
 
-    def run_sampling(self, nmsparams, mdparams, gpus=[0]):
+    def run_sampling_nms(self, nmsparams, gpus=[0]):
         print('Running NMS sampling...')
-	#self.normal_mode_sampling(nmsparams['T'],
-        #                          nmsparams['Ngen'],
-        #                          nmsparams['Nkep'],
-        #                          gpus[0])
+        p = Process(target=self.normal_mode_sampling, args=(nmsparams['T'],
+                                                            nmsparams['Ngen'],
+                                                            nmsparams['Nkep'],
+                                                            gpus[0]))
+        p.start()
+        p.join()
 
+    def run_sampling_md(self, mdparams, gpus=[0]):
         md_work = []
         for di, id in enumerate(self.idir):
             files = os.listdir(id)
@@ -61,7 +65,7 @@ class alconformationalsampler():
                                                                     mdparams['Ns'],
                                                                     g)))
         print('Running MD Sampling...')
-        for p in proc:
+        for i,p in enumerate(proc):
             p.start()
 
         for p in proc:
@@ -115,7 +119,7 @@ class alconformationalsampler():
 
                 sigma = anicv.compute_stddev_conformations(conformers,spc)
                 #print(sigma)
-                sid = np.where( sigma >  0.3 )[0]
+                sid = np.where( sigma >  0.25 )[0]
                 #print(sid)
                 #print('  -', fi, 'of', len(files), ') File:', f, 'keep:', sid.size,'percent:',"{:.2f}".format(100.0*sid.size/Ngen))
 
@@ -133,6 +137,9 @@ class alconformationalsampler():
             of.write('    -Total: '+str(Nk)+' of '+str(Nt)+' percent: '+"{:.2f}".format(100.0*Nk/Nt)+'\n')
             of.flush()
             #print('    -Total:',Nk,'of',Nt,'percent:',"{:.2f}".format(100.0*Nk/Nt))
+
+        del anicv
+        del dc
 
         of.write('\nGrand Total: '+ str(Nkt)+ ' of '+ str(Ntt)+' percent: '+"{:.2f}".format(100.0*Nkt/Ntt)+ ' Kept '+str(Nkp)+'\n')
         #print('\nGrand Total:', Nkt, 'of', Ntt,'percent:',"{:.2f}".format(100.0*Nkt/Ntt), 'Kept',Nkp)
@@ -162,7 +169,7 @@ class alconformationalsampler():
             activ.setmol(data["coordinates"], S)
 
             # Generate conformations
-            X = activ.generate_conformations(N, T, dt, Nc, Ns, dS=0.3)
+            X = activ.generate_conformations(N, T, dt, Nc, Ns, dS=0.25)
 
             ftme_t += activ.failtime
 
@@ -176,6 +183,7 @@ class alconformationalsampler():
                 hdt.writexyzfile(self.cdir + 'mds_' + m.split('.')[0] + '_' + str(i).zfill(2) + str(di).zfill(4) + '.xyz', X, S)
         difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme / float(Nmol)) + '\n')
         #print(Nmol)
+        del activ
         difo.close()
 
 def interval(v,S):
@@ -317,12 +325,11 @@ class alaniensembletrainer():
             v.makemetadata()
             th.cleanup()
 
-
-    def train_ensemble(self, GPUList, pyncdict, trdict, layers):
+    def train_ensemble(self, GPUList):
         print('Training Ensemble...')
         processes = []
         for i,id in enumerate(GPUList):
-            processes.append(Process(target=self.train_network, args=(pyncdict, trdict, layers, id, i)))
+            processes.append(Process(target=self.train_network, args=(id, i)))
             processes[-1].start()
             #self.train_network(pyncdict, trdict, layers, id, i)
 
@@ -330,7 +337,8 @@ class alaniensembletrainer():
             p.join()
         print('Training Complete.')
 
-    def train_network(self, pyncdict, trdict, layers, gpuid, index):
+    def train_network(self, gpuid, index):
+        pyncdict = dict()
         pyncdict['wkdir'] = self.train_root + 'train' + str(index) + '/'
         pyncdict['ntwkStoreDir'] = self.train_root + 'train' + str(index) + '/' + 'networks/'
         pyncdict['datadir'] = self.train_root + "cache-data-" + str(index) + '/'
@@ -344,13 +352,47 @@ class alaniensembletrainer():
 
         outputfile = pyncdict['wkdir']+'output.opt'
 
-        # Setup trainer
-        tr = atr.anitrainer(pyncdict, layers)
+        shutil.copy2(self.netdict['iptfile'], pyncdict['wkdir'])
+        shutil.copy2(self.netdict['cnstfile'], pyncdict['wkdir'])
+        shutil.copy2(self.netdict['saefile'], pyncdict['wkdir'])
 
-        # Train network
-        tr.train_network(trdict['learningrate'],
-                         trdict['lrannealing'],
-                         trdict['lrconvergence'],
-                         trdict['ST'],
-                         outputfile,
-                         trdict['printstep'])
+        command = "cd " + pyncdict['wkdir'] + " && HDAtomNNP-Trainer -i inputtrain.ipt -d " + pyncdict['datadir'] + " -p 1.0 -m -g " + pyncdict['gpuid'] + " > output.opt"
+        proc = subprocess.Popen (command, shell=True)
+        proc.communicate()
+
+#    def train_ensemble(self, GPUList, pyncdict, trdict, layers):
+#        print('Training Ensemble...')
+#        processes = []
+#        for i,id in enumerate(GPUList):
+#            processes.append(Process(target=self.train_network, args=(pyncdict, trdict, layers, id, i)))
+#            processes[-1].start()
+#            #self.train_network(pyncdict, trdict, layers, id, i)
+#
+#        for p in processes:
+#            p.join()
+#        print('Training Complete.')
+
+#    def train_network(self, pyncdict, trdict, layers, gpuid, index):
+#        pyncdict['wkdir'] = self.train_root + 'train' + str(index) + '/'
+#        pyncdict['ntwkStoreDir'] = self.train_root + 'train' + str(index) + '/' + 'networks/'
+#        pyncdict['datadir'] = self.train_root + "cache-data-" + str(index) + '/'
+#        pyncdict['gpuid'] = str(gpuid)
+#
+#        if not os.path.exists(pyncdict['wkdir']):
+#            os.mkdir(pyncdict['wkdir'])
+#
+#        if not os.path.exists(pyncdict['ntwkStoreDir']):
+#            os.mkdir(pyncdict['ntwkStoreDir'])
+#
+#        outputfile = pyncdict['wkdir']+'output.opt'
+#
+#        # Setup trainer
+#        tr = atr.anitrainer(pyncdict, layers)
+#
+#        # Train network
+#        tr.train_network(trdict['learningrate'],
+#                         trdict['lrannealing'],
+#                         trdict['lrconvergence'],
+#                         trdict['ST'],
+#                         outputfile,
+#                         trdict['printstep'])
