@@ -7,9 +7,9 @@ hostname = "comet.sdsc.xsede.org"
 #hostname = "moria.chem.ufl.edu"
 username = "jsmith48"
 
-root_dir = '/home/jujuman/Research/test_auto_al/'
+root_dir = '/home/jsmith48/scratch/auto_al/'
 
-swkdir = '/home/jsmith48/scratch/test_autoal/'# server working directory
+swkdir = '/home/jsmith48/scratch/auto_al_cycles/'# server working directory
 datdir = 'ANI-AL-0605.0001.00'
 
 h5stor = root_dir + 'h5files/'# h5store location
@@ -24,23 +24,23 @@ mae = 'module load gnu/4.9.2\n' +\
 fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
 aevsize = 1008
 
-wkdir = '/home/jujuman/Research/test_auto_al/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/'
+wkdir = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/'
 
 #---- Training Parameters ----
-GPU = [0,1] # GPU IDs
+GPU = [3,4,5,6,7] # GPU IDs
 
 trdict = dict({'learningrate' : 0.001,
                'lrannealing' : 0.5,
-               'lrconvergence' : 1.0e-4,
-               'ST' : 10,
+               'lrconvergence' : 1.0e-5,
+               'ST' : 50,
                'printstep' : 1,
                 })
 
 M   = 0.34 # Max error per atom in kcal/mol
-Nnets = 2 # networks in ensemble
+Nnets = 5 # networks in ensemble
 
-saefile = '/home/jujuman/Research/test_auto_al/modelCNOSFCl/sae_wb97x-631gd.dat'
-cstfile = '/home/jujuman/Research/test_auto_al/modelCNOSFCl/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
+saefile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/sae_wb97x-631gd.dat'
+cstfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
 #-----------0---------
 
 # Training varibles
@@ -49,8 +49,8 @@ d = dict({#'wkdir'         : wkdir,
           #'ntwkStoreDir'  : wkdir+'networks/',
           'atomEnergyFile': saefile,
           #'datadir'       : datadir,
-          'tbtchsz'       : '64',
-          'vbtchsz'       : '64',
+          'tbtchsz'       : '1024',
+          'vbtchsz'       : '1024',
           #'gpuid'         : str(GPU),
           'ntwshr'        : '0',
           'nkde'          : '2',
@@ -72,7 +72,7 @@ l2 = dict({'nodes'      : '32',
            'norm'       : '3.0',
            'btchnorm'   : '0',})
 
-l3 = dict({'nodes'      : '16',
+l3 = dict({'nodes'      : '32',
            'activation' : '5',
            'maxnorm'    : '1',
            'norm'       : '3.0',
@@ -89,17 +89,18 @@ nmsparams = {'T': 1000.0,
              'Nkep': 50,
              }
 
-mdsparams = {'N': 10,
+mdsparams = {'N': 5,
              'T': 800,
              'dt': 0.5,
-             'Nc': 500,
+             'Nc': 600,
              'Ns': 5,
              }
 
-### BEGIN LOOP HERE ###
-N = 3
 
-for i in range(N):
+### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
+N = [2,3,4]
+
+for i in N:
     netdir = wkdir+'ANI-AL-0605.0001.'+str(i).zfill(4)+'/'
     if not os.path.exists(netdir):
         os.mkdir(netdir)
@@ -113,15 +114,20 @@ for i in range(N):
                'num_nets': Nnets,
                }
 
+    ## Train the ensemble ##
     aet = alt.alaniensembletrainer(netdir, netdict, 'train', h5stor, Nnets)
-
     aet.build_training_cache()
     aet.train_ensemble(GPU, d, trdict, layers)
 
     ldtdir = root_dir  # local data directories
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
         os.mkdir(root_dir + datdir + str(i+1).zfill(2))
+
+    ## Run active learning sampling ##
     acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict)
     acs.run_sampling(nmsparams, mdsparams, GPU)
 
+    ## Submit jobs, return and pack data
     ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae)
+
+

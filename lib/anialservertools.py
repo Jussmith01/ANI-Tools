@@ -37,12 +37,21 @@ class alQMserversubmission():
         self.job_ids = set({})
         self.job_list = []
         self.mae = ''
+        self.ucount = 0
+
+    def reconnect(self):
+        self.server.close()
+        self.server = pyssh.session.Session(hostname=self.hostname, username=self.username, port=str(self.port))
 
     def set_optional_submission_command(self, mae):
         self.mae = mae
 
     def submit_ssh_command(self, command):
-        r = self.server.execute(command)
+        if self.ucount > 8:
+            self.reconnect()
+            self.ucount = 0
+        self.ucount += 1
+        r = self.server.execute(command, lazy=True)
         return r.as_str()
 
     def submit_job(self):
@@ -57,8 +66,8 @@ class alQMserversubmission():
             data = [j for j in i.split(" ") if j != '']
             running_ids.add(data[0])
 
-        print('jid:',self.job_ids)
-        print('rid:',running_ids)
+        #print('jid:',self.job_ids)
+        #print('rid:',running_ids)
 
         return len(self.job_ids.intersection(running_ids))
 
@@ -226,7 +235,6 @@ class alQMserversubmission():
     def run_all_jobs(self):
         print("cd " + self.swkdir + self.datdir + '/working' + " && bash runall.sh")
         r = self.submit_ssh_command("cd " + self.swkdir + self.datdir + '/working' + " && bash runall.sh")
-        print(r)
         reg = re.compile(r'(?:Submitted batch job )(\d+?)(?:\n|$)')
 
         ids = reg.findall(r)
@@ -251,7 +259,7 @@ class alQMserversubmission():
             L = file_len(d + f)
 
             if L >= 4:
-                print(d + f)
+                #print(d + f)
 
                 data = hdt.readncdatall(d + f)
 
@@ -271,6 +279,7 @@ class alQMserversubmission():
 
 def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae):
     # Declare server submission class and connect to ssh
+    print('Connecting...')
     alserv = alQMserversubmission(hostname, username, swkdir, ldtdir, datdir)
 
     # Set optional server information
@@ -280,10 +289,13 @@ def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae):
     alserv.prepare_data_dir()
 
     # Load all prepared files to the server
+    print('Loading to server...')
     alserv.load_to_server()
 
     # Run all jobs at once
+    print('Executing jobs...')
     alserv.run_all_jobs()
+    print('Executed:',len(alserv.job_ids))
 
     # Monitor jobs
     print('Listening...')
@@ -294,15 +306,17 @@ def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae):
         print("Running (" + str(Nj) + ")...")
 
     # CLeanup working files on server
+    print('Cleaing up server...')
+    sleep(5) # pyssh seems to freeze sometimes when there are successive back to back commands
     alserv.cleanup_server()
 
     # Load all data from server
+    print('Loading from server...')
     alserv.load_from_server()
 
     # Create h5 file
-    print('Packing...')
+    print('Packing data...')
     alserv.generate_h5(h5stor + datdir + '.h5')
 
-    print('END')
-
+    print('--Cycle Complete--')
     alserv.disconnect()
