@@ -35,10 +35,10 @@ import seaborn as sns
 
 #----------------Parameters--------------------
 
-dir = '/home/jujuman/ANIData4TB/Parkhill_IR_MOLS/cholesterol/'
+dir = '/home/jujuman/ANIData4TB/Parkhill_IR_MOLS/aspirin/'
 
 # Molecule file
-molfile = dir + 'cholesterol.sdf'
+molfile = dir + 'aspirin.sdf'
 
 # Dynamics file
 xyzfile = dir + 'mdcrd.xyz'
