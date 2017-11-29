@@ -24,13 +24,14 @@ saefile  = wkdir + 'sae_wb97x-631gd.dat'
 At = ['C', 'O', 'N', 'S', 'F', 'Cl'] # Hydrogens added after check
 
 #dstore = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_6/'
-dstore = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/confs_7/'
+dstore = '/home/jujuman/Research/temp_test/'
 
 N = 25 # Total trajectories
-T = 800.0 # Temp (K)
-dt = 0.5 # time step (fs)
-Nc = 500 # Total cycles
-Ns = 5 # Steps before checking
+T1 = 300.0 # Temp (K)
+T2 = 1200.0 # Temp (K)
+dt = 1.0 # time step (fs)
+Nc = 2000 # Total cycles
+Ns = 2 # Steps before checking
 
 idir = [#(0.25,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_1/inputs/'),
         #(0.50,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_2/inputs/'),
@@ -56,10 +57,10 @@ idir = [#(0.25,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_1/i
         #(1.00,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_04_red/inputs/'),
         #(0.50,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_05_red/inputs/'),
         #(0.35,'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/'),
-        (1.0, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size1/inputs/'),
-        (1.0, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size2/inputs/'),
-        (1.0, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size3/inputs/'),
-        (1.0, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size4/inputs/'),
+        #(1.0, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size1/inputs/'),
+        #(1.0, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size2/inputs/'),
+        #(1.0, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size3/inputs/'),
+        #(1.0, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size4/inputs/'),
         (1.0, '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size5/inputs/'),
         ]
 
@@ -88,7 +89,7 @@ for di,id in enumerate(idir):
         activ.setmol(data["coordinates"], S)
 
         # Generate conformations
-        X = activ.generate_conformations(N, T, dt, Nc, Ns, dS = 0.3)
+        X = activ.generate_conformations(N, T1, T2, dt, Nc, Ns, dS = 0.25)
 
         ftme += activ.failtime
         ftme_t += activ.failtime

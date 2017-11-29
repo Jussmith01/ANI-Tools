@@ -309,6 +309,55 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
                 }
 
     ''' Generate total errors '''
+    def generate_fullset_peratom_errors(self, ntkey, tslist):
+        #idx = np.nonzero(self.fdata[ntkey][tskey]['Erdft'])
+
+        if not tslist:
+            tskeys = self.fdata[ntkey].keys()
+        else:
+            tskeys = tslist
+
+        Nn = self.fdata[ntkey][list(tskeys)[0]]['Eani'].shape[0]-1
+
+        print(self.fdata[ntkey]['GDB07to09']['Eani'][Nn,:])
+        print(self.fdata[ntkey]['GDB07to09']['Na'])
+        print(self.fdata[ntkey]['GDB07to09']['Eani'][Nn,:]/self.fdata[ntkey]['GDB07to09']['Na'])
+
+        return {names[0]: hdt.calculatemeanabserror(
+                    np.concatenate([self.fdata[ntkey][tskey]['Eani'][Nn,:]/self.fdata[ntkey][tskey]['Na'] for tskey in tskeys]),
+                    np.concatenate([self.fdata[ntkey][tskey]['Edft']/self.fdata[ntkey][tskey]['Na'] for tskey in tskeys])),
+                names[2]: hdt.calculaterootmeansqrerror(
+                    np.concatenate([self.fdata[ntkey][tskey]['Eani'][Nn, :]/self.fdata[ntkey][tskey]['Na'] for tskey in tskeys]),
+                    np.concatenate([self.fdata[ntkey][tskey]['Edft']/self.fdata[ntkey][tskey]['Na'] for tskey in tskeys])),
+                }
+
+    ''' Generate total errors '''
+    def generate_fullset_mean_errors(self, ntkey):
+        #idx = np.nonzero(self.fdata[ntkey][tskey]['Erdft'])
+        tskeys = self.fdata[ntkey].keys()
+
+        Nn = self.fdata[ntkey][list(tskeys)[0]]['Eani'].shape[0]-1
+        return {names[2]+'E': hdt.calculaterootmeansqrerror(
+                    np.concatenate([self.fdata[ntkey][tskey]['Eani'][Nn,:] for tskey in tskeys]),
+                    np.concatenate([self.fdata[ntkey][tskey]['Edft'] for tskey in tskeys])),
+                names[2]+'M': np.mean(hdt.calculaterootmeansqrerror(
+                    np.hstack([self.fdata[ntkey][tskey]['Eani'][0:Nn, :] for tskey in tskeys]),
+                    np.hstack([self.fdata[ntkey][tskey]['Edft'] for tskey in tskeys]),axis=1)),
+                names[6]+'E': hdt.calculaterootmeansqrerror(
+                    np.concatenate([self.fdata[ntkey][tskey]['dEani'][Nn, :] for tskey in tskeys]),
+                    np.concatenate([self.fdata[ntkey][tskey]['dEdft'] for tskey in tskeys])),
+                names[6]+'M': np.mean(hdt.calculaterootmeansqrerror(
+                    np.hstack([self.fdata[ntkey][tskey]['dEani'][0:Nn, :] for tskey in tskeys]),
+                    np.hstack([self.fdata[ntkey][tskey]['dEdft'] for tskey in tskeys]),axis=1)),
+                names[10]+'E': hdt.calculaterootmeansqrerror(
+                    np.concatenate([self.fdata[ntkey][tskey]['Fani'][Nn, :] for tskey in tskeys]),
+                    np.concatenate([self.fdata[ntkey][tskey]['Fdft'] for tskey in tskeys])),
+                names[10]+'M': np.mean(hdt.calculaterootmeansqrerror(
+                    np.hstack([self.fdata[ntkey][tskey]['Fani'][0:Nn, :] for tskey in tskeys]),
+                    np.hstack([self.fdata[ntkey][tskey]['Fdft'] for tskey in tskeys]),axis=1)),
+                }
+
+    ''' Generate total errors '''
     def generate_total_errors(self, ntkey, tskey):
         #idx = np.nonzero(self.fdata[ntkey][tskey]['Erdft'])
         Nn = self.fdata[ntkey][tskey]['Eani'].shape[0]-1
@@ -415,6 +464,24 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         errors = dict()
         for k in self.fdata.keys():
             errors[k] = pd.Series(self.generate_fullset_errors(k))
+        pd.set_option('expand_frame_repr', False)
+        edat = pd.DataFrame(errors).transpose()
+        return edat
+
+
+    def get_totalerrorperatom_table(self, tslist = []):
+        errors = dict()
+        for k in self.fdata.keys():
+            errors[k] = pd.Series(self.generate_fullset_peratom_errors(k, tslist))
+        pd.set_option('expand_frame_repr', False)
+        edat = pd.DataFrame(errors).transpose()
+        return edat
+
+
+    def get_totalmeanerror_table(self):
+        errors = dict()
+        for k in self.fdata.keys():
+            errors[k] = pd.Series(self.generate_fullset_mean_errors(k))
         pd.set_option('expand_frame_repr', False)
         edat = pd.DataFrame(errors).transpose()
         return edat
