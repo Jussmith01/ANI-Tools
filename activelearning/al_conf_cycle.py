@@ -47,7 +47,8 @@ nmsparams = {'T': 700.0, # Temperature
              }
 
 mdsparams = {'N': 2,
-             'T': 600,
+             'T1': 300,
+             'T2': 1500,
              'dt': 1.0,
              'Nc': 1000,
              'Ns': 2,
