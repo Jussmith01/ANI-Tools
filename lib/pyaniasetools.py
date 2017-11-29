@@ -7,6 +7,9 @@ import numpy as np
 
 # Neuro Chem
 from ase_interface import ANI
+from ase_interface import ANIENS
+from ase_interface import ensemblemolecule
+
 import pyNeuroChem as pync
 
 import hdnntools as hdt
@@ -279,8 +282,11 @@ class moldynactivelearning(object):
         # Number of networks
         self.Nn = Nnet
 
+        # Build ANI ensemble
+        self.aens = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)
+
         # Construct pyNeuroChem class
-        self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
+        #self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
 
         # Initalize PBC
         self.pbc = False
@@ -316,7 +322,7 @@ class moldynactivelearning(object):
 
     """Runs the supplied trajectory with a random starting point
     """
-    def __run_rand_dyn__(self, mid, T, dt, Nc, Ns, dS):
+    def __run_rand_dyn__(self, mid, T1, T2, dt, Nc, Ns, dS):
         # Setup calculator
         mol = self.mols[0].copy()
 
@@ -329,47 +335,52 @@ class moldynactivelearning(object):
             mol.set_pbc((self.pbc, self.pbc, self.pbc))
 
         # Setup calculator
-        mol.set_calculator(ANI(False))
-        mol.calc.setnc(self.ncl[0])
+        mol.set_calculator(ANIENS(self.aens))
+
+        #mol.set_calculator(ANI(False))
+        #mol.calc.setnc(self.ncl[0])
 
         # Set chemical symbols
         spc = mol.get_chemical_symbols()
 
-        # Set the momenta corresponding to T=300K
-        MaxwellBoltzmannDistribution(mol, (T/4.0) * units.kB)
+        # Set the velocities corresponding to a boltzmann dist @ T/4.0
+        MaxwellBoltzmannDistribution(mol, T1 * units.kB)
 
         # Set the thermostat
-        dyn = Langevin(mol, dt * units.fs, T * units.kB, 0.02)
+        dyn = Langevin(mol, dt * units.fs, T1 * units.kB, 0.02)
+        dT = (T2 - T1)/Nc
         #print('Running...')
         for i in range(Nc):
-            dyn.run(Ns)  # Do Ns steps of MD
+            # Set steps temperature
+            dyn.set_temperature((T1 + dT*i) * units.kB)
 
-            xyz = np.array(mol.get_positions(wrap=self.pbc), dtype=np.float32).reshape(len(spc), 3)
-            energies = np.zeros((self.Nn), dtype=np.float64)
-            N = 0
-            for comp in self.ncl:
-                comp.setMolecule(coords=xyz, types=list(spc))
-                energies[N] = comp.energy()[0]
-                N = N + 1
+            # Do Ns steps of dynamics
+            dyn.run(Ns)
 
-            energies = hdt.hatokcal * energies
-            sigma = np.std(energies) / np.sqrt(float(len(spc)))
-            #print('E:', energies)
+            # Return sigma
+            sigma = hdt.evtokcal * mol.calc.stddev
+
+            ekin = mol.get_kinetic_energy() / len(mol)
+
+            # Check for dynamics failure
             if sigma > dS:
                 self.Nbad += 1
                 self.X.append(mol.get_positions())
+                #print('Step:', dyn.get_number_of_steps(), 'Sig:', sigma, 'Temp:',
+                #      str(ekin / (1.5 * units.kB)) + '(' + str(T1 + dT * i) + ')')
+
                 return True,dyn.get_number_of_steps()
         return False,dyn.get_number_of_steps()
 
     """Generate a set of conformations from MD
     """
-    def generate_conformations(self, Nr, T, dt, Nc, Ns, dS):
+    def generate_conformations(self, Nr, T1, T2, dt, Nc, Ns, dS):
         Ng = 0
         self.Nbad = 0
         self.X = []
         fsteps = []
         for r in range(Nr):
-            found, steps = self.__run_rand_dyn__(mid=r, T=T, dt=dt, Nc=Nc, Ns=Ns, dS=dS)
+            found, steps = self.__run_rand_dyn__(mid=r, T1=T1, T2=T2, dt=dt, Nc=Nc, Ns=Ns, dS=dS)
             fsteps.append(steps)
             if found:
                 Ng += 1
