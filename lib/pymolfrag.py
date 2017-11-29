@@ -143,7 +143,10 @@ class dimergenerator():
 
         pos = 0
         plc = 0
+        attempts = 0
         for idx, j in enumerate(rint):
+            if attempts >= 10000:
+                break
             x = self.mols[j]['coordinates']
             s = self.mols[j]['species']
 
@@ -155,7 +158,7 @@ class dimergenerator():
             #print('after:', maxd)
 
             fail = True
-            while fail:
+            while fail and attempts < 10000:
                 ctr = np.random.uniform(2.0*maxd + 1.0, L - 2.0*maxd - 1.0, (3))
                 fail = False
                 for cid,c in enumerate(self.ctd):
@@ -167,17 +170,21 @@ class dimergenerator():
                                 dij = np.linalg.norm(xi-xj)
                                 if dij < minv:
                                     minv = dij
-                        if minv < 1.75:
+                        if minv < 1.5:
                             fail = True
+                            attempts += 1
 
                 if not fail:
                     plc += 1
+                    attempts = 0
                     #print('Added:',plc)
                     self.ctd.append((ctr, maxd, pos))
                     self.X = np.vstack([self.X, x + ctr])
                     self.Na[idx] = len(s)
                     pos += len(s)
                     self.S.extend(s)
+
+        self.Na = self.Na[0:plc]
 
     def init_dynamics(self, Nm, V, L, dt, T):
         self.L = L
@@ -217,39 +224,32 @@ class dimergenerator():
         # Declare Dyn
         self.dyn = Langevin(self.mol, dt * units.fs, T * units.kB, 0.1)
 
-    def run_dynamics(self, Ni, xyzfile, trajfile):
+    def run_dynamics(self, Ni):
         # Open MD output
-        mdcrd = open(xyzfile, 'w')
+        #mdcrd = open(xyzfile, 'w')
 
         # Open MD output
-        traj = open(trajfile, 'w')
+        #traj = open(trajfile, 'w')
 
         # Define the printer
-        def printenergy(a=self.mol, d=self.dyn, b=mdcrd, t=traj):  # store a reference to atoms in the definition.
-            """Function to print the potential, kinetic and total energy."""
-            epot = a.get_potential_energy() / len(a)
-            ekin = a.get_kinetic_energy() / len(a)
+        #def printenergy(a=self.mol, d=self.dyn):  # store a reference to atoms in the definition.
+        #    """Function to print the potential, kinetic and total energy."""
+        #    epot = a.get_potential_energy() / len(a)
+        #    ekin = a.get_kinetic_energy() / len(a)
 
-            t.write(str(d.get_number_of_steps()) + ' ' + str(ekin / (1.5 * units.kB)) + ' ' + str(epot) + ' ' + str(
-                ekin) + ' ' + str(epot + ekin) + '\n')
-            b.write(str(len(a)) + '\n' + str(ekin / (1.5 * units.kB)) + ' Step: ' + str(d.get_number_of_steps()) + '\n')
-            c = a.get_positions(wrap=True)
-            for j, i in zip(a, c):
-                b.write(str(j.symbol) + ' ' + str(i[0]) + ' ' + str(i[1]) + ' ' + str(i[2]) + '\n')
-
-            print('Step: %d Size: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
-                  'Etot = %.3feV' % (d.get_number_of_steps(), len(a), epot, ekin, ekin / (1.5 * units.kB), epot + ekin))
+        #    print('Step: %d Size: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
+        #          'Etot = %.3feV' % (d.get_number_of_steps(), len(a), epot, ekin, ekin / (1.5 * units.kB), epot + ekin))
 
         # Attach the printer
-        self.dyn.attach(printenergy, interval=4)
+        #self.dyn.attach(printenergy, interval=4)
 
         self.dyn.run(Ni) # Do Ni steps
 
         # Open MD output
-        mdcrd.close()
+        #mdcrd.close()
 
         # Open MD output
-        traj.close()
+        #traj.close()
 
     def __fragmentbox__(self, file):
         self.X = self.mol.get_positions()
@@ -287,7 +287,7 @@ class dimergenerator():
                                     if v < min:
                                         min = v
 
-                            if min < 3.5 and min > 1.1:
+                            if min < 4.2 and min > 1.1:
                                 Xf = np.vstack([Xi, Xj])
                                 Sf = self.S[si:si+Nai]
                                 Sf.extend(self.S[sj:sj+Naj])

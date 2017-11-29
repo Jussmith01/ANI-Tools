@@ -9,20 +9,11 @@ def file_len(fname):
             pass
     return i + 1
 
-#path = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-06_rs2.h5'
-#path = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-06_rs4.h5'
-#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs4.h5'
-#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_2/gdb_r06_comb08_3.h5'
-#path = '/home/jujuman/Research/ReactionGeneration/reactiondata/comb_rxn_1.h5'
-#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/gdb11_h5/gdb11_S06_06r.h5'
-#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/gdb_r06_comb08_03_3.h5'
-#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/gdb_r06_comb09_01_3.h5'
-path = '/home/jujuman/Research/extensibility_test_sets/ani_md_benchmark/ani_md_bench.h5'
-#path = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0001/ANI-AL-0605.0001.0001.h5'
+path = '/home/jsmith48/scratch/auto_al/h5files/ANI-AL-0606.0201.0412.h5'
 
-dtdirs = [#'/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0001/confs_1/data/',
+dtdirs = ['/home/jsmith48/scratch/auto_al/ANI-AL-0606.0201.0412/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size5/data/'
-          '/home/jujuman/Research/extensibility_test_sets/ani_md_benchmark/data_big/data/',
+          #'/home/jujuman/Research/extensibility_test_sets/ani_md_benchmark/data_big/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_3/data/',
           #'/home/jujuman/Scratch/Research/ReactionGeneration/DA_rxn_1/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb08_3/confs_3/data/',

@@ -10,7 +10,7 @@ username = "jsmith48"
 root_dir = '/home/jsmith48/scratch/auto_al/'
 
 swkdir = '/home/jsmith48/scratch/auto_al_cycles/'# server working directory
-datdir = 'ANI-AL-0606.0201.04'
+datdir = 'ANI-AL-0707.0000.04'
 
 h5stor = root_dir + 'h5files/'# h5store location
 
@@ -23,6 +23,8 @@ mae = 'module load gnu/4.9.2\n' +\
 
 fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
 
+jtime = "0-2:00"
+
 #---- Training Parameters ----
 GPU = [3,4,5,6,7] # GPU IDs
 
@@ -30,7 +32,7 @@ M   = 0.34 # Max error per atom in kcal/mol
 Nnets = 5 # networks in ensemble
 aevsize = 1008
 
-wkdir = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/ANI-AL-0606/ANI-AL-0606.0201/'
+wkdir = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/ANI-AL-0707/ANI-AL-0707.0000/'
 iptfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/inputtrain.ipt'
 saefile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/sae_wb97x-631gd.dat'
 cstfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
@@ -39,24 +41,34 @@ cstfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/rHCNOSFCl-4.6A_16-3.1A_a4
 # Training varibles
 
 #### Sampling parameters ####
-nmsparams = {'T': 800.0,
-             'Ngen': 80,
-             'Nkep': 10,
+nmsparams = {'T': 700.0, # Temperature
+             'Ngen': 40, # Confs to generate
+             'Nkep': 5, # Diverse confs to keep
              }
 
-mdsparams = {'N': 4,
+mdsparams = {'N': 2,
              'T': 600,
              'dt': 1.0,
              'Nc': 1000,
              'Ns': 2,
              }
 
+dmrparams = {'mdselect' : [(200,2),(50,4),(1,5)],
+             'N' : 20,
+             'T' : 400.0, # running temp 
+             'L' : 20.0, # box length
+             'V' : 0.04, # Random init velocities 
+             'dt' : 0.5, # MD time step
+             'Nm' : 160, # Molecules to embed
+             'Nr' : 10, # Number of total boxes to embed and test
+             'Ni' : 1, # Number of steps to run the dynamics before fragmenting
+            }
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [0,1,2,3,4,5,6,7,8,9,10]
+N = [3,4,5,6,7,8]
 
 for i in N:
-    netdir = wkdir+'ANI-AL-0606.0201.04'+str(i).zfill(2)+'/'
+    netdir = wkdir+'ANI-AL-0707.0000.04'+str(i).zfill(2)+'/'
     if not os.path.exists(netdir):
         os.mkdir(netdir)
 
@@ -81,10 +93,12 @@ for i in N:
 
     ## Run active learning sampling ##
     acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict)
+    acs.run_sampling_dimer(dmrparams, GPU)
     acs.run_sampling_nms(nmsparams, GPU)
     acs.run_sampling_md(mdsparams, GPU)
+    #exit(0)
 
     ## Submit jobs, return and pack data
-    ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae)
+    ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae, jtime)
 
 
