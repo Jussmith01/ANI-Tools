@@ -283,15 +283,21 @@ def readncdatall(file,N = 0):
         DP = []
         #print('File: ',file)
         for i,l in enumerate(fd[3].split("\n")[0:-1]):
+            
             data = l.split(",")[0:-1]
-            #print(i,len(l))
-            Xi.append(np.array(data[0:nat * 3], dtype=np.float32).reshape(nat,3))
-            Ei.append(data[nat*3])
-            Fi.append(np.array(data[nat*3+1:nat*3+nat*3+1],dtype=np.float32).reshape(nat,3))
-            C1.append(np.array(data[nat*3+nat*3+1:nat*3+nat*3+(nat+1)+1],dtype=np.float32))
-            C2.append(np.array(data[nat*3+nat*3+(nat+1)+1:nat*3+nat*3+2*(nat+1)+1],dtype=np.float32))
-            SD.append(np.array(data[nat*3+nat*3+2*(nat+1)+1:nat*3+nat*3+3*(nat+1)+1],dtype=np.float32))
-            DP.append(np.array(data[nat*3+nat*3+3*(nat+1)+1:nat*3+nat*3+4*(nat+1)+(nat+1)*3+1],dtype=np.float32).reshape(nat+1,3))
+            #if True:
+            if len(data) == 3*3*nat+1+3*nat+3+3:
+               #print(i,np.array(data).shape,3*3*nat+1+3*nat+3+3,l.count(","))
+               Xi.append(np.array(data[0:nat * 3], dtype=np.float32).reshape(nat,3))
+               Ei.append(data[nat*3])
+               Fi.append(np.array(data[nat*3+1:nat*3+nat*3+1],dtype=np.float32).reshape(nat,3))
+               C1.append(np.array(data[nat*3+nat*3+1:nat*3+nat*3+(nat+1)+1],dtype=np.float32))
+               C2.append(np.array(data[nat*3+nat*3+(nat+1)+1:nat*3+nat*3+2*(nat+1)+1],dtype=np.float32))
+               SD.append(np.array(data[nat*3+nat*3+2*(nat+1)+1:nat*3+nat*3+3*(nat+1)+1],dtype=np.float32))
+               DP.append(np.array(data[nat*3+nat*3+3*(nat+1)+1:nat*3+nat*3+4*(nat+1)+(nat+1)*3+1],dtype=np.float32).reshape(nat+1,3))
+            else:
+               print(i,np.array(data).shape,3*3*nat+1+3*nat+3+3,l.count(","))
+               print('Line size does not match expected!')
     else:
         exit(FileNotFoundError)
 

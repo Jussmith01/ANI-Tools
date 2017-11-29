@@ -3,6 +3,7 @@ import nmstools as nmt
 import pyanitools as pyt
 import pyaniasetools as aat
 import pyanitrainer as atr
+import pymolfrag as pmf
 
 from pyNeuroChem import cachegenerator as cg
 
@@ -10,6 +11,7 @@ import numpy as np
 
 from time import sleep
 import subprocess
+import random
 import pyssh
 import re
 import os
@@ -17,6 +19,7 @@ import os
 import pyaniasetools as aat
 
 from multiprocessing import Process
+import shutil
 
 class alconformationalsampler():
     def __init__(self, ldtdir, datdir, optlfile, fpatoms, netdict):
@@ -34,13 +37,16 @@ class alconformationalsampler():
 
         self.netdict = netdict
 
-    def run_sampling(self, nmsparams, mdparams, gpus=[0]):
+    def run_sampling_nms(self, nmsparams, gpus=[0]):
         print('Running NMS sampling...')
-	#self.normal_mode_sampling(nmsparams['T'],
-        #                          nmsparams['Ngen'],
-        #                          nmsparams['Nkep'],
-        #                          gpus[0])
+        p = Process(target=self.normal_mode_sampling, args=(nmsparams['T'],
+                                                            nmsparams['Ngen'],
+                                                            nmsparams['Nkep'],
+                                                            gpus[0]))
+        p.start()
+        p.join()
 
+    def run_sampling_md(self, mdparams, gpus=[0]):
         md_work = []
         for di, id in enumerate(self.idir):
             files = os.listdir(id)
@@ -61,7 +67,22 @@ class alconformationalsampler():
                                                                     mdparams['Ns'],
                                                                     g)))
         print('Running MD Sampling...')
+        for i,p in enumerate(proc):
+            p.start()
+
         for p in proc:
+            p.join()
+        print('Finished sampling.')
+
+    def run_sampling_dimer(self, dmparams, gpus=[0]):
+
+        proc = []
+        for i,g in enumerate(gpus):
+            proc.append(Process(target=self.dimer_sampling, args=(i, int(dmparams['Nr']/len(gpus)),
+                                                                  dmparams,
+                                                                  g)))
+        print('Running Dimer-MD Sampling...')
+        for i,p in enumerate(proc):
             p.start()
 
         for p in proc:
@@ -115,7 +136,7 @@ class alconformationalsampler():
 
                 sigma = anicv.compute_stddev_conformations(conformers,spc)
                 #print(sigma)
-                sid = np.where( sigma >  0.3 )[0]
+                sid = np.where( sigma >  0.25 )[0]
                 #print(sid)
                 #print('  -', fi, 'of', len(files), ') File:', f, 'keep:', sid.size,'percent:',"{:.2f}".format(100.0*sid.size/Ngen))
 
@@ -134,6 +155,9 @@ class alconformationalsampler():
             of.flush()
             #print('    -Total:',Nk,'of',Nt,'percent:',"{:.2f}".format(100.0*Nk/Nt))
 
+        del anicv
+        del dc
+
         of.write('\nGrand Total: '+ str(Nkt)+ ' of '+ str(Ntt)+' percent: '+"{:.2f}".format(100.0*Nkt/Ntt)+ ' Kept '+str(Nkp)+'\n')
         #print('\nGrand Total:', Nkt, 'of', Ntt,'percent:',"{:.2f}".format(100.0*Nkt/Ntt), 'Kept',Nkp)
         of.close()
@@ -147,7 +171,6 @@ class alconformationalsampler():
 
         difo = open(self.ldtdir + self.datdir + '/info_data_mdso-'+str(i)+'.nfo', 'w')
         Nmol = 0
-        ftme = 0.0
         dnfo = 'MD Sampler running: ' + str(md_work.size)
         #print(dnfo)
         difo.write(dnfo + '\n')
@@ -162,7 +185,7 @@ class alconformationalsampler():
             activ.setmol(data["coordinates"], S)
 
             # Generate conformations
-            X = activ.generate_conformations(N, T, dt, Nc, Ns, dS=0.3)
+            X = activ.generate_conformations(N, T, dt, Nc, Ns, dS=0.25)
 
             ftme_t += activ.failtime
 
@@ -174,8 +197,62 @@ class alconformationalsampler():
 
             if X.size > 0:
                 hdt.writexyzfile(self.cdir + 'mds_' + m.split('.')[0] + '_' + str(i).zfill(2) + str(di).zfill(4) + '.xyz', X, S)
-        difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme / float(Nmol)) + '\n')
+        difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Nmol)) + '\n')
         #print(Nmol)
+        del activ
+        difo.close()
+
+    def dimer_sampling(self, tid, Nr, dparam, gpuid):
+        mds_select = dparam['mdselect']
+        N = dparam['N']
+        T = dparam['T']
+        L = dparam['L']
+        V = dparam['V']
+        dt = dparam['dt']
+        Nm = dparam['Nm']
+
+        Ni = dparam['Ni']
+        
+        mols = []
+        difo = open(self.ldtdir + self.datdir + '/info_data_mddimer-'+str(tid)+'.nfo', 'w')
+        for di,id in enumerate(dparam['mdselect']):
+            files = os.listdir(self.idir[id[1]])
+            random.shuffle(files)
+
+            dnfo = str(di) + ' of ' + str(len(dparam['mdselect'])) + ') dir: ' + str(self.idir[id[1]]) + ' Selecting: '+str(id[0]*len(files))
+            #print(dnfo)
+            difo.write(dnfo+'\n')
+        
+            for i in range(id[0]):
+                for n,m in enumerate(files):
+                        data = hdt.read_rcdb_coordsandnm(self.idir[id[1]]+m)
+                        mols.append(data)
+
+        dgen = pmf.dimergenerator(self.netdict['cnstfile'], 
+                                  self.netdict['saefile'], 
+                                  self.netdict['nnfprefix'], 
+                                  self.netdict['num_nets'], 
+                                  mols, gpuid)
+
+        difo.write('Beginning dimer generation...\n')
+        
+        Nt = 0
+        Nd = 0
+        for i in range(Nr):
+            dgen.init_dynamics(Nm, V, L, dt, T)
+ 
+            fname = self.cdir + 'dimer-'+str(tid).zfill(2)+str(i).zfill(2)+'_'
+       
+            dgen.run_dynamics(Ni)
+            dgen.__fragmentbox__(fname)
+        
+            Nt += dgen.Nt
+            Nd += dgen.Nd
+        
+            #print('Step (',tid,',',i,') [', str(dgen.Nd), '/', str(dgen.Nt),'] generated ',len(dgen.frag_list), 'dimers...')
+            difo.write('Step ('+str(i)+') ['+ str(dgen.Nd)+ '/'+ str(dgen.Nt)+'] generated '+str(len(dgen.frag_list))+'dimers...\n')
+
+        difo.write('Generated '+str(Nd)+' of '+str(Nt)+' tested dimers. Percent: ' + "{:.2f}".format(100.0*Nd/float(Nt)))
         difo.close()
 
 def interval(v,S):
@@ -317,12 +394,11 @@ class alaniensembletrainer():
             v.makemetadata()
             th.cleanup()
 
-
-    def train_ensemble(self, GPUList, pyncdict, trdict, layers):
+    def train_ensemble(self, GPUList):
         print('Training Ensemble...')
         processes = []
         for i,id in enumerate(GPUList):
-            processes.append(Process(target=self.train_network, args=(pyncdict, trdict, layers, id, i)))
+            processes.append(Process(target=self.train_network, args=(id, i)))
             processes[-1].start()
             #self.train_network(pyncdict, trdict, layers, id, i)
 
@@ -330,7 +406,8 @@ class alaniensembletrainer():
             p.join()
         print('Training Complete.')
 
-    def train_network(self, pyncdict, trdict, layers, gpuid, index):
+    def train_network(self, gpuid, index):
+        pyncdict = dict()
         pyncdict['wkdir'] = self.train_root + 'train' + str(index) + '/'
         pyncdict['ntwkStoreDir'] = self.train_root + 'train' + str(index) + '/' + 'networks/'
         pyncdict['datadir'] = self.train_root + "cache-data-" + str(index) + '/'
@@ -344,13 +421,47 @@ class alaniensembletrainer():
 
         outputfile = pyncdict['wkdir']+'output.opt'
 
-        # Setup trainer
-        tr = atr.anitrainer(pyncdict, layers)
+        shutil.copy2(self.netdict['iptfile'], pyncdict['wkdir'])
+        shutil.copy2(self.netdict['cnstfile'], pyncdict['wkdir'])
+        shutil.copy2(self.netdict['saefile'], pyncdict['wkdir'])
 
-        # Train network
-        tr.train_network(trdict['learningrate'],
-                         trdict['lrannealing'],
-                         trdict['lrconvergence'],
-                         trdict['ST'],
-                         outputfile,
-                         trdict['printstep'])
+        command = "cd " + pyncdict['wkdir'] + " && HDAtomNNP-Trainer -i inputtrain.ipt -d " + pyncdict['datadir'] + " -p 1.0 -m -g " + pyncdict['gpuid'] + " > output.opt"
+        proc = subprocess.Popen (command, shell=True)
+        proc.communicate()
+
+#    def train_ensemble(self, GPUList, pyncdict, trdict, layers):
+#        print('Training Ensemble...')
+#        processes = []
+#        for i,id in enumerate(GPUList):
+#            processes.append(Process(target=self.train_network, args=(pyncdict, trdict, layers, id, i)))
+#            processes[-1].start()
+#            #self.train_network(pyncdict, trdict, layers, id, i)
+#
+#        for p in processes:
+#            p.join()
+#        print('Training Complete.')
+
+#    def train_network(self, pyncdict, trdict, layers, gpuid, index):
+#        pyncdict['wkdir'] = self.train_root + 'train' + str(index) + '/'
+#        pyncdict['ntwkStoreDir'] = self.train_root + 'train' + str(index) + '/' + 'networks/'
+#        pyncdict['datadir'] = self.train_root + "cache-data-" + str(index) + '/'
+#        pyncdict['gpuid'] = str(gpuid)
+#
+#        if not os.path.exists(pyncdict['wkdir']):
+#            os.mkdir(pyncdict['wkdir'])
+#
+#        if not os.path.exists(pyncdict['ntwkStoreDir']):
+#            os.mkdir(pyncdict['ntwkStoreDir'])
+#
+#        outputfile = pyncdict['wkdir']+'output.opt'
+#
+#        # Setup trainer
+#        tr = atr.anitrainer(pyncdict, layers)
+#
+#        # Train network
+#        tr.train_network(trdict['learningrate'],
+#                         trdict['lrannealing'],
+#                         trdict['lrconvergence'],
+#                         trdict['ST'],
+#                         outputfile,
+#                         trdict['printstep'])

@@ -24,11 +24,12 @@ def file_len(fname):
     return i + 1
 
 class alQMserversubmission():
-    def __init__(self, hostname, username, swkdir, ldtdir, datdir, port=22):
+    def __init__(self, hostname, username, swkdir, ldtdir, datdir, jtime, port=22):
         self.server = pyssh.session.Session(hostname=hostname, username=username, port=str(port))
         self.swkdir = swkdir
         self.ldtdir = ldtdir
         self.datdir = datdir
+        self.jtime = jtime
 
         self.hostname = hostname
         self.username = username
@@ -71,14 +72,15 @@ class alQMserversubmission():
 
         return len(self.job_ids.intersection(running_ids))
 
-    def create_submission_script(self, file, cores):
+    def create_submission_script(self, file, cores, time):
         f = file.rsplit('.',1)[0]
         fname = self.ldtdir+self.datdir+'/working/'+f+'.sh'
         self.job_list.append(f+'.sh')
         sf = open(fname, 'w')
 
         parti = 'shared'
-        times = '0-24:00'
+        times = time 
+        #times = '0-1:30'
         Nmemr = 2048
         lot = 'wb97x/6-31g*'
 
@@ -197,17 +199,17 @@ class alQMserversubmission():
         for f in self.files:
             Nc = int(f.rsplit('-', 1)[1].split('.')[0])
             if Nc > 512:
-                Nproc = 8
+                Nproc = 16
             elif Nc > 128:
+                Nproc = 8
+            elif Nc > 64:
                 Nproc = 4
-            elif Nc > 48:
+            elif Nc > 32:
                 Nproc = 2
-            elif Nc > 12:
-                Nproc = 1
             else:
                 Nproc = 1
             print(f)
-            self.create_submission_script(f, Nproc)
+            self.create_submission_script(f, Nproc, self.jtime)
 
         sf = open(self.ldtdir+self.datdir+'/working/runall.sh', 'w')
         sf.write('#!/bin/sh\n')
@@ -277,10 +279,10 @@ class alQMserversubmission():
     def disconnect(self):
         self.server.close()
 
-def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae):
+def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae, jtime):
     # Declare server submission class and connect to ssh
     print('Connecting...')
-    alserv = alQMserversubmission(hostname, username, swkdir, ldtdir, datdir)
+    alserv = alQMserversubmission(hostname, username, swkdir, ldtdir, datdir, jtime)
 
     # Set optional server information
     alserv.set_optional_submission_command(mae)
@@ -307,7 +309,7 @@ def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae):
 
     # CLeanup working files on server
     print('Cleaing up server...')
-    sleep(5) # pyssh seems to freeze sometimes when there are successive back to back commands
+    sleep(5) # pyssh seems to freeze sometimes when there are fast back to back commands
     alserv.cleanup_server()
 
     # Load all data from server
