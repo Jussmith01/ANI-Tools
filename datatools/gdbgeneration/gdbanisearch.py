@@ -9,18 +9,18 @@ import numpy as np
 
 import os
 
-fpf = 'gdbSFCl_s03' #Filename prefix
-wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0001/config/' #working directory
-smfile = '/home/jujuman/Research/RawGDB11Database/SFCl/gdb11SFClsize03.smi' # Smiles file
+fpf = 'gdbSFCl_s07' #Filename prefix
+wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/ANI-AL-SFCl/ANI-AL-0707/ANI-AL-0707.0000/config_1/' #working directory
+smfile = '/home/jujuman/Research/RawGDB11Database/SFCl/gdb11SFClsize07.smi' # Smiles file
 #smfile = '/home/jujuman/Research/Drug_moles_raw/chembl_22_clean_1576904_sorted_std_final.smi'
 Nc = 10
 
 LOT='wb97x/6-31g*' # Level of theory
 SCF='Tight' #
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0000/cv7/'
-cnstfile = wkdir + 'rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
-saefile  = wkdir + 'sae_wb97x-631gd.dat'
+wkdir = '/home/jujuman/Research/DataReductionMethods/al_working_network/ANI-AL-0707.0000.0400/'
+cnstfile = wkdir + 'train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
+saefile  = wkdir + 'train0/sae_wb97x-631gd.dat'
 nnfdir   = wkdir + 'train0/networks/'
 
 if not os.path.exists(wdir):
@@ -31,9 +31,9 @@ if not os.path.exists(wdir+'inputs'):
 
 ani = aat.anicomputetool(cnstfile, saefile, nnfdir)
 
-wkdircv = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0000/cv7/'
-cnstfilecv = wkdircv + 'rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
-saefilecv  = wkdircv + 'sae_wb97x-631gd.dat'
+wkdircv = '/home/jujuman/Research/DataReductionMethods/al_working_network/ANI-AL-0707.0000.0400/'
+cnstfilecv = wkdircv + 'train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
+saefilecv  = wkdircv + 'train0/sae_wb97x-631gd.dat'
 nnfprefix   = wkdircv + 'train'
 
 anicv = aat.anicrossvalidationconformer(cnstfilecv,saefilecv,nnfprefix,5,0,False)
@@ -85,7 +85,7 @@ for n,m in enumerate(molecules):
         # Get all conformers
         X = []
         for s,c in zip(sigma,m.GetConformers()):
-            if s > 0.34:
+            if s > 0.25:
                 x =  np.empty((m.GetNumAtoms(),3),dtype=np.float32)
                 for i in range(m.GetNumAtoms()):
                     r = c.GetAtomPosition(i)
@@ -106,7 +106,7 @@ for n,m in enumerate(molecules):
         if len(X) > 0:
             S = gdb.get_symbols_rdkitmol(m)
 
-        P = np.random.binomial(1, 1.0, Ns)
+        P = np.random.binomial(1, 0.1, Ns)
         for i,(x,p) in enumerate(zip(X,P)):
             print('       -Keep:', p)
             if p:
