@@ -61,7 +61,8 @@ class alconformationalsampler():
         for i,(md,g) in enumerate(zip(md_work,gpus)):
             proc.append(Process(target=self.mol_dyn_sampling, args=(md,i,
                                                                     mdparams['N'],
-                                                                    mdparams['T'],
+                                                                    mdparams['T1'],
+                                                                    mdparams['T2'],
                                                                     mdparams['dt'],
                                                                     mdparams['Nc'],
                                                                     mdparams['Ns'],
@@ -162,7 +163,7 @@ class alconformationalsampler():
         #print('\nGrand Total:', Nkt, 'of', Ntt,'percent:',"{:.2f}".format(100.0*Nkt/Ntt), 'Kept',Nkp)
         of.close()
 
-    def mol_dyn_sampling(self,md_work, i, N, T, dt, Nc, Ns, gpuid):
+    def mol_dyn_sampling(self,md_work, i, N, T1, T2, dt, Nc, Ns, gpuid):
         activ = aat.moldynactivelearning(self.netdict['cnstfile'],
                                          self.netdict['saefile'],
                                          self.netdict['nnfprefix'],
@@ -185,7 +186,7 @@ class alconformationalsampler():
             activ.setmol(data["coordinates"], S)
 
             # Generate conformations
-            X = activ.generate_conformations(N, T, dt, Nc, Ns, dS=0.25)
+            X = activ.generate_conformations(N, T1, T2, dt, Nc, Ns, dS=0.25)
 
             ftme_t += activ.failtime
 
