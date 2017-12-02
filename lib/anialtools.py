@@ -51,7 +51,11 @@ class alconformationalsampler():
         for di, id in enumerate(self.idir):
             files = os.listdir(id)
             for f in files:
-                md_work.append(id+f)
+                if len(f) > 4:
+                    if ".ipt" in f[-4:]:
+                        md_work.append(id+f)
+                    else:
+                        print('Incorrect extension:',id+f)
 
         md_work = np.array(md_work)
         np.random.shuffle(md_work)
@@ -173,14 +177,13 @@ class alconformationalsampler():
         difo = open(self.ldtdir + self.datdir + '/info_data_mdso-'+str(i)+'.nfo', 'w')
         Nmol = 0
         dnfo = 'MD Sampler running: ' + str(md_work.size)
-        #print(dnfo)
         difo.write(dnfo + '\n')
         Nmol = md_work.size
         ftme_t = 0.0
         for di, id in enumerate(md_work):
             data = hdt.read_rcdb_coordsandnm(id)
+            print(di, ') Working on', id, '...')
             S = data["species"]
-            #print(di, ') Working on', id, '...')
 
             # Set mols
             activ.setmol(data["coordinates"], S)
@@ -199,7 +202,7 @@ class alconformationalsampler():
             if X.size > 0:
                 hdt.writexyzfile(self.cdir + 'mds_' + m.split('.')[0] + '_' + str(i).zfill(2) + str(di).zfill(4) + '.xyz', X, S)
         difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Nmol)) + '\n')
-        #print(Nmol)
+        print(Nmol)
         del activ
         difo.close()
 

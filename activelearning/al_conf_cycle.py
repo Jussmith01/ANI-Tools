@@ -48,13 +48,13 @@ nmsparams = {'T': 700.0, # Temperature
 
 mdsparams = {'N': 2,
              'T1': 300,
-             'T2': 1500,
+             'T2': 1200,
              'dt': 1.0,
-             'Nc': 1000,
+             'Nc': 2000,
              'Ns': 2,
              }
 
-dmrparams = {'mdselect' : [(200,2),(50,4),(1,5)],
+dmrparams = {'mdselect' : [(100,2),(20,4),(1,5)],
              'N' : 20,
              'T' : 400.0, # running temp 
              'L' : 20.0, # box length
@@ -66,7 +66,7 @@ dmrparams = {'mdselect' : [(200,2),(50,4),(1,5)],
             }
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [3,4,5,6,7,8]
+N = [12]
 
 for i in N:
     netdir = wkdir+'ANI-AL-0707.0000.04'+str(i).zfill(2)+'/'
