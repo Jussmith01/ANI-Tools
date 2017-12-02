@@ -43,7 +43,7 @@ cstfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/rHCNOSFCl-4.6A_16-3.1A_a4
 #### Sampling parameters ####
 nmsparams = {'T': 700.0, # Temperature
              'Ngen': 40, # Confs to generate
-             'Nkep': 5, # Diverse confs to keep
+             'Nkep': 4, # Diverse confs to keep
              }
 
 mdsparams = {'N': 2,
@@ -68,11 +68,12 @@ dmrparams = {'mdselect' : [(100,2),(20,4),(1,5)],
 solv_file = '/home/jujuman/Research/cluster_testing/solvents/gdb11_s01-2.ipt'
 solu_dirs = ''
 
-gcmddict = {'edgepad': 0.8,
-            'mindist': 1.6,
-            'maxsig' : 0.7,
-            'Nr': 5,
-            'Nm': 900,
+gcmddict = {'edgepad': 0.8, # padding on the box edge
+            'mindist': 1.6, # Minimum allow intermolecular distance
+            'maxsig' : 0.7, # Max frag sig allowed to continue dynamics
+            'Nr': 5, # Number of boxed to run
+            'MolHigh': 900, #Number of molecules
+            'MolLow': 900, #Number of molecules
             'Ni': 5,
             'Ns': 100,
             'dt': 0.25,
