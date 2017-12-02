@@ -514,14 +514,14 @@ class clustergenerator():
                         self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
                         #print(dc, Sf, sig)
 
-    def generate_clusters(self, gcmddict):
+    def generate_clusters(self, gcmddict, id):
 
         self.edgepad = gcmddict['edgepad']
         self.mindist = gcmddict['mindist']
 
         dstore = gcmddict['dstore']
 
-        difo = open(dstore + 'info_data_mddimer.nfo', 'w')
+        difo = open(dstore + 'info_data_mdcluster-' + str(id).zfill(2) + '.nfo', 'w')
         difo.write('Beginning dimer generation...\n')
 
         Nt = 0
@@ -541,14 +541,15 @@ class clustergenerator():
                 else:
                     Ni = gcmddict['Ni']
                 self.run_dynamics(Ni)
-                self.__fragmentbox__(gcmddict['molfile']+str(i).zfill(2) + '-' + str(j).zfill(4) + '_')
+                self.__fragmentbox__(gcmddict['molfile'] + '-'  + str(id).zfill(2) + '-' +str(i).zfill(2) + '-' + str(j).zfill(4) + '_')
                 #print('Step (',i,',',j,') [', str(self.Nd), '/', str(self.Nt),'] generated ',len(self.frag_list),' maxsig: ', self.maxsig,' dimers...')
-                difo.write('Step (' + str(i) + ',' + str(i) + ') [' + str(self.Nd) + '/' + str(self.Nt) + '] generated ' + str(len(self.frag_list)) + 'dimers ' + ' maxsig: ' + "{:.2f}".format(self.maxsig) + '\n')
+                difo.write('Step (' + str(i) + ',' + str(i) + ') [' + str(self.Nd) + '/' + str(self.Nt) + '] generated ' + str(len(self.frag_list)) + ' clusters. ' + ' maxsig: ' + "{:.2f}".format(self.maxsig) + '\n')
                 Nt += self.Nt
                 Nd += self.Nd
                 if self.maxsig > gcmddict['maxsig']:
-                    difo.write("Terminated after: " + "{:.2f}".format(Ni*gcmddict['Ns']*gcmddict['dt']) + 'fs for maxsig')
+                    difo.write("Terminated after: " + "{:.2f}".format(Ni*gcmddict['Ns']*gcmddict['dt']) + 'fs for maxsig\n')
                     break
+                difo.flush()
 
 
             #self.closeoutputs()

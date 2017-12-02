@@ -94,6 +94,21 @@ class alconformationalsampler():
             p.join()
         print('Finished sampling.')
 
+    def run_sampling_cluster(self, gcmddict, gpus=[0]):
+
+        proc = []
+        for i,g in enumerate(gpus):
+            proc.append(Process(target=self.cluster_sampling, args=(i, int(gcmddict['Nr']/len(gpus)),
+                                                                   gcmddict,
+                                                                   g)))
+        print('Running Cluster-MD Sampling...')
+        for i,p in enumerate(proc):
+            p.start()
+
+        for p in proc:
+            p.join()
+        print('Finished sampling.')
+
     def normal_mode_sampling(self, T, Ngen, Nkep, gpuid):
         of = open(self.ldtdir + self.datdir + '/info_data_nms.nfo', 'w')
 
@@ -258,6 +273,30 @@ class alconformationalsampler():
 
         difo.write('Generated '+str(Nd)+' of '+str(Nt)+' tested dimers. Percent: ' + "{:.2f}".format(100.0*Nd/float(Nt)))
         difo.close()
+
+    def cluster_sampling(self, tid, Nr, gcmddict, gpuid):
+        dictc = gcmddict.copy()
+        solv_file = dictc['solv_file']
+        solu_dirs = dictc['solu_dirs']
+
+        dictc['Nr'] = Nr
+        dictc['molfile'] = self.cdir + 'clst'
+        dictc['dstore'] = self.ldtdir + self.datdir + '/'
+
+        solv = [hdn.read_rcdb_coordsandnm(solv_file)]
+
+        if solu_dirs:
+            solu = [hdn.read_rcdb_coordsandnm(solu_dirs+f) for f in os.listdir(solu_dirs)]
+        else:
+            solu = []
+
+        dgen = pmf.clustergenerator(self.netdict['cnstfile'],
+                                    self.netdict['saefile'],
+                                    self.netdict['nnfprefix'],
+                                    self.netdict['num_nets'],
+                                    solv, solu, gpuid)
+
+        dgen.generate_clusters(gcmddict,tid)
 
 def interval(v,S):
     ps = 0.0

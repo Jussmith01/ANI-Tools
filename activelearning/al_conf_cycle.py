@@ -23,7 +23,7 @@ mae = 'module load gnu/4.9.2\n' +\
 
 fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
 
-jtime = "0-2:00"
+jtime = "0-3:00"
 
 #---- Training Parameters ----
 GPU = [3,4,5,6,7] # GPU IDs
@@ -65,6 +65,25 @@ dmrparams = {'mdselect' : [(100,2),(20,4),(1,5)],
              'Ni' : 1, # Number of steps to run the dynamics before fragmenting
             }
 
+solv_file = '/home/jujuman/Research/cluster_testing/solvents/gdb11_s01-2.ipt'
+solu_dirs = ''
+
+gcmddict = {'edgepad': 0.8,
+            'mindist': 1.6,
+            'maxsig' : 0.7,
+            'Nr': 5,
+            'Nm': 900,
+            'Ni': 5,
+            'Ns': 100,
+            'dt': 0.25,
+            'V': 0.04,
+            'L': 30.0,
+            'T': 500.0,
+            'Nembed' : 0,
+            'solv_file' : solv_file,
+            'solu_dirs' : solu_dirs,
+            }
+
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
 N = [12]
 
@@ -94,6 +113,7 @@ for i in N:
 
     ## Run active learning sampling ##
     acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict)
+    acs.run_sampling_cluster(gcmddict, GPU)
     acs.run_sampling_dimer(dmrparams, GPU)
     acs.run_sampling_nms(nmsparams, GPU)
     acs.run_sampling_md(mdsparams, GPU)

@@ -64,7 +64,7 @@ gcmddict = {'edgepad': 0.8,
             'V': V,
             'L': L,
             'T': T,
-            'Nembed' : 3,
+            'Nembed' : 0,
             'molfile' : molfile,
             'dstore' : dstore,
             }
@@ -74,10 +74,11 @@ gcmddict = {'edgepad': 0.8,
 #print(solu)
 
 solv = [hdn.read_rcdb_coordsandnm(solv_file)]
-solu = [hdn.read_rcdb_coordsandnm(solu_dirs+f) for f in os.listdir(solu_dirs)]
+#solu = [hdn.read_rcdb_coordsandnm(solu_dirs+f) for f in os.listdir(solu_dirs)]
+solu = []
 
 dgen = pmf.clustergenerator(cnstfilecv, saefilecv, nnfprefix, 5, solv, solu)
 
-dgen.generate_clusters(gcmddict)
+dgen.generate_clusters(gcmddict,0)
 
 
