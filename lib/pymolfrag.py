@@ -514,7 +514,7 @@ class clustergenerator():
                         self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
                         #print(dc, Sf, sig)
 
-    def generate_clusters(self, gcmddict, id):
+    def generate_clusters(self, gcmddict, mol_sizes, id):
 
         self.edgepad = gcmddict['edgepad']
         self.mindist = gcmddict['mindist']
@@ -527,7 +527,7 @@ class clustergenerator():
         Nt = 0
         Nd = 0
         for i in range(gcmddict['Nr']):
-            self.init_dynamics(gcmddict['Nm'],
+            self.init_dynamics(mol_sizes[i],
                                gcmddict['Nembed'],
                                gcmddict['V'],
                                gcmddict['L'],

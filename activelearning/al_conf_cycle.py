@@ -72,9 +72,9 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             'mindist': 1.6, # Minimum allow intermolecular distance
             'maxsig' : 0.7, # Max frag sig allowed to continue dynamics
             'Nr': 5, # Number of boxed to run
-            'MolHigh': 900, #Number of molecules
-            'MolLow': 900, #Number of molecules
-            'Ni': 5,
+            'MolHigh': 905, #High number of molecules
+            'MolLow': 800, #Low number of molecules
+            'Ni': 5, #steps before checking frags
             'Ns': 100,
             'dt': 0.25,
             'V': 0.04,

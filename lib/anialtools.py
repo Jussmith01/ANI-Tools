@@ -96,11 +96,18 @@ class alconformationalsampler():
 
     def run_sampling_cluster(self, gcmddict, gpus=[0]):
 
+        Nmols = np.random.randint(low=gcmddict['MolLow'],
+                                  high=gcmddict['MolHigh'],
+                                  size=gcmddict['Nr'])
+
+        mol_sizes = np.split(Nmols)
+
         proc = []
         for i,g in enumerate(gpus):
             proc.append(Process(target=self.cluster_sampling, args=(i, int(gcmddict['Nr']/len(gpus)),
-                                                                   gcmddict,
-                                                                   g)))
+                                                                    mol_sizes[i],
+                                                                    gcmddict,
+                                                                    g)))
         print('Running Cluster-MD Sampling...')
         for i,p in enumerate(proc):
             p.start()
@@ -274,7 +281,7 @@ class alconformationalsampler():
         difo.write('Generated '+str(Nd)+' of '+str(Nt)+' tested dimers. Percent: ' + "{:.2f}".format(100.0*Nd/float(Nt)))
         difo.close()
 
-    def cluster_sampling(self, tid, Nr, gcmddict, gpuid):
+    def cluster_sampling(self, tid, Nr, mol_sizes, gcmddict, gpuid):
         dictc = gcmddict.copy()
         solv_file = dictc['solv_file']
         solu_dirs = dictc['solu_dirs']
@@ -296,7 +303,7 @@ class alconformationalsampler():
                                     self.netdict['num_nets'],
                                     solv, solu, gpuid)
 
-        dgen.generate_clusters(gcmddict,tid)
+        dgen.generate_clusters(gcmddict, mol_sizes, tid)
 
 def interval(v,S):
     ps = 0.0
