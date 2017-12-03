@@ -104,9 +104,9 @@ for i in N:
                }
 
     ## Train the ensemble ##
-    aet = alt.alaniensembletrainer(netdir, netdict, 'train', h5stor, Nnets)
-    aet.build_training_cache()
-    aet.train_ensemble(GPU)
+    #aet = alt.alaniensembletrainer(netdir, netdict, 'train', h5stor, Nnets)
+    #aet.build_training_cache()
+    #aet.train_ensemble(GPU)
 
     ldtdir = root_dir  # local data directories
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
@@ -115,12 +115,12 @@ for i in N:
     ## Run active learning sampling ##
     acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict)
     acs.run_sampling_cluster(gcmddict, GPU)
-    acs.run_sampling_dimer(dmrparams, GPU)
-    acs.run_sampling_nms(nmsparams, GPU)
-    acs.run_sampling_md(mdsparams, GPU)
+    #acs.run_sampling_dimer(dmrparams, GPU)
+    #acs.run_sampling_nms(nmsparams, GPU)
+    #acs.run_sampling_md(mdsparams, GPU)
     #exit(0)
 
     ## Submit jobs, return and pack data
-    ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae, jtime)
+    #ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae, jtime)
 
 
