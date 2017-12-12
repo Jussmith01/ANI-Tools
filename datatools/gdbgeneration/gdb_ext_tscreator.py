@@ -26,11 +26,11 @@ def mapcount(filename):
     return lines
 
 fpf = 'gdbSFCl_s11' #Filename prefix
-wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size4/' #working directory
-smfile = '/home/jujuman/Research/RawGDB11Database/SFCl/gdb11SFClsize04.smi' # Smiles file
+wdir = '/home/jujuman/Research/extensibility_test_sets/COMP6v2/gdb-11/' #working directory
+smfile = '/home/jujuman/Research/RawGDB11Database/SFCl/gdb11SFClsize11.smi' # Smiles file
 
 Nc = 1
-Nsmiles = 1000 # number of randomly selected molecules
+Nsmiles = 375 # number of randomly selected molecules
 
 LOT='wb97x/6-31g*' # Level of theory
 SCF='Tight' #
@@ -41,8 +41,8 @@ if not os.path.exists(wdir):
 if not os.path.exists(wdir+'inputs'):
     os.mkdir(wdir+'inputs')
 
-if not os.path.exists(wdir+'images'):
-    os.mkdir(wdir+'images')
+#if not os.path.exists(wdir+'images'):
+#    os.mkdir(wdir+'images')
 
 #print('Formatting...')
 #gdb.formatsmilesfile(smfile)
@@ -50,7 +50,7 @@ if not os.path.exists(wdir+'images'):
 nl = mapcount(smfile)
 print('Total smiles:',nl)
 
-Nsmiles = nl
+#Nsmiles = nl
 
 #print('Smile supplier...')
 #molecules = Chem.SmilesMolSupplier(smfile, nameColumn=0)
@@ -66,7 +66,6 @@ Nt = 0
 n = 0
 
 ind = np.full(Nsmiles, nl+1, dtype=np.int64)
-
 f = open(smfile,'r+')
 mm = mmap.mmap(f.fileno(),0)
 
@@ -93,11 +92,11 @@ while Nt < Nsmiles:
     #smstr = linecache.getline(smfile, ridx)
     #print(Nt,smstr)
 
-    if ridx not in ind or True:
+    if ridx not in ind:
         ind[Nt] = ridx
         m = Chem.MolFromSmiles(smstr)
 
-        print(str(Nt).zfill(4),') Working on',Chem.MolToSmiles(m),'...')
+        print(str(Nt).zfill(4),') Working on (',ridx,'):',Chem.MolToSmiles(m),'...')
         id = str(Nt)
 
         # Check ring data
@@ -159,4 +158,3 @@ while Nt < Nsmiles:
 
 molnfo.close()
 print('Total mols:',Nd,'of',Nt,'percent:',"{:.2f}".format(100.0*Nd/float(Nt)))
-
