@@ -311,9 +311,10 @@ class dimergenerator():
 
 '''Cluster generator'''
 class clustergenerator():
-    def __init__(self, cnstfile, saefile, nnfprefix, Nnet, molecule_list, gpuid=0, sinet=False):
+    def __init__(self, cnstfile, saefile, nnfprefix, Nnet, solv_list, solu_list, gpuid=0, sinet=False):
         # Molecules list
-        self.mols = molecule_list
+        self.solv_list = solv_list
+        self.solu_list = solu_list
 
         # Number of networks
         self.Nn = Nnet
@@ -324,30 +325,35 @@ class clustergenerator():
         self.edgepad = 1.0
         self.mindist = 2.0
 
-        # Construct pyNeuroChem class
-        #self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
+    #def closeoutputs(self):
+    #    self.mdcrd.close()
+    #    self.traj.close()
 
-    def __generategarbagebox__(self,Nm, L):
+    def __generategarbagebox__(self,Nm, Nembed, L):
         self.X = np.empty((0, 3), dtype=np.float32)
         self.S = []
         self.C = np.zeros((Nm, 3), dtype=np.float32)
 
-        rint = np.random.randint(len(self.mols), size=Nm)
+        rint = np.random.randint(len(self.solv_list), size=Nm)
         self.Na = np.zeros(Nm, dtype=np.int32)
         self.ctd = []
 
         pos = 0
         plc = 0
         for idx, j in enumerate(rint):
-            x = self.mols[j]['coordinates']
-            s = self.mols[j]['species']
+            if idx < Nembed:
+                ri = np.random.randint(len(self.solu_list), size=1)
+                x = self.solu_list[ri[0]]['coordinates']
+                s = self.solu_list[ri[0]]['species']
+            else:
+                x = self.solv_list[j]['coordinates']
+                s = self.solv_list[j]['species']
 
             # Apply a random rotation
             M = rand_rotation_matrix()
             x = np.dot(x,M.T)
 
             maxd = hdn.generatedmatsd3(x).flatten().max() / 2.0
-            #print('after:', maxd)
 
             Nf = 0
             fail = True
@@ -374,14 +380,14 @@ class clustergenerator():
                     self.X = np.vstack([self.X, x + ctr])
                     self.Na[idx] = len(s)
                     pos += len(s)
-                    print('Placement Complete...',plc,'-',Nf)
+                    #print('Placement Complete...',plc,'-',Nf)
                     self.S.extend(s)
 
-    def init_dynamics(self, Nm, V, L, dt, T):
+    def init_dynamics(self, Nm, Nembed, V, L, dt, T):
         self.L = L
 
         # Generate the box of junk
-        self.__generategarbagebox__(Nm, L)
+        self.__generategarbagebox__(Nm, Nembed, L)
 
         # Make mol
         self.mol = Atoms(symbols=self.S, positions=self.X)
@@ -394,67 +400,47 @@ class clustergenerator():
         self.mol.set_pbc((True, True, True))
 
         # Set ANI calculator
-        # Set ANI calculator
         self.mol.set_calculator(ANIENS(self.aens))
-        #self.mol.set_calculator(ANI(False))
-        #self.mol.calc.setnc(self.ncl[0])
 
+        # Open MD output
+        #self.mdcrd = open(xyzfile, 'w')
 
-        # Give molecules random velocity
-        acc_idx = 0
-        vel = np.empty_like(self.X)
-        for n in self.Na:
-            rv = np.random.uniform(-V, V, size=(3))
-            for k in range(n):
-                vel[acc_idx + k, :] = rv
-            acc_idx += n
-        #print(vel)
+        # Open MD output
+        #self.traj = open(trjfile, 'w')
 
-        self.mol.set_velocities(vel)
+        # Set the velocities corresponding to a boltzmann dist @ T/4.0
+        MaxwellBoltzmannDistribution(self.mol, 300.0 * units.kB)
 
         # Declare Dyn
         self.dyn = Langevin(self.mol, dt * units.fs, T * units.kB, 0.1)
 
-    def run_dynamics(self, Ni, xyzfile, trajfile):
+        # Define the printer
+        #def printenergy(a=self.mol, d=self.dyn, b=self.mdcrd, t=self.traj):  # store a reference to atoms in the definition.
+        #    """Function to print the potential, kinetic and total energy."""
+        #    epot = a.get_potential_energy() / len(a)
+        #    ekin = a.get_kinetic_energy() / len(a)
+        #
+        #    stddev = hdn.evtokcal * a.calc.stddev
+        #
+        #    t.write(str(d.get_number_of_steps()) + ' ' + str(ekin / (1.5 * units.kB)) + ' ' + str(epot) + ' ' + str(
+        #        ekin) + ' ' + str(epot + ekin) + '\n')
+        #    b.write(str(len(a)) + '\n' + str(ekin / (1.5 * units.kB)) + ' Step: ' + str(d.get_number_of_steps()) + '\n')
+        #    c = a.get_positions(wrap=True)
+        #    for j, i in zip(a, c):
+        #        b.write(str(j.symbol) + ' ' + str(i[0]) + ' ' + str(i[1]) + ' ' + str(i[2]) + '\n')
+        #
+        #    print('Step: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
+        #          'Etot = %.3feV' ' StdDev = %.3fkcal/mol/sqrt(Na)' % (
+        #          d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin, stddev))
 
+        # Attach the printer
+        #self.dyn.attach(printenergy, interval=1)
+
+    def run_dynamics(self, Ni):
         for id, nc in enumerate(self.aens.ncl):
             nc.setMolecule(coords=np.array(self.mol.get_positions(), dtype=np.float32), types=self.mol.get_chemical_symbols())
 
-        # Open MD output
-        mdcrd = open(xyzfile, 'w')
-
-        # Open MD output
-        traj = open(trajfile, 'w')
-
-        # Define the printer
-        def printenergy(a=self.mol, d=self.dyn, b=mdcrd, t=traj):  # store a reference to atoms in the definition.
-            """Function to print the potential, kinetic and total energy."""
-            epot = a.get_potential_energy() / len(a)
-            ekin = a.get_kinetic_energy() / len(a)
-
-            stddev = hdn.evtokcal * a.calc.stddev
-
-            t.write(str(d.get_number_of_steps()) + ' ' + str(ekin / (1.5 * units.kB)) + ' ' + str(epot) + ' ' + str(
-                ekin) + ' ' + str(epot + ekin) + '\n')
-            b.write(str(len(a)) + '\n' + str(ekin / (1.5 * units.kB)) + ' Step: ' + str(d.get_number_of_steps()) + '\n')
-            c = a.get_positions(wrap=True)
-            for j, i in zip(a, c):
-                b.write(str(j.symbol) + ' ' + str(i[0]) + ' ' + str(i[1]) + ' ' + str(i[2]) + '\n')
-
-            #print('Step: %d Energy per atom: Epot = %.3feV  Ekin = %.3feV (T=%3.0fK)  '
-            #      'Etot = %.3feV' ' StdDev = %.3fKcal/mol/atom' % (
-            #      d.get_number_of_steps(), epot, ekin, ekin / (1.5 * units.kB), epot + ekin, stddev))
-
-        # Attach the printer
-        self.dyn.attach(printenergy, interval=4)
-
         self.dyn.run(Ni) # Do Ni steps
-
-        # Open MD output
-        mdcrd.close()
-
-        # Open MD output
-        traj.close()
 
     def __fragmentbox__(self, file):
         self.X = self.mol.get_positions()
@@ -463,6 +449,8 @@ class clustergenerator():
 
         self.Nd = 0
         self.Nt = 0
+
+        self.maxsig = 0
 
         for i in range(len(self.Na)):
             si = self.ctd[i][2]
@@ -499,7 +487,7 @@ class clustergenerator():
                                             if v < min:
                                                 min = v
 
-                                    if min < 4.25 and min > 0.70:
+                                    if min < 4.5 and min > 0.70:
                                         Xf = np.vstack([Xf, Xj])
                                         Sf.extend(self.S[sj:sj+Naj])
                                         Nmol += 1
@@ -518,8 +506,53 @@ class clustergenerator():
                     #print('Mol(',i,'): sig=',sig)
 
                     self.Nt += 1
-                    if sig > 0.34:
+                    if sig > 0.25:
+                        if sig > self.maxsig:
+                            self.maxsig = sig
                         self.Nd += 1
                         hdn.writexyzfile(file+str(i).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
                         self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
                         #print(dc, Sf, sig)
+
+    def generate_clusters(self, gcmddict, mol_sizes, id):
+
+        self.edgepad = gcmddict['edgepad']
+        self.mindist = gcmddict['mindist']
+
+        dstore = gcmddict['dstore']
+
+        difo = open(dstore + 'info_data_mdcluster-' + str(id).zfill(2) + '.nfo', 'w')
+        difo.write('Beginning dimer generation...\n')
+
+        Nt = 0
+        Nd = 0
+        for i in range(gcmddict['Nr']):
+            self.init_dynamics(mol_sizes[i],
+                               gcmddict['Nembed'],
+                               gcmddict['V'],
+                               gcmddict['L'],
+                               gcmddict['dt'],
+                               gcmddict['T'],
+                               )
+
+            for j in range(gcmddict['Ns']):
+                if j is 0:
+                    Ni = 0
+                else:
+                    Ni = gcmddict['Ni']
+                self.run_dynamics(Ni)
+                self.__fragmentbox__(gcmddict['molfile'] + '-'  + str(id).zfill(2) + '-' +str(i).zfill(2) + '-' + str(j).zfill(4) + '_')
+                #print('Step (',i,',',j,') [', str(self.Nd), '/', str(self.Nt),'] generated ',len(self.frag_list),' maxsig: ', self.maxsig,' dimers...')
+                difo.write('Step (' + str(i) + ',' + str(i) + ') [' + str(self.Nd) + '/' + str(self.Nt) + '] generated ' + str(len(self.frag_list)) + ' clusters. ' + ' maxsig: ' + "{:.2f}".format(self.maxsig) + '\n')
+                Nt += self.Nt
+                Nd += self.Nd
+                if self.maxsig > gcmddict['maxsig']:
+                    difo.write("Terminated after: " + "{:.2f}".format(Ni*gcmddict['Ns']*gcmddict['dt']) + 'fs for maxsig\n')
+                    break
+                difo.flush()
+
+
+            #self.closeoutputs()
+
+        difo.write('Generated '+str(Nd)+' of '+str(Nt)+' tested dimers. Percent: ' + "{:.2f}".format(100.0*Nd/float(Nt)))
+        difo.close()

@@ -6,8 +6,8 @@ import os
 
 #import matplotlib.pyplot as plt
 
-file_old = '/home/jsmith48/scratch/auto_al/h5files/ANI-AL-0707.0000.0403.h5'
-file_new = '/home/jsmith48/scratch/auto_al/h5files_fix/ANI-AL-0707.0000.0403.h5'
+file_old = '/home/jsmith48/scratch/auto_al/h5files/ANI-AL-0707.0000.0408.h5'
+file_new = '/home/jsmith48/scratch/auto_al/h5files_fix/ANI-AL-0707.0000.0408.h5'
 
 print('Working on file:',file_old)
 adl = pyt.anidataloader(file_old)
@@ -29,10 +29,11 @@ for i,data in enumerate(adl):
     Esae = hdt.compute_sae('/home/jsmith48/scratch/auto_al/modelCNOSFCl/sae_wb97x-631gd.dat',S)
 
     idx = np.where(np.abs(Edft-Esae)<5.0)
-    #if bidx[0].size > 0:
+    bidx = np.where(np.abs(Edft-Esae)>=5.0)
+    if bidx[0].size > 0:
         # SAE Check
-        #print(S)
-        #print(bidx,np.abs(Edft-Esae))
+        print(S)
+        print(bidx,np.abs(Edft-Esae))
         #hdt.writexyzfile(file_new+'file_'+str(i).zfill(5)+'.xyz', X[bidx], S)
 
     #Eani_m = np.mean(Eani, axis=0)

@@ -23,7 +23,7 @@ mae = 'module load gnu/4.9.2\n' +\
 
 fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
 
-jtime = "0-2:00"
+jtime = "0-3:00"
 
 #---- Training Parameters ----
 GPU = [3,4,5,6,7] # GPU IDs
@@ -43,17 +43,18 @@ cstfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/rHCNOSFCl-4.6A_16-3.1A_a4
 #### Sampling parameters ####
 nmsparams = {'T': 700.0, # Temperature
              'Ngen': 40, # Confs to generate
-             'Nkep': 5, # Diverse confs to keep
+             'Nkep': 4, # Diverse confs to keep
              }
 
 mdsparams = {'N': 2,
-             'T': 600,
+             'T1': 300,
+             'T2': 1200,
              'dt': 1.0,
-             'Nc': 1000,
+             'Nc': 2000,
              'Ns': 2,
              }
 
-dmrparams = {'mdselect' : [(200,2),(50,4),(1,5)],
+dmrparams = {'mdselect' : [(100,2),(20,4),(1,5)],
              'N' : 20,
              'T' : 400.0, # running temp 
              'L' : 20.0, # box length
@@ -64,8 +65,28 @@ dmrparams = {'mdselect' : [(200,2),(50,4),(1,5)],
              'Ni' : 1, # Number of steps to run the dynamics before fragmenting
             }
 
+solv_file = '/home/jujuman/Research/cluster_testing/solvents/gdb11_s01-2.ipt'
+solu_dirs = ''
+
+gcmddict = {'edgepad': 0.8, # padding on the box edge
+            'mindist': 1.6, # Minimum allow intermolecular distance
+            'maxsig' : 0.7, # Max frag sig allowed to continue dynamics
+            'Nr': 5, # Number of boxed to run
+            'MolHigh': 905, #High number of molecules
+            'MolLow': 800, #Low number of molecules
+            'Ni': 5, #steps before checking frags
+            'Ns': 100,
+            'dt': 0.25,
+            'V': 0.04,
+            'L': 30.0,
+            'T': 500.0,
+            'Nembed' : 0,
+            'solv_file' : solv_file,
+            'solu_dirs' : solu_dirs,
+            }
+
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [3,4,5,6,7,8]
+N = [12]
 
 for i in N:
     netdir = wkdir+'ANI-AL-0707.0000.04'+str(i).zfill(2)+'/'
@@ -93,6 +114,7 @@ for i in N:
 
     ## Run active learning sampling ##
     acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict)
+    acs.run_sampling_cluster(gcmddict, GPU)
     acs.run_sampling_dimer(dmrparams, GPU)
     acs.run_sampling_nms(nmsparams, GPU)
     acs.run_sampling_md(mdsparams, GPU)

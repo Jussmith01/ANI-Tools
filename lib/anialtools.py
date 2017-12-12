@@ -51,7 +51,11 @@ class alconformationalsampler():
         for di, id in enumerate(self.idir):
             files = os.listdir(id)
             for f in files:
-                md_work.append(id+f)
+                if len(f) > 4:
+                    if ".ipt" in f[-4:]:
+                        md_work.append(id+f)
+                    else:
+                        print('Incorrect extension:',id+f)
 
         md_work = np.array(md_work)
         np.random.shuffle(md_work)
@@ -83,6 +87,28 @@ class alconformationalsampler():
                                                                   dmparams,
                                                                   g)))
         print('Running Dimer-MD Sampling...')
+        for i,p in enumerate(proc):
+            p.start()
+
+        for p in proc:
+            p.join()
+        print('Finished sampling.')
+
+    def run_sampling_cluster(self, gcmddict, gpus=[0]):
+
+        Nmols = np.random.randint(low=gcmddict['MolLow'],
+                                  high=gcmddict['MolHigh'],
+                                  size=gcmddict['Nr'])
+
+        mol_sizes = np.split(Nmols)
+
+        proc = []
+        for i,g in enumerate(gpus):
+            proc.append(Process(target=self.cluster_sampling, args=(i, int(gcmddict['Nr']/len(gpus)),
+                                                                    mol_sizes[i],
+                                                                    gcmddict,
+                                                                    g)))
+        print('Running Cluster-MD Sampling...')
         for i,p in enumerate(proc):
             p.start()
 
@@ -173,14 +199,13 @@ class alconformationalsampler():
         difo = open(self.ldtdir + self.datdir + '/info_data_mdso-'+str(i)+'.nfo', 'w')
         Nmol = 0
         dnfo = 'MD Sampler running: ' + str(md_work.size)
-        #print(dnfo)
         difo.write(dnfo + '\n')
         Nmol = md_work.size
         ftme_t = 0.0
         for di, id in enumerate(md_work):
             data = hdt.read_rcdb_coordsandnm(id)
+            print(di, ') Working on', id, '...')
             S = data["species"]
-            #print(di, ') Working on', id, '...')
 
             # Set mols
             activ.setmol(data["coordinates"], S)
@@ -199,7 +224,7 @@ class alconformationalsampler():
             if X.size > 0:
                 hdt.writexyzfile(self.cdir + 'mds_' + m.split('.')[0] + '_' + str(i).zfill(2) + str(di).zfill(4) + '.xyz', X, S)
         difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Nmol)) + '\n')
-        #print(Nmol)
+        print(Nmol)
         del activ
         difo.close()
 
@@ -255,6 +280,30 @@ class alconformationalsampler():
 
         difo.write('Generated '+str(Nd)+' of '+str(Nt)+' tested dimers. Percent: ' + "{:.2f}".format(100.0*Nd/float(Nt)))
         difo.close()
+
+    def cluster_sampling(self, tid, Nr, mol_sizes, gcmddict, gpuid):
+        dictc = gcmddict.copy()
+        solv_file = dictc['solv_file']
+        solu_dirs = dictc['solu_dirs']
+
+        dictc['Nr'] = Nr
+        dictc['molfile'] = self.cdir + 'clst'
+        dictc['dstore'] = self.ldtdir + self.datdir + '/'
+
+        solv = [hdn.read_rcdb_coordsandnm(solv_file)]
+
+        if solu_dirs:
+            solu = [hdn.read_rcdb_coordsandnm(solu_dirs+f) for f in os.listdir(solu_dirs)]
+        else:
+            solu = []
+
+        dgen = pmf.clustergenerator(self.netdict['cnstfile'],
+                                    self.netdict['saefile'],
+                                    self.netdict['nnfprefix'],
+                                    self.netdict['num_nets'],
+                                    solv, solu, gpuid)
+
+        dgen.generate_clusters(gcmddict, mol_sizes, tid)
 
 def interval(v,S):
     ps = 0.0

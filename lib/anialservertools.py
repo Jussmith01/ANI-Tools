@@ -265,14 +265,15 @@ class alQMserversubmission():
 
                 data = hdt.readncdatall(d + f)
 
-                Ne = data['energies'].size
-                Nd += Ne
+                if 'energies' in data:
+                    Ne = data['energies'].size
+                    Nd += Ne
 
-                f = f.rsplit("-", 1)
+                    f = f.rsplit("-", 1)
 
-                fn = f[0] + "/mol" + f[1].split(".")[0]
+                    fn = f[0] + "/mol" + f[1].split(".")[0]
 
-                dpack.store_data(fn, **data)
+                    dpack.store_data(fn, **data)
         dpack.cleanup()
 
 

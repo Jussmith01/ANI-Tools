@@ -298,23 +298,25 @@ def readncdatall(file,N = 0):
             else:
                print(i,np.array(data).shape,3*3*nat+1+3*nat+3+3,l.count(","))
                print('Line size does not match expected!')
+               print('File:',file)
     else:
         exit(FileNotFoundError)
 
-    Xi = np.stack(Xi)
-    Ei = np.array(Ei,dtype=np.float64)
-    Fi = np.stack(Fi)
-    C1 = np.stack(C1)
-    C2 = np.stack(C2)
-    SD = np.stack(SD)
-    DP = np.stack(DP)
-    rdat.update({'coordinates':Xi,
-                 'energies':Ei,
-                 'forces':Fi,
-                 'hirshfeld':C1,
-                 'cm5':C2,
-                 'spindensities':SD,
-                 'hirdipole':DP})
+    if len(Xi) > 0:
+        Xi = np.stack(Xi)
+        Ei = np.array(Ei,dtype=np.float64)
+        Fi = np.stack(Fi)
+        C1 = np.stack(C1)
+        C2 = np.stack(C2)
+        SD = np.stack(SD)
+        DP = np.stack(DP)
+        rdat.update({'coordinates':Xi,
+                     'energies':Ei,
+                     'forces':Fi,
+                     'hirshfeld':C1,
+                     'cm5':C2,
+                     'spindensities':SD,
+                     'hirdipole':DP})
 
     return rdat
 
