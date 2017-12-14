@@ -268,8 +268,11 @@ class anicomputetool(object):
                 #print('remove')
             else:
                 E.append(e)
-        return np.concatenate(E)
 
+        if len(E) > 0:
+            return np.concatenate(E)
+        else:
+            return np.array([])
 ##--------------------------------
 ##    Active Learning ANI MD
 ##--------------------------------
