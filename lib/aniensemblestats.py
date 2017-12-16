@@ -319,9 +319,9 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
 
         Nn = self.fdata[ntkey][list(tskeys)[0]]['Eani'].shape[0]-1
 
-        print(self.fdata[ntkey]['GDB07to09']['Eani'][Nn,:])
-        print(self.fdata[ntkey]['GDB07to09']['Na'])
-        print(self.fdata[ntkey]['GDB07to09']['Eani'][Nn,:]/self.fdata[ntkey]['GDB07to09']['Na'])
+        #print(self.fdata[ntkey]['GDB07to09']['Eani'][Nn,:])
+        #print(self.fdata[ntkey]['GDB07to09']['Na'])
+        #print(self.fdata[ntkey]['GDB07to09']['Eani'][Nn,:]/self.fdata[ntkey]['GDB07to09']['Na'])
 
         return {names[0]: hdt.calculatemeanabserror(
                     np.concatenate([self.fdata[ntkey][tskey]['Eani'][Nn,:]/self.fdata[ntkey][tskey]['Na'] for tskey in tskeys]),
@@ -490,6 +490,14 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         errors = dict()
         for k in self.fdata.keys():
             errors[k] = pd.Series(self.generate_total_errors(k,tskey))
+        pd.set_option('expand_frame_repr', False)
+        edat = pd.DataFrame(errors).transpose()
+        return edat
+
+    def get_ntwrk_error_table(self, ntkey):
+        errors = dict()
+        for k in self.fdata[ntkey].keys():
+            errors[k] = pd.Series(self.generate_total_errors(ntkey, k))
         pd.set_option('expand_frame_repr', False)
         edat = pd.DataFrame(errors).transpose()
         return edat

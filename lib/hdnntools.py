@@ -379,7 +379,7 @@ def readncdat (file,type = np.float):
 
         types=fd.readline().split(",")
         Na = int(types[0])
-        spc = np.asarray(types[1:Na+1])
+        spc = np.asarray(types[1:Na+1],dtype=bytes)
 
         if Nconf > 0:
             data = np.loadtxt(fd, delimiter=',',usecols=range(Na*3+1),dtype=type)

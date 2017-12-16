@@ -8,22 +8,22 @@ import random
 # pyneurochem
 import pyNeuroChem as pync
 import pyaniasetools as aat
-wkdir    = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/test_network/cv/train3/'
-cnstfile = wkdir + '../rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
-saefile  = wkdir + '../sae_wb97x-631gd.dat'
+wkdir    = '/home/jujuman/Research/DataReductionMethods/al_working_network/ANI-AL-0707.0001.0400/train3/'
+cnstfile = wkdir + 'rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
+saefile  = wkdir + 'sae_wb97x-631gd.dat'
 nnfdir   = wkdir + 'networks/'
 
 # reaction center atoms
 fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
 aevsize = 1008
 
-T = 800
-K = 50
+T = 200
+K = 24
 #P = 0.25
 atmlist = []
 
-idir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size5/inputs/'
-cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size5/confs/'
+idir = '/home/jujuman/Research/extensibility_test_sets/COMP6v2/gdb-09/inputs/'
+cdir = '/home/jujuman/Research/extensibility_test_sets/COMP6v2/gdb-09/confs/'
 
 #idir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_h2ocluster/h2o_cluster/inputs/'
 #cdir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_h2ocluster/h2o_cluster/confs/'
@@ -49,12 +49,12 @@ for fi,f in enumerate(files):
 
         #Ngen = K*frc.size
         #Nkep = int(Ngen*P)
-        Ngen = K*4
+        Ngen = K*8
         Nkep = K
 
         print('    -',Nkep,'of',Ngen)
 
-        nms = nmt.nmsgenerator(xyz,nmc,frc,spc,T,minfc=1.0E-2)
+        nms = nmt.nmsgenerator(xyz,nmc,frc,spc,T,minfc=1.0E-3)
 
 
         conformers = []

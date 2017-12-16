@@ -27,7 +27,7 @@ saef   = wkdir + "sae_wb97x-631gd.dat"
 data_root = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/'
 
 h5files = [#'/home/jujuman/Research/Cluster_AL/waterclusters1.h5',
-	   #'/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
+	       #'/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
            #'/home/jujuman/Research/GDB_Dimer/dimer_gen_2/dimers2.h5',
            #'/home/jujuman/Research/GDB_Dimer/dimer_gen_3/dimers3.h5',
            #'/home/jujuman/Research/GDB_Dimer/dimer_gen_4/dimers4.h5',
