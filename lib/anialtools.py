@@ -100,7 +100,9 @@ class alconformationalsampler():
                                   high=gcmddict['MolHigh'],
                                   size=gcmddict['Nr'])
 
-        mol_sizes = np.split(Nmols)
+        print(Nmols)
+
+        mol_sizes = np.split(Nmols, len(gpus))
 
         proc = []
         for i,g in enumerate(gpus):
@@ -204,7 +206,7 @@ class alconformationalsampler():
         ftme_t = 0.0
         for di, id in enumerate(md_work):
             data = hdt.read_rcdb_coordsandnm(id)
-            print(di, ') Working on', id, '...')
+            #print(di, ') Working on', id, '...')
             S = data["species"]
 
             # Set mols
@@ -290,10 +292,10 @@ class alconformationalsampler():
         dictc['molfile'] = self.cdir + 'clst'
         dictc['dstore'] = self.ldtdir + self.datdir + '/'
 
-        solv = [hdn.read_rcdb_coordsandnm(solv_file)]
+        solv = [hdt.read_rcdb_coordsandnm(solv_file)]
 
         if solu_dirs:
-            solu = [hdn.read_rcdb_coordsandnm(solu_dirs+f) for f in os.listdir(solu_dirs)]
+            solu = [hdt.read_rcdb_coordsandnm(solu_dirs+f) for f in os.listdir(solu_dirs)]
         else:
             solu = []
 
@@ -303,7 +305,7 @@ class alconformationalsampler():
                                     self.netdict['num_nets'],
                                     solv, solu, gpuid)
 
-        dgen.generate_clusters(gcmddict, mol_sizes, tid)
+        dgen.generate_clusters(dictc, mol_sizes, tid)
 
 def interval(v,S):
     ps = 0.0
@@ -380,6 +382,17 @@ class alaniensembletrainer():
                 X = X[indexk]
                 F = F[indexk]
                 E = E[indexk]
+
+                Esae = hdt.compute_sae(self.netdict['saefile'],S)
+
+                hidx = np.where(np.abs(E-Esae) > 5.0)
+                lidx = np.where(np.abs(E-Esae) <= 5.0)
+                if hidx[0].size > 0:
+                    print('  -('+str(c).zfill(3)+')High energies detected:\n    ',E[hidx])
+
+                X = X[lidx]
+                E = E[lidx]
+                F = F[lidx]
 
                 Ndc += E.size
 

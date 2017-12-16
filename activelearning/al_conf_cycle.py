@@ -10,7 +10,7 @@ username = "jsmith48"
 root_dir = '/home/jsmith48/scratch/auto_al/'
 
 swkdir = '/home/jsmith48/scratch/auto_al_cycles/'# server working directory
-datdir = 'ANI-AL-0707.0000.04'
+datdir = 'ANI-AL-0808.0000.04'
 
 h5stor = root_dir + 'h5files/'# h5store location
 
@@ -26,13 +26,13 @@ fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
 jtime = "0-3:00"
 
 #---- Training Parameters ----
-GPU = [3,4,5,6,7] # GPU IDs
+GPU = [2,3,5,6,7] # GPU IDs
 
 M   = 0.34 # Max error per atom in kcal/mol
 Nnets = 5 # networks in ensemble
 aevsize = 1008
 
-wkdir = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/ANI-AL-0707/ANI-AL-0707.0000/'
+wkdir = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/ANI-AL-0808/ANI-AL-0808.0000/'
 iptfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/inputtrain.ipt'
 saefile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/sae_wb97x-631gd.dat'
 cstfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
@@ -41,39 +41,39 @@ cstfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/rHCNOSFCl-4.6A_16-3.1A_a4
 # Training varibles
 
 #### Sampling parameters ####
-nmsparams = {'T': 700.0, # Temperature
+nmsparams = {'T': 600.0, # Temperature
              'Ngen': 40, # Confs to generate
              'Nkep': 4, # Diverse confs to keep
              }
 
 mdsparams = {'N': 2,
              'T1': 300,
-             'T2': 1200,
-             'dt': 1.0,
-             'Nc': 2000,
+             'T2': 1000,
+             'dt': 0.5,
+             'Nc': 3000,
              'Ns': 2,
              }
 
-dmrparams = {'mdselect' : [(100,2),(20,4),(1,5)],
+dmrparams = {'mdselect' : [(400,0),(60,2),(40,3),(10,4),(1,5),(1,6),(1,7),(1,8)],
              'N' : 20,
              'T' : 400.0, # running temp 
-             'L' : 20.0, # box length
+             'L' : 25.0, # box length
              'V' : 0.04, # Random init velocities 
              'dt' : 0.5, # MD time step
-             'Nm' : 160, # Molecules to embed
-             'Nr' : 10, # Number of total boxes to embed and test
+             'Nm' : 180, # Molecules to embed
+             'Nr' : 30, # Number of total boxes to embed and test
              'Ni' : 1, # Number of steps to run the dynamics before fragmenting
             }
 
-solv_file = '/home/jujuman/Research/cluster_testing/solvents/gdb11_s01-2.ipt'
+solv_file = '/home/jsmith48/scratch/GDB-11-AL-wB97x631gd/gdb11_s01/inputs/gdb11_s01-2.ipt'
 solu_dirs = ''
 
 gcmddict = {'edgepad': 0.8, # padding on the box edge
             'mindist': 1.6, # Minimum allow intermolecular distance
             'maxsig' : 0.7, # Max frag sig allowed to continue dynamics
-            'Nr': 5, # Number of boxed to run
-            'MolHigh': 905, #High number of molecules
-            'MolLow': 800, #Low number of molecules
+            'Nr': 20, # Number of boxed to run
+            'MolHigh': 910, #High number of molecules
+            'MolLow': 820, #Low number of molecules
             'Ni': 5, #steps before checking frags
             'Ns': 100,
             'dt': 0.25,
@@ -86,10 +86,10 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             }
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [12]
+N = [2, 3, 4, 5, 6, 7, 8]
 
 for i in N:
-    netdir = wkdir+'ANI-AL-0707.0000.04'+str(i).zfill(2)+'/'
+    netdir = wkdir+'ANI-AL-0808.0000.04'+str(i).zfill(2)+'/'
     if not os.path.exists(netdir):
         os.mkdir(netdir)
 
@@ -104,9 +104,9 @@ for i in N:
                }
 
     ## Train the ensemble ##
-    #aet = alt.alaniensembletrainer(netdir, netdict, 'train', h5stor, Nnets)
-    #aet.build_training_cache()
-    #aet.train_ensemble(GPU)
+    aet = alt.alaniensembletrainer(netdir, netdict, 'train', h5stor, Nnets)
+    aet.build_training_cache()
+    aet.train_ensemble(GPU)
 
     ldtdir = root_dir  # local data directories
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
@@ -115,12 +115,12 @@ for i in N:
     ## Run active learning sampling ##
     acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict)
     acs.run_sampling_cluster(gcmddict, GPU)
-    #acs.run_sampling_dimer(dmrparams, GPU)
-    #acs.run_sampling_nms(nmsparams, GPU)
-    #acs.run_sampling_md(mdsparams, GPU)
+    acs.run_sampling_dimer(dmrparams, GPU)
+    acs.run_sampling_nms(nmsparams, GPU)
+    acs.run_sampling_md(mdsparams, GPU)
     #exit(0)
 
     ## Submit jobs, return and pack data
-    #ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae, jtime)
+    ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae, jtime)
 
 

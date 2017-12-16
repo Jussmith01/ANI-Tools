@@ -6,6 +6,7 @@ import pyanitools as pyt
 from time import sleep
 import subprocess
 import pyssh
+import math
 import re
 import os
 
@@ -85,7 +86,7 @@ class alQMserversubmission():
         lot = 'wb97x/6-31g*'
 
         sf.write('#!/bin/sh\n')
-        sf.write('#SBATCH --job-name=\"' + 'test' + '\"\n')
+        sf.write('#SBATCH --job-name=\"' + f + '\"\n')
         sf.write('#SBATCH --partition=' + parti + '\n')
         sf.write('#SBATCH -N 1 # number of nodes\n')
         sf.write('#SBATCH -n ' + str(cores) + ' # number of cores\n')
@@ -117,7 +118,7 @@ class alQMserversubmission():
         #sf.write('cd ' + wrkdir + '\n\n')
 
     def prepare_confs_iso(self):
-        prefix = 'anidata'
+        prefix = 'ad'
         confs_dir = self.ldtdir + self.datdir + '/confs/'
         isoms_dir = self.ldtdir + self.datdir + '/confs_iso/'
 
@@ -163,10 +164,18 @@ class alQMserversubmission():
 
             Nt += N
 
-            #print(type(S), S)
-            fn = prefix + '_' + convert_eformula(S) + '-' + str(N).zfill(5) + '.xyz'
-            #print('Writing: ', fn)
-            hdt.writexyzfile(isoms_dir + '/' + fn, X, S)
+            if N < 48:
+                #print(type(S), S)
+                fn = prefix + '_' + convert_eformula(S) + '-' + str(N).zfill(3) + '.xyz'
+                #print('Writing: ', fn)
+                hdt.writexyzfile(isoms_dir + '/' + fn, X, S)
+            else:
+                Nsplit = int(math.ceil(N/float(48)))
+                X = np.array_split(X, Nsplit)
+                for l,x in enumerate(X):
+                    fn = prefix + '_' + convert_eformula(S) + '_'  + str(l).zfill(2)  + '-' + str(x.shape[0]).zfill(3) + '.xyz'
+                    hdt.writexyzfile(isoms_dir + '/' + fn, x, S)
+                
         #print('Total data:', Nt)
 
     def prepare_data_dir(self):
@@ -201,14 +210,13 @@ class alQMserversubmission():
             if Nc > 512:
                 Nproc = 16
             elif Nc > 128:
-                Nproc = 8
-            elif Nc > 64:
-                Nproc = 4
+                Nproc = 16
             elif Nc > 32:
+                Nproc = 8
+            elif Nc > 16:
                 Nproc = 2
             else:
                 Nproc = 1
-            print(f)
             self.create_submission_script(f, Nproc, self.jtime)
 
         sf = open(self.ldtdir+self.datdir+'/working/runall.sh', 'w')
@@ -315,6 +323,7 @@ def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae, jtim
 
     # Load all data from server
     print('Loading from server...')
+    sleep(5) # pyssh seems to freeze sometimes when there are fast back to back commands
     alserv.load_from_server()
 
     # Create h5 file

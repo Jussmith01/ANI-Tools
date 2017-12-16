@@ -15,6 +15,12 @@ AtoBohr = 1.88973
 
 convert = hatokcal  # Ha to Kcal/mol
 
+def get_na_from_xyz(f):
+    o = open(f,'r')
+    value = int(o.readline())
+    o.close()
+    return value
+
 def convertatomicnumber(X):
     X = int(X)
     if X == 1:
