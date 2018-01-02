@@ -81,7 +81,7 @@ class alQMserversubmission():
         parti = 'shared'
         times = time 
         #times = '0-1:30'
-        Nmemr = 2048
+        Nmemr = 4096
         lot = 'wb97x/6-31g*'
 
         sf.write('#!/bin/sh\n')
