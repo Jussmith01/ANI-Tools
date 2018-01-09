@@ -3,7 +3,9 @@ import numpy as np
 
 import pyanitools as pyt
 
+from traceback import print_exc
 from time import sleep
+
 import subprocess
 import pyssh
 import math
@@ -19,14 +21,20 @@ def convert_eformula(S):
     return rtn
 
 def file_len(fname):
+    i = 0
     with open(fname) as f:
-        for i, l in enumerate(f):
+        for l in f:
+            i += 1
             pass
     return i + 1
 
 class alQMserversubmission():
-    def __init__(self, hostname, username, swkdir, ldtdir, datdir, jtime, port=22):
-        self.server = pyssh.session.Session(hostname=hostname, username=username, port=str(port))
+    def __init__(self, hostname, username, swkdir, ldtdir, datdir, jtime, max_jobs = 40, port=22, password=''):
+        if password:
+            self.server = pyssh.session.Session(hostname=hostname, username=username, password=password, port=str(port))
+        else:	
+            self.server = pyssh.session.Session(hostname=hostname, username=username, port=str(port))
+
         self.swkdir = swkdir
         self.ldtdir = ldtdir
         self.datdir = datdir
@@ -34,6 +42,7 @@ class alQMserversubmission():
 
         self.hostname = hostname
         self.username = username
+        self.password = password
         self.port = port
 
         self.job_ids = set({})
@@ -41,9 +50,20 @@ class alQMserversubmission():
         self.mae = ''
         self.ucount = 0
 
+        self.jobs_cnt = 0
+        self.max_jobs = max_jobs
+
+        self.cmp_count = 0
+
+        self.job_ids = set()
+        self.iter = 0
+
     def reconnect(self):
         self.server.close()
-        self.server = pyssh.session.Session(hostname=self.hostname, username=self.username, port=str(self.port))
+        if self.password:
+            self.server = pyssh.session.Session(hostname=self.hostname, username=self.username, password=self.password, port=str(self.port))
+        else:
+            self.server = pyssh.session.Session(hostname=self.hostname, username=self.username, port=str(self.port))
 
     def set_optional_submission_command(self, mae):
         self.mae = mae
@@ -52,8 +72,29 @@ class alQMserversubmission():
         if self.ucount > 8:
             self.reconnect()
             self.ucount = 0
+
+        connect = False
+        r = ""
+        while connect is False:
+            try:
+                r = self.server.execute(command, lazy=True)
+                connect = True
+            except Exception as e:
+                ext = e.__class__.__name__
+                print('Error raised:', ext)
+                if ext == "AuthenticationError" or ext == "ConnectionError":
+                    print("Attempting connection again in 120s...")
+                    connect = False
+                    sleep(120)
+                    self.reconnect()
+                    self.ucount = 0
+                else:
+                    print("Another error occured which I cannot handle.")
+                    connect = True
+                    print_exc()
+                    exit(1)
+
         self.ucount += 1
-        r = self.server.execute(command, lazy=True)
         return r.as_str()
 
     def submit_job(self):
@@ -79,10 +120,10 @@ class alQMserversubmission():
         self.job_list.append(f+'.sh')
         sf = open(fname, 'w')
 
-        parti = 'shared'
+        parti = 'RM-shared'
         times = time 
         #times = '0-1:30'
-        Nmemr = 2048
+        Nmemr = 3000
         lot = 'wb97x/6-31g*'
 
         sf.write('#!/bin/sh\n')
@@ -90,13 +131,13 @@ class alQMserversubmission():
         sf.write('#SBATCH --partition=' + parti + '\n')
         sf.write('#SBATCH -N 1 # number of nodes\n')
         sf.write('#SBATCH -n ' + str(cores) + ' # number of cores\n')
-        sf.write('#SBATCH --mem-per-cpu=' + str(Nmemr) + '\n')
+        sf.write('#SBATCH --mem ' + str(cores*Nmemr) + '\n')
         sf.write('#SBATCH -t ' + times + ' # time (D-HH:MM)\n')
         sf.write('#SBATCH -o slurm.cgfp.%j.out # STDOUT\n')
         sf.write('#SBATCH -e slurm.cgfp.%j.err # STDERR\n')
-        sf.write('#SBATCH --mail-type=END,FAIL # notifications for job done & fail\n')
-        sf.write('#SBATCH --mail-user=jsmith48@ufl.edu # send-to address\n')
-        sf.write('#SBATCH -A jsu101\n')
+        #sf.write('#SBATCH --mail-type=END,FAIL # notifications for job done & fail\n')
+        #sf.write('#SBATCH --mail-user=jsmith48@ufl.edu # send-to address\n')
+        sf.write('#SBATCH -A mr3bdtp\n')
         sf.write('\n')
         sf.write('cd ' + self.swkdir+self.datdir+'/working/' + '\n\n')
 
@@ -108,7 +149,7 @@ class alQMserversubmission():
         g09scr = self.ldtdir+self.datdir+'/working/' + f + '_scratch'
         if not os.path.exists(g09scr):
             os.makedirs(g09scr)
-        sf.write('export GAUSS_SCRDIR=' + self.swkdir+self.datdir+'/working/' + '\n\n')
+        sf.write('export GAUSS_SCRDIR=' + self.swkdir+self.datdir+'/working/' +  f + '_scratch/\n\n')
 
         sf.write('gcdata -i ' + self.swkdir+self.datdir+'/confs_iso/'+f+'.xyz' + ' -o ' + self.swkdir+self.datdir+'/data/' + f.split(".")[0] + '.dat -l ' + lot + ' -m ' + str(
             Nmemr) + ' -s -p -f > ' + self.swkdir+self.datdir+'/output/' + f.split(".")[0] + '.opt')
@@ -164,19 +205,28 @@ class alQMserversubmission():
 
             Nt += N
 
-            if N < 48:
+            if N < 96:
                 #print(type(S), S)
                 fn = prefix + '_' + convert_eformula(S) + '-' + str(N).zfill(3) + '.xyz'
                 #print('Writing: ', fn)
                 hdt.writexyzfile(isoms_dir + '/' + fn, X, S)
             else:
-                Nsplit = int(math.ceil(N/float(48)))
+                Nsplit = int(math.ceil(N/float(96)))
                 X = np.array_split(X, Nsplit)
                 for l,x in enumerate(X):
                     fn = prefix + '_' + convert_eformula(S) + '_'  + str(l).zfill(2)  + '-' + str(x.shape[0]).zfill(3) + '.xyz'
                     hdt.writexyzfile(isoms_dir + '/' + fn, x, S)
                 
         #print('Total data:', Nt)
+
+    def compress_orginal_confs(self):
+        command = 'cd ' + self.ldtdir+self.datdir + ' && tar --remove-files -czf confs.tar.gz confs'
+        proc = subprocess.Popen (command, shell=True)
+        r = proc.communicate()
+        print('Compressing confs...')
+        proc.wait()
+        print(r)
+
 
     def prepare_data_dir(self):
         iptdir = self.ldtdir + self.datdir + '/confs_iso/'
@@ -198,36 +248,83 @@ class alQMserversubmission():
 
         print('Preparing iso confs...')
         self.prepare_confs_iso()
+        self.compress_orginal_confs()
 
         fextn = 'xyz'
         self.files = os.listdir(iptdir)
         self.files = [f for f in self.files if f.split(".")[1] == fextn]
-        self.files = sorted(self.files, key=lambda x: int(x.rsplit("-", 1)[1].split(".")[0]), reverse=True)
+        self.files = sorted(self.files, key=lambda x: int(x.rsplit("-", 1)[1].split(".")[0]), reverse=True)#[415:]
+
+        rgx = re.compile('(?:[A-G]|[I-Z])[a-z]?(\d+)')
 
         print('Building scripts...')
         for f in self.files:
+            As = f.rsplit('-', 1)[0].split('_')[1]
+            Na = np.sum(np.array(rgx.findall(As),dtype=np.int32))
+
             Nc = int(f.rsplit('-', 1)[1].split('.')[0])
-            if Nc > 512:
-                Nproc = 16
-            elif Nc > 128:
-                Nproc = 16
-            elif Nc > 32:
+            if Nc > 64:
                 Nproc = 8
+            elif Nc > 32:
+                Nproc = 4
             elif Nc > 16:
                 Nproc = 2
             else:
                 Nproc = 1
+
+            if Na > 18:
+                Nproc = 2 * Nproc
+
+            if Na <= 7 and Nproc > 1:
+                Nproc = int(Nproc/2)
+
             self.create_submission_script(f, Nproc, self.jtime)
 
-        sf = open(self.ldtdir+self.datdir+'/working/runall.sh', 'w')
-        sf.write('#!/bin/sh\n')
-        for j in self.job_list:
-            sf.write('sbatch ' + j + '\n')
-        sf.close()
+        #self.jobs_left = len(self.job_list)
 
+        #sf = open(self.ldtdir+self.datdir+'/working/runall.sh', 'w')
+        #sf.write('#!/bin/sh\n')
+        #for j in self.job_list:
+        #    sf.write('sbatch ' + j + '\n')
+        #sf.close()
+
+    def check_and_submit_jobs(self):
+        Nj = self.get_job_status()
+        sleep(2)
+
+        Nl = len(self.job_list)-self.jobs_cnt
+
+        N = min([self.max_jobs-Nj, Nl])
+        
+        command = "cd " + self.swkdir + self.datdir + '/working && '
+        idx = self.jobs_cnt
+        #print('N:',N,'Nl:',Nl,'Nj:',Nj,'Jtot:',len(self.job_list))
+        if N > 0:
+            for j in self.job_list[idx:idx+N]:
+                command += 'sbatch ' + j + ' && '
+            command = command[:-4]
+            #print('Command:', command)
+            
+            r = self.submit_ssh_command(command)
+            print(r)
+            reg = re.compile(r'(?:Submitted batch job )(\d+?)(?:\n|$)')
+
+            ids = reg.findall(r)
+            self.job_ids = self.job_ids.union(set(ids))
+
+            self.jobs_cnt += N
+
+            if self.iter > 0:
+                sleep(2)
+                self.compress_fchks()
+        
+        self.iter += 1
+        complete = (Nj == 0) and (Nl == 0)
+        return complete,Nj,N,len(self.job_list)-self.jobs_cnt
 
     def load_to_server(self):
-        command = 'rsync -a --delete ' + self.ldtdir + self.datdir + ' ' + self.username  + '@' + self.hostname + ':' + self.swkdir
+        pwd = " sshpass -p "+self.password
+        command = pwd + ' rsync -a ' + self.ldtdir + self.datdir + ' ' + self.username  + '@' + self.hostname + ':' + self.swkdir
         proc = subprocess.Popen (command, shell=True)
         r = proc.communicate()
         print('Wait')
@@ -235,25 +332,21 @@ class alQMserversubmission():
         print(r)
 
     def load_from_server(self):
-        command = 'rsync -a --delete ' + self.username  + '@' + self.hostname + ':' + self.swkdir + self.datdir + ' ' + self.ldtdir
+        pwd = " sshpass -p "+self.password
+        command = pwd + ' rsync -a --delete ' + self.username  + '@' + self.hostname + ':' + self.swkdir + self.datdir + ' ' + self.ldtdir
         print('Execute transfer from server...')
         proc = subprocess.Popen (command, shell=True)
         r = proc.communicate()
         proc.wait()
         print(r)
 
-    def run_all_jobs(self):
-        print("cd " + self.swkdir + self.datdir + '/working' + " && bash runall.sh")
-        r = self.submit_ssh_command("cd " + self.swkdir + self.datdir + '/working' + " && bash runall.sh")
-        reg = re.compile(r'(?:Submitted batch job )(\d+?)(?:\n|$)')
-
-        ids = reg.findall(r)
-        self.job_ids = set(ids)
+    def compress_fchks(self):
+        r = self.submit_ssh_command('cd ' + self.swkdir+self.datdir+'/data/' + ' && tar --remove-files -czf '+ self.swkdir+self.datdir+'/checkpoints/checkpoints'+str(self.cmp_count).zfill(3)+'.tar.gz ' + '*.fchk')
+        print(r)
+        self.cmp_count += 1
 
     def cleanup_server(self):
-        r = self.submit_ssh_command("rm -r " + self.swkdir+self.datdir+'/working && mv '
-                                    + self.swkdir+self.datdir+'/data/*.fchk ' + self.swkdir+self.datdir+'/checkpoints/ && '
-                                    + 'rm ' + self.swkdir + self.datdir+'/data/*.chk')
+        r = self.submit_ssh_command('cd ' + self.swkdir+self.datdir+'/data/' + " && rm -r " + self.swkdir+self.datdir+'/working && tar --remove-files -czf ' + self.swkdir+self.datdir+'/checkpoints/checkpoints'+str(self.cmp_count).zfill(3)+'.tar.gz ' + '*.fchk && ' + 'rm ' + '*.chk')
 
     def generate_h5(self, path):
         # open an HDF5 for compressed storage.
@@ -266,6 +359,7 @@ class alQMserversubmission():
         Nf = len(files)
         Nd = 0
         for n, f in enumerate(files):
+            #print(d + f)
             L = file_len(d + f)
 
             if L >= 4:
@@ -288,10 +382,10 @@ class alQMserversubmission():
     def disconnect(self):
         self.server.close()
 
-def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae, jtime):
+def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae, jtime, password):
     # Declare server submission class and connect to ssh
     print('Connecting...')
-    alserv = alQMserversubmission(hostname, username, swkdir, ldtdir, datdir, jtime)
+    alserv = alQMserversubmission(hostname, username, swkdir, ldtdir, datdir, jtime, password=password)
 
     # Set optional server information
     alserv.set_optional_submission_command(mae)
@@ -303,18 +397,15 @@ def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae, jtim
     print('Loading to server...')
     alserv.load_to_server()
 
-    # Run all jobs at once
-    print('Executing jobs...')
-    alserv.run_all_jobs()
-    print('Executed:',len(alserv.job_ids))
-
-    # Monitor jobs
-    print('Listening...')
-    Nj = 1
-    while Nj != 0:
+    # Submit and monitor jobs
+    print('Generating Data...')
+    complete = False
+    while True:
+        complete,Nr,Nj,Nl = alserv.check_and_submit_jobs()
+        print("Running (" + str(Nr) + " : " + str(Nj) + " : " + str(Nl) + " : " + str(len(alserv.job_list)) + ")...")
+        if complete:
+            break
         sleep(120)
-        Nj = alserv.get_job_status()
-        print("Running (" + str(Nj) + ")...")
 
     # CLeanup working files on server
     print('Cleaing up server...')

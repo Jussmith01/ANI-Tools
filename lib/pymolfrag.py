@@ -6,6 +6,7 @@ import pyNeuroChem as pync
 
 import numpy as np
 import hdnntools as hdn
+import nmstools as nmt
 
 import  ase
 from ase import Atoms
@@ -132,7 +133,7 @@ class dimergenerator():
         # Construct pyNeuroChem class
         #self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
 
-    def __generategarbagebox__(self,Nm, L):
+    def __generategarbagebox__(self,Nm, L, T):
         self.X = np.empty((0, 3), dtype=np.float32)
         self.S = []
         self.C = np.zeros((Nm, 3), dtype=np.float32)
@@ -147,8 +148,16 @@ class dimergenerator():
         for idx, j in enumerate(rint):
             if attempts >= 10000:
                 break
-            x = self.mols[j]['coordinates']
-            s = self.mols[j]['species']
+            #x = self.mols[j]['coordinates']
+            #s = self.mols[j]['species']
+
+            s   = self.mols[j]['species']
+            xyz = self.mols[j]['coordinates']
+            nmc = self.mols[j]['nmdisplacements']
+            frc = self.mols[j]['forceconstant']
+
+            nms = nmt.nmsgenerator(xyz,nmc,frc,s,T,minfc=5.0E-2)
+            x = nms.get_Nrandom_structures(1)[0]
 
             # Apply a random rotation
             M = rand_rotation_matrix()
@@ -190,7 +199,7 @@ class dimergenerator():
         self.L = L
 
         # Generate the box of junk
-        self.__generategarbagebox__(Nm, L)
+        self.__generategarbagebox__(Nm, L, T)
 
         # Make mol
         self.mol = Atoms(symbols=self.S, positions=self.X)
@@ -251,7 +260,7 @@ class dimergenerator():
         # Open MD output
         #traj.close()
 
-    def __fragmentbox__(self, file):
+    def __fragmentbox__(self, file, sig_cut):
         self.X = self.mol.get_positions()
 
         self.frag_list = []
@@ -303,7 +312,7 @@ class dimergenerator():
                                 sig = np.std(hdn.hatokcal*E)/np.sqrt(Nai+Naj)
 
                                 self.Nt += 1
-                                if sig > 0.25:
+                                if sig > sig_cut:
                                     self.Nd += 1
                                     hdn.writexyzfile(file+str(i).zfill(4)+'-'+str(j).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
                                     self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
@@ -329,7 +338,7 @@ class clustergenerator():
     #    self.mdcrd.close()
     #    self.traj.close()
 
-    def __generategarbagebox__(self,Nm, Nembed, L):
+    def __generategarbagebox__(self,Nm, Nembed, L, T):
         self.X = np.empty((0, 3), dtype=np.float32)
         self.S = []
         self.C = np.zeros((Nm, 3), dtype=np.float32)
@@ -343,11 +352,22 @@ class clustergenerator():
         for idx, j in enumerate(rint):
             if idx < Nembed:
                 ri = np.random.randint(len(self.solu_list), size=1)
-                x = self.solu_list[ri[0]]['coordinates']
-                s = self.solu_list[ri[0]]['species']
+                s   = self.solu_list[ri[0]]['species']
+                xyz = self.solu_list[ri[0]]['coordinates']
+                nmc = self.solu_list[ri[0]]['nmdisplacements']
+                frc = self.solu_list[ri[0]]['forceconstant']
+
+                nms = nmt.nmsgenerator(xyz,nmc,frc,s,T,minfc=5.0E-2)
+                x = nms.get_Nrandom_structures(1)[0]
+
             else:
-                x = self.solv_list[j]['coordinates']
-                s = self.solv_list[j]['species']
+                s   = self.solv_list[j]['species']
+                xyz = self.solv_list[j]['coordinates']
+                nmc = self.solv_list[j]['nmdisplacements']
+                frc = self.solv_list[j]['forceconstant']
+
+                nms = nmt.nmsgenerator(xyz,nmc,frc,s,T,minfc=5.0E-2)
+                x = nms.get_Nrandom_structures(1)[0]
 
             # Apply a random rotation
             M = rand_rotation_matrix()
@@ -387,7 +407,7 @@ class clustergenerator():
         self.L = L
 
         # Generate the box of junk
-        self.__generategarbagebox__(Nm, Nembed, L)
+        self.__generategarbagebox__(Nm, Nembed, L, T)
 
         # Make mol
         self.mol = Atoms(symbols=self.S, positions=self.X)
@@ -442,7 +462,7 @@ class clustergenerator():
 
         self.dyn.run(Ni) # Do Ni steps
 
-    def __fragmentbox__(self, file):
+    def __fragmentbox__(self, file, sighat):
         self.X = self.mol.get_positions()
 
         self.frag_list = []
@@ -465,7 +485,7 @@ class clustergenerator():
                     Xf = Xi
                     Sf = self.S[si:si + Nai]
 
-                    Nmax = random.randint(2, 12)
+                    Nmax = random.randint(2, 14)
                     Nmol = 0
                     for j in range(len(self.Na)):
                         if i != j:
@@ -506,7 +526,7 @@ class clustergenerator():
                     #print('Mol(',i,'): sig=',sig)
 
                     self.Nt += 1
-                    if sig > 0.25:
+                    if sig > sighat:
                         if sig > self.maxsig:
                             self.maxsig = sig
                         self.Nd += 1
@@ -541,7 +561,7 @@ class clustergenerator():
                 else:
                     Ni = gcmddict['Ni']
                 self.run_dynamics(Ni)
-                self.__fragmentbox__(gcmddict['molfile'] + '-'  + str(id).zfill(2) + '-' +str(i).zfill(2) + '-' + str(j).zfill(4) + '_')
+                self.__fragmentbox__(gcmddict['molfile'] + '-'  + str(id).zfill(2) + '-' +str(i).zfill(2) + '-' + str(j).zfill(4) + '_', gcmddict['sig'])
                 #print('Step (',i,',',j,') [', str(self.Nd), '/', str(self.Nt),'] generated ',len(self.frag_list),' maxsig: ', self.maxsig,' dimers...')
                 difo.write('Step (' + str(i) + ',' + str(i) + ') [' + str(self.Nd) + '/' + str(self.Nt) + '] generated ' + str(len(self.frag_list)) + ' clusters. ' + ' maxsig: ' + "{:.2f}".format(self.maxsig) + '\n')
                 Nt += self.Nt
