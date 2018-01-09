@@ -9,9 +9,10 @@ def file_len(fname):
             pass
     return i + 1
 
-path = '/home/jujuman/Research/extensibility_test_sets/COMP6v2/gdb-11/ts_gdb-11.h5'
+path = '/home/jujuman/Research/extensibility_test_sets/COMP6v2/benchmarks/ts_drugbankSFCl.h5'
 
-dtdirs = ['/home/jujuman/Research/extensibility_test_sets/COMP6v2/gdb-11/data/',
+dtdirs = ['/home/jujuman/Research/extensibility_test_sets/COMP6v2/drugbank/data/',
+          #'/home/jujuman/Research/extensibility_test_sets/COMP6v2/gdb-11/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size5/data/'
           #'/home/jujuman/Research/extensibility_test_sets/ani_md_benchmark/data_big/data/',
           #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_3/data/',

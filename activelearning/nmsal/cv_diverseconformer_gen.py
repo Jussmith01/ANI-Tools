@@ -24,8 +24,8 @@ nnfdir   = wkdir + 'train0/networks/'
 fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
 aevsize = 1008
 T = 1000.0
-Ngen = 400
-Nkep = 100
+Ngen = 50
+Nkep = 16
 atmlist = []
 
 idir = [#'/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_2/inputs/',
@@ -52,16 +52,18 @@ idir = [#'/home/jujuman/Research/GDB-11-AL-wB97x631gd/chemmbl22/config_2/inputs/
         #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_04_red/inputs/',
         #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_05_red/inputs/',
         #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_red/dnntsgdb11_06_red/inputs/',
-        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0001/config/inputs/',
-        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size1/inputs/',
-        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size2/inputs/',
-        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size3/inputs/',
-        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size4/inputs/',
-        '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size5/inputs/',
+        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0001/config/inputs/',
+        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size1/inputs/',
+        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size2/inputs/',
+        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size3/inputs/',
+        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size4/inputs/',
+        #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/gdb11_size5/inputs/',
+        '/home/jujuman/Research/extensibility_test_sets/COMP6v2/drugbank/inputs/',
         ]
 
 #cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_comb_resample/gdb_r06_comb09_1/confs_5/'
-cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.000/confs_1/'
+#cdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.000/confs_1/'
+cdir = '/home/jujuman/Research/extensibility_test_sets/COMP6v2/drugbank/confs/'
 
 dc = aat.diverseconformers(cnstfile, saefile, nnfdir, aevsize, 0, False)
 
@@ -111,7 +113,7 @@ for di,id in enumerate(idir):
 
         sigma = anicv.compute_stddev_conformations(conformers,spc)
         #print(sigma)
-        sid = np.where( sigma >  0.3 )[0]
+        sid = np.where( sigma >  0.0 )[0]
         print('  -', fi, 'of', len(files), ') File:', f, 'keep:', sid.size,'percent:',"{:.2f}".format(100.0*sid.size/Ngen))
 
 
@@ -119,7 +121,7 @@ for di,id in enumerate(idir):
         Nk += sid.size
         if 100.0*sid.size/float(Ngen) > 0:
             Nkp += sid.size
-            cfn = f.split('.')[0].split('-')[0]+'_'+str(idx).zfill(5)+'-'+f.split('.')[0].split('-')[1]+'_2.xyz'
+            cfn = f.split('.')[0].split('-')[0]+'_'+str(idx).zfill(5)+'-'+f.split('.')[0].split('-')[1]+'.xyz'
             hdn.writexyzfile(cdir+cfn,conformers[sid],spc)
         idx += 1
 

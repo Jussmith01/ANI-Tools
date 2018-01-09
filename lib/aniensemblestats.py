@@ -25,16 +25,16 @@ pd.options.display.float_format = '{:.2f}'.format
 # ----------------------------------
 # Plot force histogram
 # ----------------------------------
-def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, vmin=0, vmax=0):
+def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0):
     Fmx = Xa.max()
     Fmn = Xa.min()
 
     # Plot ground truth line
-    ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='r', linewidth=3)
+    ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='black', linewidth=3)
 
     # Set labels
-    ax.set_xlabel(labelx, fontsize=22)
-    ax.set_ylabel(labely, fontsize=22)
+    ax.set_xlabel(labelx, fontsize=26)
+    ax.set_ylabel(labely, fontsize=26)
 
     # Plot 2d Histogram
     if vmin == 0 and vmax ==0:
@@ -45,10 +45,13 @@ def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, vmin=0, vmax=0):
     # Build color bar
     #cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
 
+    # Annotate with label
+    ax.text(0.1*((Fmx-Fmn))+Fmn, 0.87*((Fmx-Fmn))+Fmn, plabel, fontsize=40)
+
     # Annotate with errors
     PMAE = hdt.calculatemeanabserror(Xa, Xp)
     PRMS = hdt.calculaterootmeansqrerror(Xa, Xp)
-    ax.text(0.65*((Fmx-Fmn))+Fmn, 0.1*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=20,
+    ax.text(0.6*((Fmx-Fmn))+Fmn, 0.1*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=30,
             bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
 
     '''
@@ -84,7 +87,7 @@ def add_inset_histogram(Xa, Xp, pos, ylim, xlim):
 # ----------------------------------
 # Plot force histogram
 # ----------------------------------
-def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
+def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10], cmap=mpl.cm.viridis):
     Fmx = Xa.max()
     Fmn = Xa.min()
 
@@ -101,7 +104,8 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10]):
     ax.set_xlabel('$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
     ax.set_ylabel('$F_{ani}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
 
-    cmap = mpl.cm.viridis
+    #cmap = mpl.cm.viridis
+    #cmap = mpl.cm.brg
 
     # Plot 2d Histogram
     bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), range= [[Fmn, Fmx], [Fmn, Fmx]], cmap=cmap)
@@ -165,7 +169,8 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                           'Fdft': [],
                           'dEani': [],
                           'dEdft': [],
-                          'Na': [],})
+                          'Na': [],
+                          'Na2': [],})
 
             for file in self.tsfiles[key]:
                 adl = ant.anidataloader(file)
@@ -208,10 +213,12 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                     cdata['dEani'].append(hdt.calculateKdmat(self.Nn+1, Eani))
                     cdata['dEdft'].append(hdt.calculatedmat(Edft))
 
+                    cdata['Na2'].append(np.full(cdata['dEdft'][-1].size, len(data['species']), dtype=np.int32))
+
                     #cdata['Erani'].append(Eani-Eani.min())
                     #cdata['Erdft'].append(Edft-Edft.min())
 
-            for k in ['Na', 'Edft', 'Fdft', 'dEdft']:
+            for k in ['Na', 'Na2', 'Edft', 'Fdft', 'dEdft']:
                 cdata[k] = np.concatenate(cdata[k])
 
             for k in ['Eani', 'Fani', 'dEani']:
@@ -257,9 +264,14 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
             self.fdata[df.split('tsdata_')[-1].split('.h5')[0]] = tdata
 
     ''' Generate total errors '''
-    def generate_fullset_errors(self, ntkey):
+    def generate_fullset_errors(self, ntkey, tslist):
         #idx = np.nonzero(self.fdata[ntkey][tskey]['Erdft'])
-        tskeys = self.fdata[ntkey].keys()
+        #tskeys = self.fdata[ntkey].keys()
+
+        if not tslist:
+            tskeys = self.fdata[ntkey].keys()
+        else:
+            tskeys = tslist
 
         Nn = self.fdata[ntkey][list(tskeys)[0]]['Eani'].shape[0]-1
         return {names[0]: hdt.calculatemeanabserror(
@@ -309,6 +321,19 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
                 }
 
     ''' Generate total errors '''
+    def get_range_stats(self, tslist, dkey):
+        #idx = np.nonzero(self.fdata[ntkey][tskey]['Erdft'])
+        ntkey = list(self.fdata.keys())[0]
+
+        if not tslist:
+            tskeys = self.fdata[ntkey].keys()
+        else:
+            tskeys = tslist
+
+        Nn = self.fdata[ntkey][list(tskeys)[0]][dkey].shape[0]-1
+        return np.concatenate([self.fdata[ntkey][tskey][dkey] for tskey in tskeys])
+
+    ''' Generate total errors '''
     def generate_fullset_peratom_errors(self, ntkey, tslist):
         #idx = np.nonzero(self.fdata[ntkey][tskey]['Erdft'])
 
@@ -323,13 +348,20 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         #print(self.fdata[ntkey]['GDB07to09']['Na'])
         #print(self.fdata[ntkey]['GDB07to09']['Eani'][Nn,:]/self.fdata[ntkey]['GDB07to09']['Na'])
 
-        return {names[0]: hdt.calculatemeanabserror(
+        return {names[0]: 1000*hdt.calculatemeanabserror(
                     np.concatenate([self.fdata[ntkey][tskey]['Eani'][Nn,:]/self.fdata[ntkey][tskey]['Na'] for tskey in tskeys]),
                     np.concatenate([self.fdata[ntkey][tskey]['Edft']/self.fdata[ntkey][tskey]['Na'] for tskey in tskeys])),
-                names[2]: hdt.calculaterootmeansqrerror(
+                names[2]: 1000*hdt.calculaterootmeansqrerror(
                     np.concatenate([self.fdata[ntkey][tskey]['Eani'][Nn, :]/self.fdata[ntkey][tskey]['Na'] for tskey in tskeys]),
                     np.concatenate([self.fdata[ntkey][tskey]['Edft']/self.fdata[ntkey][tskey]['Na'] for tskey in tskeys])),
-                }
+                names[4]: 1000*hdt.calculatemeanabserror(
+                    np.concatenate([self.fdata[ntkey][tskey]['dEani'][Nn, :] / self.fdata[ntkey][tskey]['Na2'] for tskey in tskeys]),
+                    np.concatenate([self.fdata[ntkey][tskey]['dEdft'] / self.fdata[ntkey][tskey]['Na2'] for tskey in tskeys])),
+                names[6]: 1000*hdt.calculaterootmeansqrerror(
+                    np.concatenate([self.fdata[ntkey][tskey]['dEani'][Nn, :] / self.fdata[ntkey][tskey]['Na2'] for tskey in tskeys]),
+                    np.concatenate([self.fdata[ntkey][tskey]['dEdft'] / self.fdata[ntkey][tskey]['Na2'] for tskey in tskeys])),
+        }
+
 
     ''' Generate total errors '''
     def generate_fullset_mean_errors(self, ntkey):
@@ -379,8 +411,11 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
                 #'ERRMS': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Erani'][idx], self.fdata[ntkey][tskey]['rdft'][idx]),
                 }
 
-    def determine_min_error_by_sigma(self, ntkey, minerror, percent, tskeys = ['GDB07to09'], figsize=(15.0, 12.0), labelx='', labely='', xymax=(10.0,10.0), storepath=''):
+    def determine_min_error_by_sigma(self, ntkey, minerror, percent, tskeys = ['GDB07to09'], figsize=(15.0, 12.0), labelx='', labely='', xymax=(10.0,10.0), storepath='', cmap=mpl.cm.viridis):
         #tskeys = self.fdata[ntkey].keys()
+
+        mpl.rcParams['xtick.labelsize'] = 18
+        mpl.rcParams['ytick.labelsize'] = 18
 
         Nn = self.fdata[ntkey][list(tskeys)[0]]['Eani'].shape[0]-1
 
@@ -422,23 +457,22 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         print('RMSE Under: ', hdt.calculaterootmeansqrerror(Eanimu[Su],Edft[Su]))
 
         fig, ax = plt.subplots(figsize=figsize)
-        cmap = mpl.cm.viridis
 
         poa = np.where(Eerr[So] > minerror)[0].size / So[0].size
         pob = np.where(Eerr > minerror)[0].size / Eerr.size
 
-        ax.text(0.61*xymax[0], 0.04*xymax[1], 'Total Captured:    ' + str(int(100.0 * Sidx[0].size / Edft.size)) + '%' +
+        ax.text(0.51*xymax[0], 0.04*xymax[1], 'Total Captured:    ' + str(int(100.0 * Sidx[0].size / Edft.size)) + '%' +
                 '\n' + r'($\mathrm{\mathcal{E}>}$'+ "{:.1f}".format(minerror) + r'$\mathrm{) \forall \rho}$:           ' + str(int(100*pob)) + '%' +
                 '\n' + r'($\mathrm{\mathcal{E}>}$'+ "{:.1f}".format(minerror) + r'$\mathrm{) \forall \rho >}$' + "{:.2f}".format(S) + ': ' + str(int(100*poa)) + '%' +
-                '\n' + r'$\mathrm{E_t}$ RMSE ($\mathrm{\rho>}$'+ "{:.2f}".format(S) + r'$\mathrm{)}$: ' + "{:.1f}".format(hdt.calculaterootmeansqrerror(Eanimu[So],Edft[So])) +
-                '\n' + r'$\mathrm{E_t}$ RMSE ($\mathrm{\rho\leq}$' + "{:.2f}".format(S) + r'$\mathrm{)}$: ' + "{:.1f}".format(hdt.calculaterootmeansqrerror(Eanimu[Su], Edft[Su])),
-                bbox={'facecolor':'grey', 'alpha':0.5, 'pad':10}, fontsize=14)
+                '\n' + r'$\mathrm{E}$ RMSE ($\mathrm{\rho>}$'+ "{:.2f}".format(S) + r'$\mathrm{)}$: ' + "{:.1f}".format(hdt.calculaterootmeansqrerror(Eanimu[So],Edft[So])) +
+                '\n' + r'$\mathrm{E}$ RMSE ($\mathrm{\rho\leq}$' + "{:.2f}".format(S) + r'$\mathrm{)}$: ' + "{:.1f}".format(hdt.calculaterootmeansqrerror(Eanimu[Su], Edft[Su])),
+                bbox={'facecolor':'grey', 'alpha':0.5, 'pad':10}, fontsize=18)
 
-        plt.axvline(x=S,linestyle='--',color='r',linewidth=5, label="{:.2f}".format(S) + ' value that captures '+ str(int(percent)) + '% of errors over ' + "{:.1f}".format(minerror))
+        plt.axvline(x=S,linestyle='--',color='r',linewidth=5, label="{:.2f}".format(S) + ' is the value that captures\n'+ str(int(percent)) + '% of errors over ' + "{:.1f}".format(minerror))
         #)
         # Set labels
-        ax.set_xlabel(labelx, fontsize=22)
-        ax.set_ylabel(labely, fontsize=22)
+        ax.set_xlabel(labelx, fontsize=24)
+        ax.set_ylabel(labely, fontsize=24)
 
         # Plot 2d Histogram
         bins = ax.hist2d(Sani, Eerr, bins=400, norm=LogNorm(), range=[[0.0, xymax[0]], [0.0, xymax[1]]], cmap=cmap)
@@ -446,8 +480,9 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         # Build color bar
         # cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
         cb1 = fig.colorbar(bins[-1], cmap=cmap)
-        cb1.set_label('Count', fontsize=16)
-        plt.legend(loc='upper center',fontsize=14)
+        cb1.set_label('Count', fontsize=20)
+        cb1.ax.tick_params(labelsize=18)
+        plt.legend(loc='upper center',fontsize=18)
 
         if storepath:
             pp = PdfPages(storepath)
@@ -460,10 +495,10 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
     def get_net_keys(self):
         return self.fdata.keys()
 
-    def get_totalerror_table(self):
+    def get_totalerror_table(self, tslist = []):
         errors = dict()
         for k in self.fdata.keys():
-            errors[k] = pd.Series(self.generate_fullset_errors(k))
+            errors[k] = pd.Series(self.generate_fullset_errors(k, tslist))
         pd.set_option('expand_frame_repr', False)
         edat = pd.DataFrame(errors).transpose()
         return edat
@@ -502,9 +537,9 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         edat = pd.DataFrame(errors).transpose()
         return edat
 
-    def generate_correlation_plot(self, ntkey, tskey, prop1, prop2, figsize=[13,10]):
+    def generate_correlation_plot(self, ntkey, tskey, prop1, prop2, figsize=[13,10],cmap=mpl.cm.viridis):
         Nn = self.fdata[ntkey][tskey][prop1].shape[0]-1
-        plot_corr_dist(self.fdata[ntkey][tskey][prop1][Nn,:], self.fdata[ntkey][tskey][prop2], True, figsize)
+        plot_corr_dist(self.fdata[ntkey][tskey][prop1][Nn,:], self.fdata[ntkey][tskey][prop2], True, figsize, cmap)
 
     def generate_violin_distribution(self, tskey, maxstd=0.34):
         import seaborn as sns

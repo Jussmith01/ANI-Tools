@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 # Define test file
-#h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
-h5file = '/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s07.h5'
+h5file = '/home/jujuman/Research/ForceNMPaper/polypeptide/tripeptide_full.h5'
+#h5file = '/home/jujuman/Research/ANI-DATASET/ANI-1_release/ani_gdb_s07.h5'
 
 # Define cross validation networks
 wkdircv = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb01-06_red03-06/cv4/'
