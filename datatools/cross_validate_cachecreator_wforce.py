@@ -18,16 +18,17 @@ def interval(v,S):
             return s
         ps = ps + ds
 
-#wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
+#wkdir = '/scratch/Research/force_train_testing/'
 #saef   = wkdir + "sae_6-31gd.dat"
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/cv1/'
-saef   = wkdir + "sae_wb97x-631gd.dat"
+wkdir = '/scratch/Research/datasets/iso17/train_test/'
+saef   = wkdir + "sae_6-31gd.dat"
 
-data_root = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/'
+#data_root = '/scratch/Research/GDB-11-AL-wB97x631gd/'
+data_root = '/scratch/Research/datasets/iso17/'
 
 h5files = [#'/home/jujuman/Research/Cluster_AL/waterclusters1.h5',
-	       #'/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
+	   #'/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
            #'/home/jujuman/Research/GDB_Dimer/dimer_gen_2/dimers2.h5',
            #'/home/jujuman/Research/GDB_Dimer/dimer_gen_3/dimers3.h5',
            #'/home/jujuman/Research/GDB_Dimer/dimer_gen_4/dimers4.h5',
@@ -66,32 +67,34 @@ h5files = [#'/home/jujuman/Research/Cluster_AL/waterclusters1.h5',
            #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs2.h5',
            #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs3.h5',
            #'/home/jujuman/Research/GDB-11-AL-wB97x631gd/dnnts_nms_resample/confs_cv_gdb01-06_red03-08/confs_cv_gdb01-08_rs4.h5',
-           data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0001/ANI-AL-0605.0001.0001.h5',
-           data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0006.h5',
-           data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0005.h5',
-           data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0004.h5',
-           data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0003.h5',
-           data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0002.h5',
-           data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0001.h5',
-           data_root + 'elements_SFCl/gdb11SFCl_s01.h5',
-           data_root + 'elements_SFCl/gdb11SFCl_s02.h5',
-           data_root + 'elements_SFCl/gdb11SFCl_s03.h5',
-           data_root + 'elements_SFCl/gdb11SFCl_s04.h5',
-           data_root + 'elements_SFCl/gdb11SFCl_s05.h5',
-           data_root + '/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs1.h5',
-           data_root + '/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs2.h5',
-           data_root + '/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs3.h5',
-           data_root + '/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs4.h5',
-           data_root + '/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_cv_gdb01-06_rs1.h5',
-           data_root + '/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_cv_gdb01-06_rs2.h5',
-           data_root + '/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_cv_gdb01-06_rs3.h5',
-           data_root + '/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_cv_gdb01-06_rs4.h5',
-           data_root + 'gdb11_h5/gdb11_S01_06r.h5',
-           data_root + 'gdb11_h5/gdb11_S02_06r.h5',
-           data_root + 'gdb11_h5/gdb11_S03_06r.h5',
-           data_root + 'gdb11_h5/gdb11_S04_06r.h5',
-           data_root + 'gdb11_h5/gdb11_S05_06r.h5',
-           data_root + 'gdb11_h5/gdb11_S06_06r.h5',
+           #data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0001/ANI-AL-0605.0001.0001.h5',
+           #data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0006.h5',
+           #data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0005.h5',
+           #data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0004.h5',
+           #data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0003.h5',
+           #data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0002.h5',
+           #data_root + 'elements_SFCl/ANI-AL-SFCl/ANI-AL-0605/ANI-AL-0605.0000/ANI-AL-0605.0000.0001.h5',
+           #data_root + 'elements_SFCl/gdb11SFCl_s01.h5',
+           #data_root + 'elements_SFCl/gdb11SFCl_s02.h5',
+           #data_root + 'elements_SFCl/gdb11SFCl_s03.h5',
+           #data_root + 'elements_SFCl/gdb11SFCl_s04.h5',
+           #data_root + 'elements_SFCl/gdb11SFCl_s05.h5',
+           #data_root + '/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs1.h5',
+           #data_root + '/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs2.h5',
+           #data_root + '/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs3.h5',
+           #data_root + '/dnnts_nms_resample/confs_cv_gdb01-05_red03-05/confs_cv_gdb01-05_rs4.h5',
+           #data_root + '/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_cv_gdb01-06_rs1.h5',
+           #data_root + '/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_cv_gdb01-06_rs2.h5',
+           #data_root + '/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_cv_gdb01-06_rs3.h5',
+           #data_root + '/dnnts_nms_resample/confs_cv_gdb01-06_red03-06/confs_cv_gdb01-06_rs4.h5',
+           #data_root + 'gdb11_h5/gdb11_S01_06r.h5',
+           #data_root + 'gdb11_h5/gdb11_S02_06r.h5',
+           #data_root + 'gdb11_h5/gdb11_S03_06r.h5',
+           #data_root + 'gdb11_h5/gdb11_S04_06r.h5',
+           #data_root + 'gdb11_h5/gdb11_S05_06r.h5',
+           #data_root + 'gdb11_h5/gdb11_S06_06r.h5',
+           #data_root + 'gutzwiller1-U2-rs1.5.h5',
+           data_root + 'reference.h5',
            ]
 
 
@@ -150,8 +153,8 @@ for f,fn in enumerate(h5files):
         Emt.append(E)
         Mv = np.max(np.linalg.norm(F,axis=2),axis=1)
         #print(Mv.shape,X.shape)
-        index = np.where(Mv > 10.5)[0]
-        indexk = np.where(Mv <= 10.5)[0]
+        index = np.where(Mv > 10000000.5)[0]
+        indexk = np.where(Mv <= 10000000.5)[0]
         #if index.size > 0:
             #print(Mv[index])
             #hdn.writexyzfile(bddir+'mols_'+str(c).zfill(3)+'_'+str(f).zfill(3)+'.xyz',X[index],S)
@@ -211,19 +214,19 @@ for f,fn in enumerate(h5files):
             for i,t,v,te in zip(range(N), cachet, cachev, testh5):
                 ## Store training data
                 X_t = np.array(np.concatenate([X[s] for j, s in enumerate(split) if j != i]), order='C', dtype=np.float32)
-                F_t = np.array(np.concatenate([F[s] for j, s in enumerate(split) if j != i]), order='C', dtype=np.float32)
+                F_t = -np.array(np.concatenate([F[s] for j, s in enumerate(split) if j != i]), order='C', dtype=np.float32)
                 E_t = np.array(np.concatenate([E[s] for j, s in enumerate(split) if j != i]), order='C', dtype=np.float64)
 
                 if E_t.shape[0] != 0:
                     t.insertdata(X_t, F_t, E_t, list(S))
 
-                ## Split test/valid data and store\
+                ## Split test/valid data and store
                 tv_split = np.array_split(split[i],2)
 
                 ## Store Validation
                 if tv_split[0].size > 0:
                     X_v = np.array(X[tv_split[0]], order='C', dtype=np.float32)
-                    F_v = np.array(F[tv_split[0]], order='C', dtype=np.float32)
+                    F_v = -np.array(F[tv_split[0]], order='C', dtype=np.float32)
                     E_v = np.array(E[tv_split[0]], order='C', dtype=np.float64)
                     if E_v.shape[0] != 0:
                         v.insertdata(X_v, F_v, E_v, list(S))
@@ -231,7 +234,7 @@ for f,fn in enumerate(h5files):
                 ## Store testset
                 if tv_split[1].size > 0:
                     X_te = np.array(X[split[i]], order='C', dtype=np.float32)
-                    F_te = np.array(F[split[i]], order='C', dtype=np.float32)
+                    F_te = -np.array(F[split[i]], order='C', dtype=np.float32)
                     E_te = np.array(E[split[i]], order='C', dtype=np.float64)
                     if E_te.shape[0] != 0:
                         te.store_data(Pn, coordinates=X_te, forces=F_te, energies=E_te, species=list(S))

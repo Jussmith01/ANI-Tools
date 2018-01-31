@@ -35,10 +35,10 @@ import seaborn as sns
 
 #----------------Parameters--------------------
 
-dir = '/home/jujuman/Research/hard_const_test/'
+dir = '/nh/nest/u/jsmith/scratch/Research/MD_TEST/2luf_test/'
 
 # Molecule file
-molfile = dir + 'AA4cap.xyz'
+molfile = dir + '2luf_solv.pdb'
 
 # Dynamics file
 xyzfile = dir + 'mdcrd.xyz'
@@ -49,12 +49,12 @@ trajfile = dir + 'traj.dat'
 # Optimized structure out:
 optfile = dir + 'optmol.xyz'
 
-T = 600.0 # Temperature
-dt = 0.2
-C = 0.0001 # Optimization convergence
+T = 300.0 # Temperature
+dt = 0.25
+C = 0.1 # Optimization convergence
 steps = 40000
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/train_test/ANI-9.0.4_netarch8/'
+wkdir = '/nh/nest/u/jsmith/scratch/Gits/ANI-Networks/networks/al_networks/model_al-9.0.4/'
 cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'sae_6-31gd.dat'
 nnfdir   = wkdir + '/train'
@@ -66,12 +66,12 @@ Nn = 5
 # Load molecule
 mol = read(molfile)
 #print('test')
-#L = 30.0
-#mol.set_cell(([[L, 0, 0],
-#               [0, L, 0],
-#               [0, 0, L]]))
+L = 40.0
+mol.set_cell(([[L, 0, 0],
+               [0, L, 0],
+               [0, 0, L]]))
 
-#mol.set_pbc((True, True, True))
+mol.set_pbc((True, True, True))
 
 #print(mol.get_chemical_symbols())
 
@@ -83,7 +83,7 @@ mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
 
 # Optimize molecule
 start_time = time.time()
-dyn = LBFGS(mol)
+dyn = QuasiNewton(mol)
 dyn.run(fmax=C)
 print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
@@ -149,7 +149,7 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
 
 
 # Attach the printer
-dyn.attach(storeenergy, interval=1)
+#dyn.attach(storeenergy, interval=1)
 dyn.attach(printenergy, interval=1)
 
 # Run production
