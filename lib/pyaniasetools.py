@@ -31,6 +31,7 @@ from ase.calculators.calculator import Calculator, all_changes
 from ase.md.langevin import Langevin
 from ase import units
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+from ase.optimize.fire import FIRE as QuasiNewton
 
 ## Converts an rdkit mol class conformer to a 2D numpy array
 def __convert_rdkitmol_to_nparr__(mrdk, confId=-1):
@@ -247,7 +248,7 @@ class anicomputetool(object):
         for cid in cids:
             X, S = self.__convert_rdkitmol_to_nparr__(mol,confId=cid)
             self.nc.setMolecule(coords=X, types=list(S))
-            e = self.nc.energy().copy()
+            e,s = self.nc.energy().copy()
             E.append(e)
         return np.concatenate(E)
 
@@ -273,6 +274,67 @@ class anicomputetool(object):
             return np.concatenate(E)
         else:
             return np.array([])
+
+class anienscomputetool(object):
+    def __init__(self,cnstfile,saefile,nnfdir,Nn,gpuid=0, sinet=False):
+        # Construct pyNeuroChem class
+        #self.nc = [pync.molecule(cnstfile, saefile, nnfdir+str(i)+'/', gpuid, sinet) for i in range(Nn)]
+
+        self.ens = ensemblemolecule(cnstfile,saefile,nnfdir,Nn,gpuid,sinet)
+
+    #def __init__(self, nc):
+    #    # Construct pyNeuroChem class
+    #    self.nc = nc
+
+    def optimize_rdkit_molecule(self, mrdk, cid, fmax=0.001, steps=3000, logger='opt.out'):
+        mol = __convert_rdkitmol_to_aseatoms__(mrdk,cid)
+        mol.set_calculator(ANIENS(self.ens))
+        dyn = LBFGS(mol,logfile=logger)
+        #dyn = QuasiNewton(mol)
+        dyn.run(fmax=fmax,steps=steps)
+        stps = dyn.get_number_of_steps()
+        if steps == stps:
+            print('Did not converge:',stps)
+
+        xyz = mol.get_positions()
+        for i,x in enumerate(xyz):
+            mrdk.GetConformer(cid).SetAtomPosition(i,x)
+        #print(stps)
+
+    def energy_rdkit_conformers(self,mol,cids):
+        E = []
+        V = []
+        for cid in cids:
+            X, S = __convert_rdkitmol_to_nparr__(mol,confId=cid)
+            self.ens.set_molecule(X=X, S=list(S))
+            e,v = self.ens.compute_mean_energies()
+            E.append(e)
+            V.append(v)
+        return np.array(E),np.array(V)
+
+    def __in_list_within_eps__(self,val,ilist,eps):
+        for i in ilist:
+            if abs(i-val) < eps:
+                return True
+        return False
+
+    def detect_unique_rdkitconfs(self, mol, cids, eps=1.0E-6):
+        E = []
+        for cid in cids:
+            X, S = __convert_rdkitmol_to_nparr__(mol, confId=cid)
+            self.nc.setMolecule(coords=X, types=list(S))
+            e = self.nc.energy().copy()
+            if self.__in_list_within_eps__(e,E,eps):
+                mol.RemoveConformer(cid)
+                #print('remove')
+            else:
+                E.append(e)
+
+        if len(E) > 0:
+            return np.concatenate(E)
+        else:
+            return np.array([])
+
 ##--------------------------------
 ##    Active Learning ANI MD
 ##--------------------------------

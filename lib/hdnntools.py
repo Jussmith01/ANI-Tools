@@ -264,6 +264,21 @@ def writexyzfile (fn,xyz,typ,cmt=''):
         #f.write('\n')
     f.close()
 
+def writexyzfilewc (fn,xyz,typ,cmt):
+    f = open(fn, 'w')
+    N = len(typ)
+    #print('N ATOMS: ',typ)
+    for m,c in zip(xyz,cmt):
+        f.write(str(N)+'\n comment:' + c + '\n')
+        #print(m)
+        for i in range(N):
+            x = m[i,0]
+            y = m[i,1]
+            z = m[i,2]
+            f.write(typ[i] + ' ' + "{:.7f}".format(x) + ' ' + "{:.7f}".format(y) + ' ' + "{:.7f}".format(z) + '\n')
+        #f.write('\n')
+    f.close()
+
 def readncdatall(file,N = 0):
     rdat = dict()
     if os.path.isfile(file):

@@ -35,11 +35,10 @@ import seaborn as sns
 
 #----------------Parameters--------------------
 
-#dir = '/home/jsmith48/scratch/MD_TEST/2luf/'
-dir = '/home/jsmith48/scratch/MD_TEST/fspeptide/'
+dir = '/nh/nest/u/jsmith/scratch/Research/MD_TEST/2luf_test/'
+
 # Molecule file
-#molfile = dir + '2luf_solv.pdb'
-molfile = dir + 'fspeptide_solv.pdb'
+molfile = dir + '2luf_solv.pdb'
 
 # Dynamics file
 xyzfile = dir + 'mdcrd.xyz'
@@ -53,11 +52,11 @@ optfile = dir + 'optmol.xyz'
 T = 300.0 # Temperature
 dt = 0.25
 C = 0.1 # Optimization convergence
-steps = 32000000
+steps = 40000
 
-wkdir = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/ANI-AL-0808/ANI-AL-0808.0303/ANI-AL-0808.0303.0400/'
-cnstfile = wkdir + 'train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
-saefile  = wkdir + 'train0/sae_wb97x-631gd.dat'
+wkdir = '/nh/nest/u/jsmith/scratch/Gits/ANI-Networks/networks/al_networks/model_al-9.0.4/'
+cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
+saefile  = wkdir + 'sae_6-31gd.dat'
 nnfdir   = wkdir + '/train'
 Nn = 5
 #nnfdir   = wkdir + 'networks/'
