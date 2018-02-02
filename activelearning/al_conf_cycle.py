@@ -105,7 +105,7 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             }
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [9]
+N = [10]
 
 for i in N:
     netdir = wkdir+'ANI-AL-0808.0302.04'+str(i).zfill(2)+'/'
@@ -126,6 +126,7 @@ for i in N:
     aet = alt.alaniensembletrainer(netdir, netdict, 'train', h5stor, Nnets)
     aet.build_training_cache()
     aet.train_ensemble(GPU)
+    exit(0)
 
     ldtdir = root_dir  # local data directories
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
