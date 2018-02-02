@@ -35,10 +35,10 @@ import seaborn as sns
 
 #----------------Parameters--------------------
 
-dir = '/nh/nest/u/jsmith/scratch/Research/MD_TEST/2luf_test/'
+dir = '/home/jsmith48/scratch/MD_TEST/5mxv_2/'
 
 # Molecule file
-molfile = dir + '2luf_solv.pdb'
+molfile = dir + '5mxv_solv.pdb'
 
 # Dynamics file
 xyzfile = dir + 'mdcrd.xyz'
@@ -51,12 +51,12 @@ optfile = dir + 'optmol.xyz'
 
 T = 300.0 # Temperature
 dt = 0.25
-C = 0.1 # Optimization convergence
-steps = 40000
+C = 10.0 # Optimization convergence
+steps = 1000
 
-wkdir = '/nh/nest/u/jsmith/scratch/Gits/ANI-Networks/networks/al_networks/model_al-9.0.4/'
-cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
-saefile  = wkdir + 'sae_6-31gd.dat'
+wkdir = '/home/jsmith48/Gits/ANI-Networks/networks/al_networks/ANI-AL-0808.0303.0400/'
+cnstfile = wkdir + 'train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
+saefile  = wkdir + 'train0/sae_wb97x-631gd.dat'
 nnfdir   = wkdir + '/train'
 Nn = 5
 #nnfdir   = wkdir + 'networks/'
@@ -71,28 +71,28 @@ mol = read(molfile)
 #               [0, L, 0],
 #               [0, 0, L]]))
 
-mol.set_cell(([[100.0, 0, 0],
-               [0, 35.0, 0],
-               [0, 0, 35.0]]))
+mol.set_cell(([[66.0, 0, 0],
+               [0, 90.0, 0],
+               [0, 0, 66.0]]))
 
 mol.set_pbc((True, True, True))
 
 #print(mol.get_chemical_symbols())
 
 # Set NC
-aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 5)
+aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 2)
 
 # Set ANI calculator
 mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
 
 # Optimize molecule
-start_time = time.time()
-dyn = QuasiNewton(mol)
-dyn.run(fmax=C)
-print('[ANI Total time:', time.time() - start_time, 'seconds]')
+#start_time = time.time()
+#dyn = QuasiNewton(mol)
+#dyn.run(fmax=C)
+#print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
-print(hdt.evtokcal*mol.get_potential_energy())
-print(hdt.evtokcal*mol.get_forces())
+#print(hdt.evtokcal*mol.get_potential_energy())
+#print(hdt.evtokcal*mol.get_forces())
 
 # Save optimized mol
 spc = mol.get_chemical_symbols()
@@ -120,8 +120,8 @@ dyn = Langevin(mol, dt * units.fs, T * units.kB, 0.02)
 # Set the momenta corresponding to T=300K
 #MaxwellBoltzmannDistribution(mol, T * units.kB)
 # Print temp
-ekin = mol.get_kinetic_energy() / len(mol)
-print('Temp: ', ekin / (1.5 * units.kB))
+#ekin = mol.get_kinetic_energy() / len(mol)
+#print('Temp: ', ekin / (1.5 * units.kB))
 
 # Define the printer
 def storeenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in the definition.
@@ -164,9 +164,14 @@ print('Running production...')
 #    dyn.set_temperature(float(i) * units.kB)
 #    dyn.run(50)
 
+mol.calc.nc_time = 0.0
+
 dyn.set_temperature(T * units.kB)
+start_time = time.time()
 dyn.run(steps)
-print('[ANI Total time:', time.time() - start_time, 'seconds]')
+final_time = time.time() - start_time
+print('[NeuroChem time:', mol.calc.nc_time, 'seconds]')
+print('[Total time:', final_time, 'seconds]')
 mdcrd.close()
 traj.close()
 print('Finished.')
