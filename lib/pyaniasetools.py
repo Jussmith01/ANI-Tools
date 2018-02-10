@@ -235,6 +235,7 @@ class anicomputetool(object):
         mol.set_calculator(ANI(False))
         mol.calc.setnc(self.nc)
         dyn = LBFGS(mol,logfile=logger)
+        #dyn = LBFGS(mol)
         dyn.run(fmax=fmax,steps=steps)
         stps = dyn.get_number_of_steps()
 
@@ -286,20 +287,24 @@ class anienscomputetool(object):
     #    # Construct pyNeuroChem class
     #    self.nc = nc
 
-    def optimize_rdkit_molecule(self, mrdk, cid, fmax=0.001, steps=3000, logger='opt.out'):
+    def optimize_rdkit_molecule(self, mrdk, cid, fmax=0.001, steps=10000, logger='opt.out'):
         mol = __convert_rdkitmol_to_aseatoms__(mrdk,cid)
         mol.set_calculator(ANIENS(self.ens))
         dyn = LBFGS(mol,logfile=logger)
-        #dyn = QuasiNewton(mol)
+        #dyn = LBFGS(mol)
+        #dyn = QuasiNewton(mol,logfile=logger)
         dyn.run(fmax=fmax,steps=steps)
         stps = dyn.get_number_of_steps()
+
+        opt = True
         if steps == stps:
-            print('Did not converge:',stps)
+            opt = False
 
         xyz = mol.get_positions()
         for i,x in enumerate(xyz):
             mrdk.GetConformer(cid).SetAtomPosition(i,x)
-        #print(stps)
+
+        return opt
 
     def energy_rdkit_conformers(self,mol,cids):
         E = []
