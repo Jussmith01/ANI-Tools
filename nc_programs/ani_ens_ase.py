@@ -51,8 +51,8 @@ optfile = dir + 'optmol.xyz'
 
 T = 300.0 # Temperature
 dt = 0.25
-C = 10.0 # Optimization convergence
-steps = 1000
+C = 1.0 # Optimization convergence
+steps = 400000
 
 wkdir = '/home/jsmith48/Gits/ANI-Networks/networks/al_networks/ANI-AL-0808.0303.0400/'
 cnstfile = wkdir + 'train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
@@ -80,16 +80,16 @@ mol.set_pbc((True, True, True))
 #print(mol.get_chemical_symbols())
 
 # Set NC
-aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 2)
+aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 5)
 
 # Set ANI calculator
 mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
 
 # Optimize molecule
-#start_time = time.time()
-#dyn = QuasiNewton(mol)
-#dyn.run(fmax=C)
-#print('[ANI Total time:', time.time() - start_time, 'seconds]')
+start_time = time.time()
+dyn = QuasiNewton(mol)
+dyn.run(fmax=C)
+print('[ANI Total time:', time.time() - start_time, 'seconds]')
 
 #print(hdt.evtokcal*mol.get_potential_energy())
 #print(hdt.evtokcal*mol.get_forces())
