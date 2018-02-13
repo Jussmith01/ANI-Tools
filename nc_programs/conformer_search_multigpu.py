@@ -9,12 +9,30 @@ import multiprocessing
 
 import time
 
+#################PARAMETERS#######################
+netdir = '/home/jsmith48/Libraries/ANI-Networks/networks/al_networks/ANI-AL-0808.0303.0400/'
+cns = netdir+'train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
+sae = netdir+'train0/sae_wb97x-631gd.dat'
+nnf = netdir+'train'
+Nn = 5 # Number of models in the ensemble
+
+num_consumers = 12 # This is the number of threads to be spawned
+NGPUS = 4 # Number of GPUs on the node (num_consumers/NGPUS jobs will run on each GPU at the same time)
+NCONF = 50 # Number of conformations to embed
+
+## SMILES file (actually each line should be formatted: "[Unique Ident.] [Smiles string]" without brakets)
+smiles = '/home/jsmith48/Chembl_opt/chembl_23_CHNOSFCl_neutral.smi'
+
+optd = '/home/jsmith48/Chembl_opt/opt_pdb/' # pdb file output
+datd = '/home/jsmith48/Chembl_opt/opt_dat/' # conformer data output
+#################PARAMETERS#######################
+
 def confsearchsmiles(name, smiles, NCONF, cmp, eout, optd):
     # Create RDKit MOL
     m = Chem.MolFromSmiles(smiles)
     print('Working on:', name, 'Heavyatoms(', m.GetNumHeavyAtoms(), ')')
-    if m.GetNumHeavyAtoms() > 75:
-        print('Skipping '+name+': more than 75 atoms.')
+    if m.GetNumHeavyAtoms() > 50:
+        print('Skipping '+name+': more than 50 atoms.')
         return
 
     # Add hydrogens
@@ -110,29 +128,14 @@ class multianiconformersearch(multiprocessing.Process):
             self.eout.flush()
         return
 
-netdir = '/home/jsmith48/Libraries/ANI-Networks/networks/al_networks/ANI-AL-0808.0303.0400/'
-cns = netdir+'train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
-sae = netdir+'train0/sae_wb97x-631gd.dat'
-nnf = netdir+'train'
-Nn = 5
-
 netdict = {'cns': cns,
            'sae': sae,
            'nnf': nnf,
            'Nn' : Nn,}
 
-NGPUS = 4
-NCONF = 50
-
-smiles = '/home/jsmith48/Chembl_opt/chembl_23_CHNOSFCl_neutral.smi'
-
-optd = '/home/jsmith48/Chembl_opt/opt_pdb/'
-datd = '/home/jsmith48/Chembl_opt/opt_dat/'
-
 tasks = multiprocessing.JoinableQueue()
 
 # Start consumers
-num_consumers = 12
 print ('Creating %d consumers' % num_consumers)
 consumers = [ multianiconformersearch(tasks, NCONF, NGPUS, netdict, optd, datd) for i in range(num_consumers) ]
 
