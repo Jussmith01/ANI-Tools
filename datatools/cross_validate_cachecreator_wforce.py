@@ -21,11 +21,15 @@ def interval(v,S):
 #wkdir = '/scratch/Research/force_train_testing/'
 #saef   = wkdir + "sae_6-31gd.dat"
 
-wkdir = '/scratch/Research/datasets/iso17/train_test/'
-saef   = wkdir + "sae_6-31gd.dat"
+#wkdir = '/scratch/Research/datasets/iso17/train_test/'
+#saef   = wkdir + "sae_6-31gd.dat"
+
+wkdir = '/nh/nest/u/jsmith/Research/gutzwiller_research/train_all/gutz_model-0/'
+saef   = wkdir + "sae.dat"
 
 #data_root = '/scratch/Research/GDB-11-AL-wB97x631gd/'
-data_root = '/scratch/Research/datasets/iso17/'
+#data_root = '/scratch/Research/datasets/iso17/'
+data_root = '/scratch/Research/gutzwiller_research/h5files/'
 
 h5files = [#'/home/jujuman/Research/Cluster_AL/waterclusters1.h5',
 	   #'/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
@@ -93,8 +97,13 @@ h5files = [#'/home/jujuman/Research/Cluster_AL/waterclusters1.h5',
            #data_root + 'gdb11_h5/gdb11_S04_06r.h5',
            #data_root + 'gdb11_h5/gdb11_S05_06r.h5',
            #data_root + 'gdb11_h5/gdb11_S06_06r.h5',
-           #data_root + 'gutzwiller1-U2-rs1.5.h5',
-           data_root + 'reference.h5',
+           data_root + 'gutzwiller1-U2-rs1.5.h5',
+           #data_root + 'gutzwiller1-U4-rs1.5.h5',
+           #data_root + 'gutzwiller1-U6-rs1.5.h5',
+           #data_root + 'gutzwiller1-U8-rs1.5.h5',
+           #data_root + 'gutzwiller1-U10-rs1.5.h5',
+           #data_root + 'gutzwiller1-U12-rs1.5.h5',
+           #data_root + 'reference.h5',
            ]
 
 

@@ -33,6 +33,8 @@ from ase import units
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from ase.optimize.fire import FIRE as QuasiNewton
 
+import math
+
 ## Converts an rdkit mol class conformer to a 2D numpy array
 def __convert_rdkitmol_to_nparr__(mrdk, confId=-1):
     xyz = np.zeros((mrdk.GetNumAtoms(), 3), dtype=np.float32)
@@ -141,6 +143,23 @@ class anicrossvalidationconformer(object):
             energies[i] = nc.energy().copy()
             #charges[i] = nc.charge().copy()
             forces[i] = nc.force().copy()
+        return hdt.hatokcal*energies, hdt.hatokcal*forces#, charges
+
+    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
+    def compute_separate(self,X,S,i):
+        Na = X.shape[0] * len(S)
+
+        X_split = np.array_split(X, math.ceil(Na/20000))
+        nc = self.ncl[i]
+        energies=[]
+        forces=[]
+        for x in X_split:
+            nc.setConformers(confs=x,types=list(S))
+            energies.append(nc.energy().copy())
+            forces.append(nc.force().copy())
+
+        energies = np.concatenate(energies)
+        forces = np.vstack(forces)
         return hdt.hatokcal*energies, hdt.hatokcal*forces#, charges
 
     ''' Compute the weighted average energy and forces of a set of conformers for the CV networks '''
