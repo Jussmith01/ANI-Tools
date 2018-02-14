@@ -208,7 +208,7 @@ for w in consumers:
 print('reading...')
 
 data = (open(smiles , 'r').read()).split('\n')
-for dat in data[1:5]:
+for dat in data:
     mol = dat.split(" ")
     if mol[0]:
         print(mol)
