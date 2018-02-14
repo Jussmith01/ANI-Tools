@@ -21,13 +21,13 @@ def interval(v,S):
 #wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
 #saef   = wkdir + "sae_6-31gd.dat"
 
-wkdir = '/home/jsmith48/scratch/TZData_force/train/'
+wkdir = '/nh/nest/u/jsmith/Research/ccsd_extrapolation/ccsd_train/'
 saef   = wkdir + "sae_linfit.dat"
 
 #wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/cv1/'
 #saef   = wkdir + "sae_wb97x-631gd.dat"
 
-data_root = '/home/jsmith48/scratch/TZData_force/h5files/train/'
+data_root = '/nh/nest/u/jsmith/Research/ccsd_extrapolation/h5files/'
 
 h5files = [data_root+f for f in os.listdir(data_root) if '.h5' in f]
 
@@ -52,7 +52,7 @@ testh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/testset'+str(r)+'.h5'
 Nd = np.zeros(N,dtype=np.int32)
 Nbf = 0
 for f,fn in enumerate(h5files):
-    print('Processing file('+ str(f+1) +' of '+ str(len(h5files)) +'):', fn[1])
+    print('Processing file('+ str(f+1) +' of '+ str(len(h5files)) +'):', fn)
     adl = pyt.anidataloader(fn)
 
     To = adl.size()
@@ -74,8 +74,10 @@ for f,fn in enumerate(h5files):
 
         # Extract the data
         X = data['coordinates']
-        E = data['energies']
-        F = data['forces']
+        E = data['extrapE']
+        #E = data['energies']
+        F = data['mp2_tz_grad']
+        #F = data['forces']
         S = data['species']
 
         Fmt.append(np.max(np.linalg.norm(F,axis=2),axis=1))
@@ -115,7 +117,7 @@ for f,fn in enumerate(h5files):
             plt.show()
         '''
         Ru = np.random.uniform(0.0, 1.0, E.shape[0])
-        nidx = np.where(Ru < 0.1)
+        nidx = np.where(Ru < 1.0)
         X = X[nidx]
         F = F[nidx]
         E = E[nidx]

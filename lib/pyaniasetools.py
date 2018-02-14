@@ -134,7 +134,7 @@ class anicrossvalidationconformer(object):
         return deltas,energies
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
-    def compute_energy_conformations(self,X,S):
+    def compute_energyandforce_conformations(self,X,S):
         energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
         #charges  = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
         forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
@@ -144,6 +144,23 @@ class anicrossvalidationconformer(object):
             #charges[i] = nc.charge().copy()
             forces[i] = nc.force().copy()
         return hdt.hatokcal*energies, hdt.hatokcal*forces#, charges
+
+    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
+    def compute_energy_conformations(self,X,S):
+        Na = X.shape[0] * len(S)
+
+        X_split = np.array_split(X, math.ceil(Na/20000))
+
+        energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
+        forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
+        shift = 0
+        for j,x in enumerate(X_split):
+            for i, nc in enumerate(self.ncl):
+                nc.setConformers(confs=x,types=list(S))
+                energies[i,j+shift] = nc.energy().copy()
+            shift += x.shape[0]
+
+        return hdt.hatokcal*np.mean(energies,axis=0)#, charges
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_separate(self,X,S,i):
@@ -191,6 +208,11 @@ class anicrossvalidationconformer(object):
         return charges
 
     ''' Compute the std. dev. of rdkit conformers '''
+    def compute_stddev_rdkitconfs(self,mrdk):
+        X,S = __convert_rdkitconfs_to_nparr__(mrdk)
+        return self.compute_stddev_conformations(X,S)
+
+    ''' Compute the energies of rdkit conformers '''
     def compute_stddev_rdkitconfs(self,mrdk):
         X,S = __convert_rdkitconfs_to_nparr__(mrdk)
         return self.compute_stddev_conformations(X,S)
