@@ -18,7 +18,8 @@ Nn = 5 # Number of models in the ensemble
 
 num_consumers = 12 # This is the number of threads to be spawned
 NGPUS = 4 # Number of GPUs on the node (num_consumers/NGPUS jobs will run on each GPU at the same time)
-NCONF = 50 # Number of conformations to embed
+NCONF = 1000 # Number of conformations to embed
+Ew = 30.0 # kcal/mol window for optimization selection
 
 ## SMILES file (actually each line should be formatted: "[Unique Ident.] [Smiles string]" without brakets)
 smiles = '/home/jsmith48/Chembl_opt/chembl_23_CHNOSFCl_neutral.smi'
@@ -27,7 +28,7 @@ optd = '/home/jsmith48/Chembl_opt/opt_pdb/' # pdb file output
 datd = '/home/jsmith48/Chembl_opt/opt_dat/' # conformer data output
 #################PARAMETERS#######################
 
-def confsearchsmiles(name, smiles, NCONF, cmp, eout, optd):
+def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
     # Create RDKit MOL
     m = Chem.MolFromSmiles(smiles)
     print('Working on:', name, 'Heavyatoms(', m.GetNumHeavyAtoms(), ')')
@@ -41,9 +42,11 @@ def confsearchsmiles(name, smiles, NCONF, cmp, eout, optd):
     # Embed 50 random conformations
     cids = AllChem.EmbedMultipleConfs(m, useExpTorsionAnglePrefs=True, useBasicKnowledge=True, numConfs=NCONF)
     print('   -Confs:', len(cids), 'Total atoms:', m.GetNumAtoms())
-    if len(cids) < NCONF/2:
+    if len(cids) < 1:
         print('Skipping '+name+': not enough confs embedded.')
         return
+
+    
 
     # Classical OPT
     for cid in cids:
@@ -53,7 +56,7 @@ def confsearchsmiles(name, smiles, NCONF, cmp, eout, optd):
     ochk = np.zeros(NCONF, dtype=np.int64)
     for i, cid in enumerate(cids):
         #print('   -Optimizing confid:', cid)
-        ochk[i] = cmp.optimize_rdkit_molecule(m, cid=cid, fmax=0.00025)
+        ochk[i] = cmp.optimize_rdkit_molecule(m, cid=cid, fmax=0.001)
 
     # Align conformers
     rmslist = []
@@ -79,9 +82,10 @@ def confsearchsmiles(name, smiles, NCONF, cmp, eout, optd):
             conf.SetAtomPosition(i, [float(x[i][0]), float(x[i][1]), float(x[i][2])])
 
     # Write out conformations
-    pdb = AllChem.PDBWriter(optd + name + '.pdb')
-    pdb.write(m)
-    pdb.close()
+    sdf = AllChem.SDWriter(optd + name + '.sdf')
+    for cid in cids:
+    	sdf.write(m,confId=cid)
+    sdf.close()
 
     # Write out energy and sigma data
     eout.write(name + ' ' + str(Es) + ' ' + str(Vs) + ' ' + str(ochk) + '\n')
