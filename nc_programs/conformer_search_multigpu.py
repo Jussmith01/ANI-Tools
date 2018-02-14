@@ -88,12 +88,11 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
     # Calculate energies
     E,V = cmp.energy_rdkit_conformers(m,cids)
     E = hdt.hatokcal*(E-E.min())
-    print(E)
 
     # Build index < Ew kcal/mol
     mask = np.ones(E.size, dtype=bool)
 
-    if np.where(hdt.hatokcal*(E-E.min()) < 5.0)[0] > 25:
+    if np.where(E < 5.0)[0].size > 25:
         mask[np.where(E < 5.0)[0]] = 0
     elif E.size > 25:
         mask[np.argsort(E)[25]] = 0
@@ -208,7 +207,7 @@ for w in consumers:
 print('reading...')
 
 data = (open(smiles , 'r').read()).split('\n')
-for dat in data:
+for dat in data[0:3]:
     mol = dat.split(" ")
     if mol[0]:
         print(mol)
