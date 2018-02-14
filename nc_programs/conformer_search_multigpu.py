@@ -1,6 +1,8 @@
 import pyaniasetools as pya
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.ML.Cluster import Butina
+
 import hdnntools as hdt
 import numpy as np
 
@@ -10,23 +12,43 @@ import multiprocessing
 import time
 
 #################PARAMETERS#######################
-netdir = '/home/jsmith48/Libraries/ANI-Networks/networks/al_networks/ANI-AL-0808.0303.0400/'
+#netdir = '/home/jsmith48/Libraries/ANI-Networks/networks/al_networks/ANI-AL-0808.0303.0400/'
+netdir = '/nh/nest/u/jsmith/scratch/Gits/ANI-Networks/networks/al_networks/ANI-AL-0808.0303.0400/'
 cns = netdir+'train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
 sae = netdir+'train0/sae_wb97x-631gd.dat'
 nnf = netdir+'train'
 Nn = 5 # Number of models in the ensemble
 
-num_consumers = 12 # This is the number of threads to be spawned
-NGPUS = 4 # Number of GPUs on the node (num_consumers/NGPUS jobs will run on each GPU at the same time)
+num_consumers = 1 # This is the number of threads to be spawned
+NGPUS = 1 # Number of GPUs on the node (num_consumers/NGPUS jobs will run on each GPU at the same time)
 NCONF = 1000 # Number of conformations to embed
-Ew = 30.0 # kcal/mol window for optimization selection
+Ew = 25.0 # kcal/mol window for optimization selection
 
 ## SMILES file (actually each line should be formatted: "[Unique Ident.] [Smiles string]" without brakets)
-smiles = '/home/jsmith48/Chembl_opt/chembl_23_CHNOSFCl_neutral.smi'
+#smiles = '/home/jsmith48/Chembl_opt/chembl_23_CHNOSFCl_neutral.smi'
+smiles = '/scratch/Research/confs_test/Chembl_opt/chembl_23_CHNOSFCl_neutral.smi'
 
-optd = '/home/jsmith48/Chembl_opt/opt_pdb/' # pdb file output
-datd = '/home/jsmith48/Chembl_opt/opt_dat/' # conformer data output
+#optd = '/home/jsmith48/Chembl_opt/opt_pdb/' # pdb file output
+#datd = '/home/jsmith48/Chembl_opt/opt_dat/' # conformer data output
+
+optd = '/scratch/Research/confs_test/Chembl_opt/opt_pdb/' # pdb file output
+datd = '/scratch/Research/confs_test/Chembl_opt/opt_dat/' # conformer data output
 #################PARAMETERS#######################
+
+## Roman's code!
+def RemoveConformers(mol, mask, remove_props=True):
+    confs = mol.GetConformers()
+    N = len(confs)
+    assert len(confs) == len(mask)
+    for c, m in zip(confs, mask):
+        if m:
+            mol.RemoveConformer(c.GetId())
+    # remove any lists of properties, which are the same length as list of conformers
+    if remove_props:
+        for k, v in mol.__dict__.items():
+            if hasattr(v, '__iter__') and hasattr(v, '__len__') and len(v) == N:
+                new_v = [v[i] for i in range(len(mask)) if not mask[i]]
+                mol.__dict__[k] = new_v
 
 def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
     # Create RDKit MOL
@@ -46,11 +68,47 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
         print('Skipping '+name+': not enough confs embedded.')
         return
 
-    
-
     # Classical OPT
     for cid in cids:
         _ = AllChem.MMFFOptimizeMolecule(m, confId=cid)
+
+    # Locate clusters
+    dmat = AllChem.GetConformerRMSMatrix(m, prealigned=False)
+    rms_clusters = Butina.ClusterData(dmat, m.GetNumConformers(), 0.3, isDistData=True, reordering=True)
+    keep_ids = [i[0] for i in rms_clusters]
+    mask = np.ones(len(cids), dtype=bool)
+    mask[keep_ids] = 0
+
+    # Remove conformers
+    RemoveConformers(m, mask)
+
+    # Get new cids
+    cids = [x.GetId() for x in m.GetConformers()]
+
+    # Calculate energies
+    E,V = cmp.energy_rdkit_conformers(m,cids)
+    E = hdt.hatokcal*(E-E.min())
+    print(E)
+
+    # Build index < Ew kcal/mol
+    mask = np.ones(E.size, dtype=bool)
+
+    if np.where(hdt.hatokcal*(E-E.min()) < 5.0)[0] > 25:
+        mask[np.where(E < 5.0)[0]] = 0
+    elif E.size > 25:
+        mask[np.argsort(E)[25]] = 0
+    else:
+        mask = np.zeros(E.size, dtype=bool)
+
+    # Remove conformers
+    RemoveConformers(m, mask)
+
+    # Get new cids
+    cids = [x.GetId() for x in m.GetConformers()]
+
+    if len(cids) < 1:
+        print('Skipping '+name+': not enough confs to continue.')
+        return
 
     # ANI OPT
     ochk = np.zeros(NCONF, dtype=np.int64)
@@ -84,7 +142,7 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
     # Write out conformations
     sdf = AllChem.SDWriter(optd + name + '.sdf')
     for cid in cids:
-    	sdf.write(m,confId=cid)
+        sdf.write(m,confId=cid)
     sdf.close()
 
     # Write out energy and sigma data
@@ -95,11 +153,12 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
 
 class multianiconformersearch(multiprocessing.Process):
 
-    def __init__(self, task_queue, ncon, ngpu, ntd, optd, datd):
+    def __init__(self, task_queue, Ew, ncon, ngpu, ntd, optd, datd):
         multiprocessing.Process.__init__(self)
 
         self.task_queue = task_queue # tasks
 
+        self.Ew   = Ew   # Energy cut
         self.ncon = ncon # Number of conformers
         self.ngpu = ngpu # Number of GPUs
         self.optd = optd # Optimization file dir
@@ -127,7 +186,7 @@ class multianiconformersearch(multiprocessing.Process):
             gpuid = (int(proc_name[-1])-1) % self.ngpu
             #print (proc_name, next_task, gpuid)
             self.cmp = pya.anienscomputetool(self.ntd['cns'], self.ntd['sae'], self.ntd['nnf'], self.ntd['Nn'], self.GPU)
-            confsearchsmiles(next_task['name'], next_task['smiles'], self.ncon, self.cmp, self.eout, self.optd)
+            confsearchsmiles(next_task['name'], next_task['smiles'], self.Ew, self.ncon, self.cmp, self.eout, self.optd)
             self.task_queue.task_done()
             self.eout.flush()
         return
@@ -141,7 +200,7 @@ tasks = multiprocessing.JoinableQueue()
 
 # Start consumers
 print ('Creating %d consumers' % num_consumers)
-consumers = [ multianiconformersearch(tasks, NCONF, NGPUS, netdict, optd, datd) for i in range(num_consumers) ]
+consumers = [ multianiconformersearch(tasks, Ew, NCONF, NGPUS, netdict, optd, datd) for i in range(num_consumers) ]
 
 for w in consumers:
     w.start()
@@ -149,7 +208,7 @@ for w in consumers:
 print('reading...')
 
 data = (open(smiles , 'r').read()).split('\n')
-for dat in data:
+for dat in data[1:5]:
     mol = dat.split(" ")
     if mol[0]:
         print(mol)
