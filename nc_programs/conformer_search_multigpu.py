@@ -110,7 +110,7 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
         return
 
     # ANI OPT
-    ochk = np.zeros(NCONF, dtype=np.int64)
+    ochk = np.zeros(len(cids), dtype=np.int64)
     for i, cid in enumerate(cids):
         #print('   -Optimizing confid:', cid)
         ochk[i] = cmp.optimize_rdkit_molecule(m, cid=cid, fmax=0.001)
