@@ -330,6 +330,7 @@ class anienscomputetool(object):
 
     def optimize_rdkit_molecule(self, mrdk, cid, fmax=0.001, steps=10000, logger='opt.out'):
         mol = __convert_rdkitmol_to_aseatoms__(mrdk,cid)
+        mol.set_pbc((False, False, False))
         mol.set_calculator(ANIENS(self.ens))
         dyn = LBFGS(mol,logfile=logger)
         #dyn = LBFGS(mol)
