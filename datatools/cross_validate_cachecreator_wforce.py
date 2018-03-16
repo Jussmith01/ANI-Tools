@@ -21,11 +21,11 @@ def interval(v,S):
 #wkdir = '/scratch/Research/force_train_testing/'
 #saef   = wkdir + "sae_6-31gd.dat"
 
-wkdir = '/scratch/Research/datasets/iso17/train_test/'
+wkdir = '/home/jujuman/Scratch/Research/Parkhill_datasets/test_train/'
 saef   = wkdir + "sae_6-31gd.dat"
 
 #data_root = '/scratch/Research/GDB-11-AL-wB97x631gd/'
-data_root = '/scratch/Research/datasets/iso17/'
+data_root = '/home/jujuman/Scratch/Research/Parkhill_datasets/'
 
 h5files = [#'/home/jujuman/Research/Cluster_AL/waterclusters1.h5',
 	   #'/home/jujuman/Research/GDB_Dimer/dimer_gen_1/dimers1.h5',
@@ -94,7 +94,8 @@ h5files = [#'/home/jujuman/Research/Cluster_AL/waterclusters1.h5',
            #data_root + 'gdb11_h5/gdb11_S05_06r.h5',
            #data_root + 'gdb11_h5/gdb11_S06_06r.h5',
            #data_root + 'gutzwiller1-U2-rs1.5.h5',
-           data_root + 'reference.h5',
+           #data_root + 'reference.h5',
+           data_root + 'chemspider12_clean_maxatom35.h5',
            ]
 
 
@@ -166,9 +167,10 @@ for f,fn in enumerate(h5files):
         #    print(F)
 
         # CLear forces
-        X = X[indexk]
-        F = F[indexk]
-        E = E[indexk]
+        T = int(1.0*E.size)
+        X = X[0:T]
+        F = F[0:T]
+        E = E[0:T]
 
         #exit(0)
         #print(" MAX FORCE:", F.max(), S)
