@@ -35,10 +35,11 @@ import seaborn as sns
 
 #----------------Parameters--------------------
 
-dir = '/home/jujuman/Research/hard_const_test/'
+dir = '/home/jujuman/Research/MDTest/5ti4/'
+
 
 # Molecule file
-molfile = dir + 'AA4cap.xyz'
+molfile = dir + '5ti4_solv.pdb'
 
 # Dynamics file
 xyzfile = dir + 'mdcrd.xyz'
@@ -49,15 +50,21 @@ trajfile = dir + 'traj.dat'
 # Optimized structure out:
 optfile = dir + 'optmol.xyz'
 
-T = 600.0 # Temperature
-dt = 0.2
-C = 0.0001 # Optimization convergence
-steps = 40000
+T = 300.0 # Temperature
+dt = 0.25
+C = 0.01 # Optimization convergence
+steps = 4000000
 
-wkdir = '/home/jujuman/Research/DataReductionMethods/train_test/ANI-9.0.4_netarch8/'
-cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
-saefile  = wkdir + 'sae_6-31gd.dat'
+#wkdir = '/home/jujuman/Research/DataReductionMethods/train_test/ANI-9.0.4_netarch8/'
+#cnstfile = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
+#saefile  = wkdir + 'sae_6-31gd.dat'
+#nnfdir   = wkdir + '/train'
+
+wkdir = '/home/jujuman/Research/DataReductionMethods/al_working_network/ANI-AL-0808.0302.0408/'
+cnstfile = wkdir + '/train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
+saefile  = wkdir + '/train0/sae_wb97x-631gd.dat'
 nnfdir   = wkdir + '/train'
+
 Nn = 5
 #nnfdir   = wkdir + 'networks/'
 
@@ -66,12 +73,12 @@ Nn = 5
 # Load molecule
 mol = read(molfile)
 #print('test')
-#L = 30.0
-#mol.set_cell(([[L, 0, 0],
-#               [0, L, 0],
-#               [0, 0, L]]))
+L = 60.0
+mol.set_cell(([[L, 0, 0],
+               [0, L, 0],
+               [0, 0, L]]))
 
-#mol.set_pbc((True, True, True))
+mol.set_pbc((True, True, True))
 
 #print(mol.get_chemical_symbols())
 
@@ -81,14 +88,16 @@ aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 0)
 # Set ANI calculator
 mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
 
+print(mol.get_potential_energy())
+print(np.where(mol.get_forces()>200.0))
+
+print("size: ", len(mol.get_chemical_symbols()))
+
 # Optimize molecule
 start_time = time.time()
-dyn = LBFGS(mol)
-dyn.run(fmax=C)
+dyn = QuasiNewton(mol)
+dyn.run(fmax=0.1)
 print('[ANI Total time:', time.time() - start_time, 'seconds]')
-
-print(hdt.evtokcal*mol.get_potential_energy())
-print(hdt.evtokcal*mol.get_forces())
 
 # Save optimized mol
 spc = mol.get_chemical_symbols()
@@ -149,8 +158,8 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
 
 
 # Attach the printer
-dyn.attach(storeenergy, interval=1)
-dyn.attach(printenergy, interval=1)
+dyn.attach(storeenergy, interval=50)
+#dyn.attach(printenergy, interval=200)
 
 # Run production
 print('Running production...')

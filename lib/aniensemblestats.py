@@ -461,14 +461,14 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         poa = np.where(Eerr[So] > minerror)[0].size / So[0].size
         pob = np.where(Eerr > minerror)[0].size / Eerr.size
 
-        ax.text(0.51*xymax[0], 0.04*xymax[1], 'Total Captured:    ' + str(int(100.0 * Sidx[0].size / Edft.size)) + '%' +
+        ax.text(0.57*xymax[0], 0.04*xymax[1], 'Total Captured:    ' + str(int(100.0 * Sidx[0].size / Edft.size)) + '%' +
                 '\n' + r'($\mathrm{\mathcal{E}>}$'+ "{:.1f}".format(minerror) + r'$\mathrm{) \forall \rho}$:           ' + str(int(100*pob)) + '%' +
                 '\n' + r'($\mathrm{\mathcal{E}>}$'+ "{:.1f}".format(minerror) + r'$\mathrm{) \forall \rho >}$' + "{:.2f}".format(S) + ': ' + str(int(100*poa)) + '%' +
                 '\n' + r'$\mathrm{E}$ RMSE ($\mathrm{\rho>}$'+ "{:.2f}".format(S) + r'$\mathrm{)}$: ' + "{:.1f}".format(hdt.calculaterootmeansqrerror(Eanimu[So],Edft[So])) +
                 '\n' + r'$\mathrm{E}$ RMSE ($\mathrm{\rho\leq}$' + "{:.2f}".format(S) + r'$\mathrm{)}$: ' + "{:.1f}".format(hdt.calculaterootmeansqrerror(Eanimu[Su], Edft[Su])),
                 bbox={'facecolor':'grey', 'alpha':0.5, 'pad':10}, fontsize=18)
 
-        plt.axvline(x=S,linestyle='--',color='r',linewidth=5, label="{:.2f}".format(S) + ' is the value that captures\n'+ str(int(percent)) + '% of errors over ' + "{:.1f}".format(minerror))
+        plt.axvline(x=S,linestyle='--',color='r',linewidth=5, label=r"$\mathrm{\rho=}$"+"{:.2f}".format(S) + ' is the value that captures\n'+ str(int(percent)) + '% of errors over ' + r"$\mathrm{\mathcal{E}=}$" + "{:.1f}".format(minerror))
         #)
         # Set labels
         ax.set_xlabel(labelx, fontsize=24)
