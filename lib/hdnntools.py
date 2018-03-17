@@ -15,6 +15,12 @@ AtoBohr = 1.88973
 
 convert = hatokcal  # Ha to Kcal/mol
 
+def get_na_from_xyz(f):
+    o = open(f,'r')
+    value = int(o.readline())
+    o.close()
+    return value
+
 def convertatomicnumber(X):
     X = int(X)
     if X == 1:
@@ -249,6 +255,21 @@ def writexyzfile (fn,xyz,typ,cmt=''):
     #print('N ATOMS: ',typ)
     for m in xyz:
         f.write(str(N)+'\n comment:' + cmt + '\n')
+        #print(m)
+        for i in range(N):
+            x = m[i,0]
+            y = m[i,1]
+            z = m[i,2]
+            f.write(typ[i] + ' ' + "{:.7f}".format(x) + ' ' + "{:.7f}".format(y) + ' ' + "{:.7f}".format(z) + '\n')
+        #f.write('\n')
+    f.close()
+
+def writexyzfilewc (fn,xyz,typ,cmt):
+    f = open(fn, 'w')
+    N = len(typ)
+    #print('N ATOMS: ',typ)
+    for m,c in zip(xyz,cmt):
+        f.write(str(N)+'\n comment:' + c + '\n')
         #print(m)
         for i in range(N):
             x = m[i,0]

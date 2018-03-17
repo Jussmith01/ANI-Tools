@@ -87,7 +87,7 @@ def add_inset_histogram(Xa, Xp, pos, ylim, xlim):
 # ----------------------------------
 # Plot force histogram
 # ----------------------------------
-def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10], cmap=mpl.cm.viridis):
+def plot_corr_dist(Xa, Xp, inset=True, xlabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', ylabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', figsize=[13,10], cmap=mpl.cm.viridis):
     Fmx = Xa.max()
     Fmn = Xa.min()
 
@@ -101,8 +101,8 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10], cmap=mpl.cm.viridis):
     ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='r', linewidth=3)
 
     # Set labels
-    ax.set_xlabel('$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
-    ax.set_ylabel('$F_{ani}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
+    ax.set_xlabel(xlabel, fontsize=22)
+    ax.set_ylabel(ylabel, fontsize=22)
 
     #cmap = mpl.cm.viridis
     #cmap = mpl.cm.brg
@@ -118,7 +118,7 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10], cmap=mpl.cm.viridis):
     # Annotate with errors
     PMAE = hdt.calculatemeanabserror(Xa, Xp)
     PRMS = hdt.calculaterootmeansqrerror(Xa, Xp)
-    ax.text(0.75*((Fmx-Fmn))+Fmn, 0.43*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=20,
+    ax.text(0.75*((Fmx-Fmn))+Fmn, 0.43*((Fmx-Fmn))+Fmn, 'MAE='+"{:.3f}".format(PMAE)+'\nRMSE='+"{:.3f}".format(PRMS), fontsize=20,
             bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
 
     if inset:

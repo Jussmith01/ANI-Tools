@@ -31,6 +31,9 @@ from ase.calculators.calculator import Calculator, all_changes
 from ase.md.langevin import Langevin
 from ase import units
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+from ase.optimize.fire import FIRE as QuasiNewton
+
+import math
 
 ## Converts an rdkit mol class conformer to a 2D numpy array
 def __convert_rdkitmol_to_nparr__(mrdk, confId=-1):
@@ -131,7 +134,7 @@ class anicrossvalidationconformer(object):
         return deltas,energies
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
-    def compute_energy_conformations(self,X,S):
+    def compute_energyandforce_conformations(self,X,S):
         energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
         #charges  = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
         forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
@@ -140,6 +143,40 @@ class anicrossvalidationconformer(object):
             energies[i] = nc.energy().copy()
             #charges[i] = nc.charge().copy()
             forces[i] = nc.force().copy()
+        return hdt.hatokcal*energies, hdt.hatokcal*forces#, charges
+
+    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
+    def compute_energy_conformations(self,X,S):
+        Na = X.shape[0] * len(S)
+
+        X_split = np.array_split(X, math.ceil(Na/20000))
+
+        energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
+        forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
+        shift = 0
+        for j,x in enumerate(X_split):
+            for i, nc in enumerate(self.ncl):
+                nc.setConformers(confs=x,types=list(S))
+                energies[i,j+shift] = nc.energy().copy()
+            shift += x.shape[0]
+
+        return hdt.hatokcal*np.mean(energies,axis=0)#, charges
+
+    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
+    def compute_separate(self,X,S,i):
+        Na = X.shape[0] * len(S)
+
+        X_split = np.array_split(X, math.ceil(Na/20000))
+        nc = self.ncl[i]
+        energies=[]
+        forces=[]
+        for x in X_split:
+            nc.setConformers(confs=x,types=list(S))
+            energies.append(nc.energy().copy())
+            forces.append(nc.force().copy())
+
+        energies = np.concatenate(energies)
+        forces = np.vstack(forces)
         return hdt.hatokcal*energies, hdt.hatokcal*forces#, charges
 
     ''' Compute the weighted average energy and forces of a set of conformers for the CV networks '''
@@ -171,6 +208,11 @@ class anicrossvalidationconformer(object):
         return charges
 
     ''' Compute the std. dev. of rdkit conformers '''
+    def compute_stddev_rdkitconfs(self,mrdk):
+        X,S = __convert_rdkitconfs_to_nparr__(mrdk)
+        return self.compute_stddev_conformations(X,S)
+
+    ''' Compute the energies of rdkit conformers '''
     def compute_stddev_rdkitconfs(self,mrdk):
         X,S = __convert_rdkitconfs_to_nparr__(mrdk)
         return self.compute_stddev_conformations(X,S)
@@ -234,6 +276,7 @@ class anicomputetool(object):
         mol.set_calculator(ANI(False))
         mol.calc.setnc(self.nc)
         dyn = LBFGS(mol,logfile=logger)
+        #dyn = LBFGS(mol)
         dyn.run(fmax=fmax,steps=steps)
         stps = dyn.get_number_of_steps()
 
@@ -247,7 +290,7 @@ class anicomputetool(object):
         for cid in cids:
             X, S = self.__convert_rdkitmol_to_nparr__(mol,confId=cid)
             self.nc.setMolecule(coords=X, types=list(S))
-            e = self.nc.energy().copy()
+            e,s = self.nc.energy().copy()
             E.append(e)
         return np.concatenate(E)
 
@@ -273,6 +316,72 @@ class anicomputetool(object):
             return np.concatenate(E)
         else:
             return np.array([])
+
+class anienscomputetool(object):
+    def __init__(self,cnstfile,saefile,nnfdir,Nn,gpuid=0, sinet=False):
+        # Construct pyNeuroChem class
+        #self.nc = [pync.molecule(cnstfile, saefile, nnfdir+str(i)+'/', gpuid, sinet) for i in range(Nn)]
+
+        self.ens = ensemblemolecule(cnstfile,saefile,nnfdir,Nn,gpuid,sinet)
+
+    #def __init__(self, nc):
+    #    # Construct pyNeuroChem class
+    #    self.nc = nc
+
+    def optimize_rdkit_molecule(self, mrdk, cid, fmax=0.1, steps=10000, logger='opt.out'):
+        mol = __convert_rdkitmol_to_aseatoms__(mrdk,cid)
+        mol.set_pbc((False, False, False))
+        mol.set_calculator(ANIENS(self.ens))
+        dyn = LBFGS(mol,logfile=logger)
+        #dyn = LBFGS(mol)
+        #dyn = QuasiNewton(mol,logfile=logger)
+        dyn.run(fmax=fmax,steps=steps)
+        stps = dyn.get_number_of_steps()
+
+        opt = True
+        if steps == stps:
+            opt = False
+
+        xyz = mol.get_positions()
+        for i,x in enumerate(xyz):
+            mrdk.GetConformer(cid).SetAtomPosition(i,x)
+
+        return opt
+
+    def energy_rdkit_conformers(self,mol,cids):
+        E = []
+        V = []
+        for cid in cids:
+            X, S = __convert_rdkitmol_to_nparr__(mol,confId=cid)
+            self.ens.set_molecule(X=X, S=list(S))
+            e,v = self.ens.compute_mean_energies()
+            E.append(e)
+            V.append(v)
+        return np.array(E),np.array(V)
+
+    def __in_list_within_eps__(self,val,ilist,eps):
+        for i in ilist:
+            if abs(i-val) < eps:
+                return True
+        return False
+
+    def detect_unique_rdkitconfs(self, mol, cids, eps=1.0E-6):
+        E = []
+        for cid in cids:
+            X, S = __convert_rdkitmol_to_nparr__(mol, confId=cid)
+            self.nc.setMolecule(coords=X, types=list(S))
+            e = self.nc.energy().copy()
+            if self.__in_list_within_eps__(e,E,eps):
+                mol.RemoveConformer(cid)
+                #print('remove')
+            else:
+                E.append(e)
+
+        if len(E) > 0:
+            return np.concatenate(E)
+        else:
+            return np.array([])
+
 ##--------------------------------
 ##    Active Learning ANI MD
 ##--------------------------------

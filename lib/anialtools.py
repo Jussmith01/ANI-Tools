@@ -42,11 +42,12 @@ class alconformationalsampler():
         p = Process(target=self.normal_mode_sampling, args=(nmsparams['T'],
                                                             nmsparams['Ngen'],
                                                             nmsparams['Nkep'],
+                                                            nmsparams['sig'],
                                                             gpus[0]))
         p.start()
         p.join()
 
-    def run_sampling_md(self, mdparams, gpus=[0]):
+    def run_sampling_md(self, mdparams, perc=1.0, gpus=[0]):
         md_work = []
         for di, id in enumerate(self.idir):
             files = os.listdir(id)
@@ -57,12 +58,15 @@ class alconformationalsampler():
                     else:
                         print('Incorrect extension:',id+f)
 
+        gpus2 = gpus+gpus
+
         md_work = np.array(md_work)
         np.random.shuffle(md_work)
-        md_work = np.array_split(md_work,len(gpus))
+        md_work = md_work[0:int(perc*md_work.size)]
+        md_work = np.array_split(md_work,len(gpus2))
 	
         proc = []
-        for i,(md,g) in enumerate(zip(md_work,gpus)):
+        for i,(md,g) in enumerate(zip(md_work,gpus2)):
             proc.append(Process(target=self.mol_dyn_sampling, args=(md,i,
                                                                     mdparams['N'],
                                                                     mdparams['T1'],
@@ -70,6 +74,7 @@ class alconformationalsampler():
                                                                     mdparams['dt'],
                                                                     mdparams['Nc'],
                                                                     mdparams['Ns'],
+                                                                    mdparams['sig'],
                                                                     g)))
         print('Running MD Sampling...')
         for i,p in enumerate(proc):
@@ -100,7 +105,9 @@ class alconformationalsampler():
                                   high=gcmddict['MolHigh'],
                                   size=gcmddict['Nr'])
 
-        mol_sizes = np.split(Nmols)
+        print(Nmols)
+
+        mol_sizes = np.split(Nmols, len(gpus))
 
         proc = []
         for i,g in enumerate(gpus):
@@ -116,7 +123,7 @@ class alconformationalsampler():
             p.join()
         print('Finished sampling.')
 
-    def normal_mode_sampling(self, T, Ngen, Nkep, gpuid):
+    def normal_mode_sampling(self, T, Ngen, Nkep, sig, gpuid):
         of = open(self.ldtdir + self.datdir + '/info_data_nms.nfo', 'w')
 
         aevsize = self.netdict['aevsize']
@@ -163,7 +170,7 @@ class alconformationalsampler():
 
                 sigma = anicv.compute_stddev_conformations(conformers,spc)
                 #print(sigma)
-                sid = np.where( sigma >  0.25 )[0]
+                sid = np.where( sigma >  sig )[0]
                 #print(sid)
                 #print('  -', fi, 'of', len(files), ') File:', f, 'keep:', sid.size,'percent:',"{:.2f}".format(100.0*sid.size/Ngen))
 
@@ -189,7 +196,7 @@ class alconformationalsampler():
         #print('\nGrand Total:', Nkt, 'of', Ntt,'percent:',"{:.2f}".format(100.0*Nkt/Ntt), 'Kept',Nkp)
         of.close()
 
-    def mol_dyn_sampling(self,md_work, i, N, T1, T2, dt, Nc, Ns, gpuid):
+    def mol_dyn_sampling(self,md_work, i, N, T1, T2, dt, Nc, Ns, sig, gpuid):
         activ = aat.moldynactivelearning(self.netdict['cnstfile'],
                                          self.netdict['saefile'],
                                          self.netdict['nnfprefix'],
@@ -204,14 +211,14 @@ class alconformationalsampler():
         ftme_t = 0.0
         for di, id in enumerate(md_work):
             data = hdt.read_rcdb_coordsandnm(id)
-            print(di, ') Working on', id, '...')
+            #print(di, ') Working on', id, '...')
             S = data["species"]
 
             # Set mols
             activ.setmol(data["coordinates"], S)
 
             # Generate conformations
-            X = activ.generate_conformations(N, T1, T2, dt, Nc, Ns, dS=0.25)
+            X = activ.generate_conformations(N, T1, T2, dt, Nc, Ns, dS=sig)
 
             ftme_t += activ.failtime
 
@@ -235,8 +242,8 @@ class alconformationalsampler():
         L = dparam['L']
         V = dparam['V']
         dt = dparam['dt']
+        sig = dparam['sig']
         Nm = dparam['Nm']
-
         Ni = dparam['Ni']
         
         mols = []
@@ -270,7 +277,7 @@ class alconformationalsampler():
             fname = self.cdir + 'dimer-'+str(tid).zfill(2)+str(i).zfill(2)+'_'
        
             dgen.run_dynamics(Ni)
-            dgen.__fragmentbox__(fname)
+            dgen.__fragmentbox__(fname,sig)
         
             Nt += dgen.Nt
             Nd += dgen.Nd
@@ -290,10 +297,10 @@ class alconformationalsampler():
         dictc['molfile'] = self.cdir + 'clst'
         dictc['dstore'] = self.ldtdir + self.datdir + '/'
 
-        solv = [hdn.read_rcdb_coordsandnm(solv_file)]
+        solv = [hdt.read_rcdb_coordsandnm(solv_file)]
 
         if solu_dirs:
-            solu = [hdn.read_rcdb_coordsandnm(solu_dirs+f) for f in os.listdir(solu_dirs)]
+            solu = [hdt.read_rcdb_coordsandnm(solu_dirs+f) for f in os.listdir(solu_dirs)]
         else:
             solu = []
 
@@ -303,7 +310,7 @@ class alconformationalsampler():
                                     self.netdict['num_nets'],
                                     solv, solu, gpuid)
 
-        dgen.generate_clusters(gcmddict, mol_sizes, tid)
+        dgen.generate_clusters(dictc, mol_sizes, tid)
 
 def interval(v,S):
     ps = 0.0
@@ -381,6 +388,17 @@ class alaniensembletrainer():
                 F = F[indexk]
                 E = E[indexk]
 
+                Esae = hdt.compute_sae(self.netdict['saefile'],S)
+
+                hidx = np.where(np.abs(E-Esae) > 5.0)
+                lidx = np.where(np.abs(E-Esae) <= 5.0)
+                if hidx[0].size > 0:
+                    print('  -('+str(c).zfill(3)+')High energies detected:\n    ',E[hidx])
+
+                X = X[lidx]
+                E = E[lidx]
+                F = F[lidx]
+
                 Ndc += E.size
 
                 if (set(S).issubset(['C', 'N', 'O', 'H', 'F', 'S', 'Cl'])):
@@ -421,12 +439,12 @@ class alaniensembletrainer():
                                 v.insertdata(X_v, F_v, E_v, list(S))
 
                         ## Store testset
-                        if tv_split[1].size > 0:
-                            X_te = np.array(X[split[i]], order='C', dtype=np.float32)
-                            F_te = np.array(F[split[i]], order='C', dtype=np.float32)
-                            E_te = np.array(E[split[i]], order='C', dtype=np.float64)
-                            if E_te.shape[0] != 0:
-                                te.store_data(Pn, coordinates=X_te, forces=F_te, energies=E_te, species=list(S))
+                        #if tv_split[1].size > 0:
+                            #X_te = np.array(X[split[i]], order='C', dtype=np.float32)
+                            #F_te = np.array(F[split[i]], order='C', dtype=np.float32)
+                            #E_te = np.array(E[split[i]], order='C', dtype=np.float64)
+                            #if E_te.shape[0] != 0:
+                            #    te.store_data(Pn, coordinates=X_te, forces=F_te, energies=E_te, species=list(S))
 
 
             #sys.stdout.write("\r%d%%" % int(100))
