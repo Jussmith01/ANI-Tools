@@ -184,7 +184,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
 
                     Eani = Eani[:,midx]
                     Edft = data['energies'][midx]
-                    Fani = Fani[:,midx,:,:]
+                    Fani = -Fani[:,midx,:,:]
                     Fdft = data['forces'][midx]
 
                     #Eestd = np.std(Eani, axis=0)/np.sqrt(len(data['species']))

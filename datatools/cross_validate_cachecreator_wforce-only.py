@@ -21,7 +21,7 @@ def interval(v,S):
 #wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
 #saef   = wkdir + "sae_6-31gd.dat"
 
-wkdir = '/home/jsmith48/scratch/TZData_force/train/'
+wkdir = '/home/jsmith48/scratch/TZData_force/full_train/'
 saef   = wkdir + "sae_linfit.dat"
 
 #wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/cv1/'
@@ -115,7 +115,7 @@ for f,fn in enumerate(h5files):
             plt.show()
         '''
         Ru = np.random.uniform(0.0, 1.0, E.shape[0])
-        nidx = np.where(Ru < 0.1)
+        nidx = np.where(Ru < 0.5)
         X = X[nidx]
         F = F[nidx]
         E = E[nidx]
