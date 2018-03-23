@@ -87,7 +87,7 @@ def add_inset_histogram(Xa, Xp, pos, ylim, xlim):
 # ----------------------------------
 # Plot force histogram
 # ----------------------------------
-def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10], cmap=mpl.cm.viridis):
+def plot_corr_dist(Xa, Xp, inset=True, xlabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', ylabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', figsize=[13,10], cmap=mpl.cm.viridis):
     Fmx = Xa.max()
     Fmn = Xa.min()
 
@@ -101,8 +101,8 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10], cmap=mpl.cm.viridis):
     ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='r', linewidth=3)
 
     # Set labels
-    ax.set_xlabel('$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
-    ax.set_ylabel('$F_{ani}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', fontsize=22)
+    ax.set_xlabel(xlabel, fontsize=22)
+    ax.set_ylabel(ylabel, fontsize=22)
 
     #cmap = mpl.cm.viridis
     #cmap = mpl.cm.brg
@@ -118,7 +118,7 @@ def plot_corr_dist(Xa, Xp, inset=True, figsize=[13,10], cmap=mpl.cm.viridis):
     # Annotate with errors
     PMAE = hdt.calculatemeanabserror(Xa, Xp)
     PRMS = hdt.calculaterootmeansqrerror(Xa, Xp)
-    ax.text(0.75*((Fmx-Fmn))+Fmn, 0.43*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=20,
+    ax.text(0.75*((Fmx-Fmn))+Fmn, 0.43*((Fmx-Fmn))+Fmn, 'MAE='+"{:.3f}".format(PMAE)+'\nRMSE='+"{:.3f}".format(PRMS), fontsize=20,
             bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
 
     if inset:
@@ -461,14 +461,14 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         poa = np.where(Eerr[So] > minerror)[0].size / So[0].size
         pob = np.where(Eerr > minerror)[0].size / Eerr.size
 
-        ax.text(0.51*xymax[0], 0.04*xymax[1], 'Total Captured:    ' + str(int(100.0 * Sidx[0].size / Edft.size)) + '%' +
+        ax.text(0.57*xymax[0], 0.04*xymax[1], 'Total Captured:    ' + str(int(100.0 * Sidx[0].size / Edft.size)) + '%' +
                 '\n' + r'($\mathrm{\mathcal{E}>}$'+ "{:.1f}".format(minerror) + r'$\mathrm{) \forall \rho}$:           ' + str(int(100*pob)) + '%' +
                 '\n' + r'($\mathrm{\mathcal{E}>}$'+ "{:.1f}".format(minerror) + r'$\mathrm{) \forall \rho >}$' + "{:.2f}".format(S) + ': ' + str(int(100*poa)) + '%' +
                 '\n' + r'$\mathrm{E}$ RMSE ($\mathrm{\rho>}$'+ "{:.2f}".format(S) + r'$\mathrm{)}$: ' + "{:.1f}".format(hdt.calculaterootmeansqrerror(Eanimu[So],Edft[So])) +
                 '\n' + r'$\mathrm{E}$ RMSE ($\mathrm{\rho\leq}$' + "{:.2f}".format(S) + r'$\mathrm{)}$: ' + "{:.1f}".format(hdt.calculaterootmeansqrerror(Eanimu[Su], Edft[Su])),
                 bbox={'facecolor':'grey', 'alpha':0.5, 'pad':10}, fontsize=18)
 
-        plt.axvline(x=S,linestyle='--',color='r',linewidth=5, label="{:.2f}".format(S) + ' is the value that captures\n'+ str(int(percent)) + '% of errors over ' + "{:.1f}".format(minerror))
+        plt.axvline(x=S,linestyle='--',color='r',linewidth=5, label=r"$\mathrm{\rho=}$"+"{:.2f}".format(S) + ' is the value that captures\n'+ str(int(percent)) + '% of errors over ' + r"$\mathrm{\mathcal{E}=}$" + "{:.1f}".format(minerror))
         #)
         # Set labels
         ax.set_xlabel(labelx, fontsize=24)

@@ -35,10 +35,11 @@ import seaborn as sns
 
 #----------------Parameters--------------------
 
-dir = '/home/jsmith48/scratch/MD_TEST/5mxv_2/'
+dir = '/home/jujuman/scratch/MDTest/2avi/'
+
 
 # Molecule file
-molfile = dir + '5mxv_solv.pdb'
+molfile = dir + '2avi_solv.pdb'
 
 # Dynamics file
 xyzfile = dir + 'mdcrd.xyz'
@@ -51,29 +52,24 @@ optfile = dir + 'optmol.xyz'
 
 T = 300.0 # Temperature
 dt = 0.25
-C = 1.0 # Optimization convergence
+C = 0.1 # Optimization convergence
 steps = 400000
 
 wkdir = '/home/jsmith48/Gits/ANI-Networks/networks/al_networks/ANI-AL-0808.0303.0400/'
 cnstfile = wkdir + 'train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
 saefile  = wkdir + 'train0/sae_wb97x-631gd.dat'
 nnfdir   = wkdir + '/train'
+
 Nn = 5
 #nnfdir   = wkdir + 'networks/'
-
-#----------------------------------------------
 
 # Load molecule
 mol = read(molfile)
 #print('test')
-#L = 70.0
-#mol.set_cell(([[L, 0, 0],
-#               [0, L, 0],
-#               [0, 0, L]]))
-
-mol.set_cell(([[66.0, 0, 0],
-               [0, 90.0, 0],
-               [0, 0, 66.0]]))
+L = 70.0
+mol.set_cell(([[L, 0, 0],
+               [0, L, 0],
+               [0, 0, L]]))
 
 mol.set_pbc((True, True, True))
 
@@ -84,6 +80,11 @@ aens = ensemblemolecule(cnstfile, saefile, nnfdir, Nn, 5)
 
 # Set ANI calculator
 mol.set_calculator(ANIENS(aens,sdmx=20000000.0))
+
+print(mol.get_potential_energy())
+print(np.where(mol.get_forces()>200.0))
+
+print("size: ", len(mol.get_chemical_symbols()))
 
 # Optimize molecule
 start_time = time.time()
@@ -153,7 +154,7 @@ def printenergy(a=mol, d=dyn, b=mdcrd, t=traj):  # store a reference to atoms in
 
 
 # Attach the printer
-dyn.attach(storeenergy, interval=100)
+dyn.attach(storeenergy, interval=250)
 #dyn.attach(printenergy, interval=1)
 
 # Run production
