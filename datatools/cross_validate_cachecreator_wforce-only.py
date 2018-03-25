@@ -21,13 +21,13 @@ def interval(v,S):
 #wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
 #saef   = wkdir + "sae_6-31gd.dat"
 
-wkdir = '/home/jsmith48/scratch/ccsd_extrapolation/ccsd_train_new/'
+wkdir = '/home/jujuman/Research/ccsd_extrapolation/ccsd_new/train_ens/'
 saef   = wkdir + "sae_linfit.dat"
 
 #wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/cv1/'
 #saef   = wkdir + "sae_wb97x-631gd.dat"
 
-data_root = '/home/jsmith48/scratch/ccsd_extrapolation/h5files_combined/'
+data_root = '/home/jujuman/Research/ccsd_extrapolation/ccsd_new/h5_test_files/'
 
 h5files = [data_root+f for f in os.listdir(data_root) if '.h5' in f]
 
@@ -80,8 +80,8 @@ for f,fn in enumerate(h5files):
 
         E = data['energies']
         #E = data['energies']
-        F = 0.0*X
-        #F = data['forces']
+        #F = 0.0*X
+        F = -data['forces']
         S = data['species']
 
         #print(X.shape)
@@ -133,7 +133,8 @@ for f,fn in enumerate(h5files):
         #    F[i] = F[0]
         #    E[i] = E[0]
 
-        if (set(S).issubset(['C', 'N', 'O', 'H'])):
+        if (set(S).issubset(['C', 'N', 'O', 'H']) and S != ['N','N']):
+            print(S)
 
             # Random mask
             R = np.random.uniform(0.0, 1.0, E.shape[0])
