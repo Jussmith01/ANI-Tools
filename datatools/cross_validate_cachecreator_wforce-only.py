@@ -21,13 +21,15 @@ def interval(v,S):
 #wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
 #saef   = wkdir + "sae_6-31gd.dat"
 
-wkdir = '/home/jujuman/Research/ccsd_extrapolation/ccsd_new/train_ens/'
+wkdir = '/home/jsmith48/scratch/TZData_force/train2/'
 saef   = wkdir + "sae_linfit.dat"
 
 #wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/cv1/'
 #saef   = wkdir + "sae_wb97x-631gd.dat"
 
-data_root = '/home/jujuman/Research/ccsd_extrapolation/ccsd_new/h5_test_files/'
+#data_root = '/home/jsmith48/scratch/ccsd_extrapolation/h5files_combined/'
+#data_root = '/home/jsmith48/scratch/auto_al/h5files/original_ani-1x/'
+data_root = '/home/jsmith48/scratch/TZData_force/h5files/train/'
 
 h5files = [data_root+f for f in os.listdir(data_root) if '.h5' in f]
 
@@ -81,7 +83,7 @@ for f,fn in enumerate(h5files):
         E = data['energies']
         #E = data['energies']
         #F = 0.0*X
-        F = -data['forces']
+        F = data['forces']
         S = data['species']
 
         #print(X.shape)
@@ -89,8 +91,8 @@ for f,fn in enumerate(h5files):
         Emt.append(E)
         Mv = np.max(np.linalg.norm(F,axis=2),axis=1)
         #print(Mv.shape,X.shape)
-        index = np.where(Mv > 10.5)[0]
-        indexk = np.where(Mv <= 10.5)[0]
+        index = np.where(Mv > 0.75)[0]
+        indexk = np.where(Mv <= 0.75)[0]
         #if index.size > 0:
             #print(Mv[index])
             #hdn.writexyzfile(bddir+'mols_'+str(c).zfill(3)+'_'+str(f).zfill(3)+'.xyz',X[index],S)
@@ -133,8 +135,7 @@ for f,fn in enumerate(h5files):
         #    F[i] = F[0]
         #    E[i] = E[0]
 
-        if (set(S).issubset(['C', 'N', 'O', 'H']) and S != ['N','N']):
-            print(S)
+        if (set(S).issubset(['C', 'N', 'O', 'H'])):
 
             # Random mask
             R = np.random.uniform(0.0, 1.0, E.shape[0])
