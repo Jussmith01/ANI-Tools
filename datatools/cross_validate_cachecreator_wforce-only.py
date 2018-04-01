@@ -21,13 +21,13 @@ def interval(v,S):
 #wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
 #saef   = wkdir + "sae_6-31gd.dat"
 
-wkdir = '/nh/nest/u/jsmith/Research/ccsd_extrapolation/ccsd_train/'
+wkdir = '/home/jujuman/Research/ccsd_extrapolation/ccsd_new/train_ens/'
 saef   = wkdir + "sae_linfit.dat"
 
 #wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/cv1/'
 #saef   = wkdir + "sae_wb97x-631gd.dat"
 
-data_root = '/nh/nest/u/jsmith/Research/ccsd_extrapolation/h5files/'
+data_root = '/home/jujuman/Research/ccsd_extrapolation/ccsd_new/h5_test_files/'
 
 h5files = [data_root+f for f in os.listdir(data_root) if '.h5' in f]
 
@@ -74,12 +74,17 @@ for f,fn in enumerate(h5files):
 
         # Extract the data
         X = data['coordinates']
-        E = data['extrapE']
+	
+        if len(X.shape) == 2:
+            X = X.reshape((X.shape[0],-1,3))
+
+        E = data['energies']
         #E = data['energies']
-        F = data['mp2_tz_grad']
-        #F = data['forces']
+        #F = 0.0*X
+        F = -data['forces']
         S = data['species']
 
+        #print(X.shape)
         Fmt.append(np.max(np.linalg.norm(F,axis=2),axis=1))
         Emt.append(E)
         Mv = np.max(np.linalg.norm(F,axis=2),axis=1)
@@ -128,7 +133,8 @@ for f,fn in enumerate(h5files):
         #    F[i] = F[0]
         #    E[i] = E[0]
 
-        if (set(S).issubset(['C', 'N', 'O', 'H', 'F', 'S', 'Cl'])):
+        if (set(S).issubset(['C', 'N', 'O', 'H']) and S != ['N','N']):
+            print(S)
 
             # Random mask
             R = np.random.uniform(0.0, 1.0, E.shape[0])
