@@ -32,9 +32,11 @@ from ase.md.langevin import Langevin
 from ase import units
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from ase.optimize.fire import FIRE as QuasiNewton
+from ase.optimize import BFGS, LBFGS, FIRE
+from ase.constraints import FixInternals
 
 import math
-
+import copy
 ## Converts an rdkit mol class conformer to a 2D numpy array
 def __convert_rdkitmol_to_nparr__(mrdk, confId=-1):
     xyz = np.zeros((mrdk.GetNumAtoms(), 3), dtype=np.float32)
@@ -539,3 +541,48 @@ class diverseconformers():
         ids = list(picker.Pick(dm, Ngen, Nkep, firstPicks=list(seed_list[0:5])))
         ids.sort()
         return ids
+
+class ani_tortion_scanner():
+    def __init__(self,ens):
+        self.ens = ens
+
+    def opt(self, rdkmol, atid, logger='optlog.out'):
+        Na = rdkmol.GetNumAtoms()
+        X, S = __convert_rdkitmol_to_nparr__(rdkmol)
+        mol=Atoms(symbols=S, positions=X)
+        mol.set_calculator(ANIENS(self.ens))                #Set the ANI Ensemble as the calculator
+        phi_restraint=mol.get_dihedral(atid)
+        phi_fix = [phi_restraint, atid]
+        c = FixInternals(dihedrals=[phi_fix], epsilon=1.e-9)
+        mol.set_constraint(c)
+        dyn = BFGS(mol, logfile=logger)                               #Choose optimization algorith
+        dyn.run(fmax=0.000514221, steps=1000, )         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
+        e=mol.get_potential_energy()*hdt.evtokcal
+        phi_value=mol.get_dihedral(atid)*180./np.pi
+        X = mol.get_positions()
+        print('Phi value (degrees), energy (kcal/mol)= ', "{0:.2f}".format(phi_value), "{0:.2f}".format(e))
+        return phi_value, e, X
+
+    def rot(self, mol, atid, phi):
+        
+        a0=int(atid[0])
+        a1=int(atid[1])
+        a2=int(atid[2])
+        a3=int(atid[3])
+        
+        c=mol.GetConformer()
+        Chem.rdMolTransforms.SetDihedralDeg(c, a0, a1, a2, a3, phi)
+        phi_value, e, X = self.opt(mol, atid)
+        print(X.shape)
+        return phi_value, e
+
+    def scan_tortion(self, mol, atid, inc, stps):
+        mol_copy = copy.deepcopy(mol)
+
+        ang = []
+        enr = []
+        for i in range(stps):
+            phi, e = self.rot(mol, atid, i*inc)
+            ang.append(phi)
+            enr.append(e)
+        return np.array(ang), np.array(enr)
