@@ -573,7 +573,6 @@ class ani_tortion_scanner():
         c=mol.GetConformer()
         Chem.rdMolTransforms.SetDihedralDeg(c, a0, a1, a2, a3, phi)
         phi_value, e, X = self.opt(mol, atid)
-        print(X.shape)
         return phi_value, e
 
     def scan_tortion(self, mol, atid, inc, stps):
