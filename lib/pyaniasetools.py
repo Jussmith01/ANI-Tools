@@ -595,3 +595,90 @@ class ani_tortion_scanner():
             ang.append(phi)
             enr.append(e)
         return np.array(ang), np.array(enr)
+
+class MD_Sampler:
+    def __init__(self, files):
+        self.files=files                      #List of files containing the molecules to run md on
+        self.coor_train=[]                    #Where the coordinates of the molecules with high standard deviation will be saved
+        self.Na_train=[]                      #Where the number of atoms of the molecules with high standard deviation will be saved
+        self.S_train=[]                       #Where the atomic species of the molecules with high standard deviation will be saved
+        self.hstd=[]                          #Where the standard deviation of the molecules with high standard deviation will be saved
+
+        #The path to the network
+        nwork= 'model_al-9.0.4/'
+        wkdir = '/home/cdever01/ANI-Networks/networks/al_networks/' + nwork
+        cnstfilecv = wkdir + 'rHCNO-4.6A_16-3.1A_a4-8.params'
+        saefilecv  = wkdir + 'sae_6-31gd.dat'
+        nnfdircv   = wkdir + '/train'
+        self.net = ensemblemolecule(cnstfilecv, saefilecv, nnfdircv, 5)            #Load the network
+
+    def run_md(self, mol, f, T, record=True):
+        dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.01)
+        MaxwellBoltzmannDistribution(mol, T * units.kB)
+        dyn.set_temperature(T * units.kB)
+        steps=30    #10000=1picosecond                             #Max number of steps to run
+        n_steps = 1                                                #Number of steps to run for before checking the standard deviation
+        hsdt_Na=[]
+        evkcal=hdt.evtokcal
+
+        if record==True:                                           #Records the coordinates at every step of the dynamics
+            recdir='fill_this/'                                #name of directory to store coordinates in
+            fname = f + '_record_' + str(T) + 'K' + '.xyz'     #name of file to store coodinated in
+            def printenergy(name=fname, a=mol):
+                """Function to print the potential, kinetic and total energy."""
+                fil= open(recdir + name,'a')
+                Na=a.get_number_of_atoms()
+                c = a.get_positions(wrap=True)
+                fil.write('%s \n comment \n' %Na)
+                for j, i in zip(a, c):
+                    fil.write(str(j.symbol) + ' ' + str(i[0]) + ' ' + str(i[1]) + ' ' + str(i[2]) + '\n')
+                fil.close()
+            dyn.attach(printenergy, interval=1)
+
+        e=mol.get_potential_energy()                             #Calculate the energy of the molecule. Must be done to get the standard deviation
+        s=mol.calc.stddev
+        stddev =  s*evkcal
+        tot_steps = 0
+        while (tot_steps <= steps):
+            if stddev > 0.34:                                #Check the standard deviation
+                self.hstd.append(stddev)
+                c = mol.get_positions(wrap=True)
+                s = mol.get_chemical_symbols()
+                Na=mol.get_number_of_atoms()
+                self.Na_train.append(Na)
+                self.coor_train.append(c)
+                self.S_train.append(s)
+                break
+            else:                                           #if the standard deviation is low, run dynamics, then check it again
+                tot_steps = tot_steps + n_steps
+                dyn.run(n_steps)
+                s=mol.calc.stddev
+                stddev =  evkcal*s
+                e=mol.get_potential_energy()
+
+    def run_md_list(self):
+        T = random.randrange(0, 20, 1)                              # random T (random velocities) from 0K to 20K
+        for f in self.files:
+            mol=read(f)                                         #Read the molecule for the file
+            f=os.path.basename(f)                               #If the drectory name is in the file name, this pulls just the file name. Just to make bookeeping easier
+            mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
+            self.run_md(mol, f, T)
+
+    def write_training_xyz(self, fname):                                #Calling this function wirtes all the structures with high standard deviations to and xyz file
+        alt=open('%s' %fname, 'w')
+        for i in range(len(self.Na_train)):
+            cm='STD= ' + str(self.hstd[i])
+            alt.write('%s \n%s\n' %(str(self.Na_train[i]), cm))
+            for j in range(len(self.S_train[i])):
+                alt.write('%s %f %f %f \n' %(self.S_train[i][j], self.coor_train[i][j][0], self.coor_train[i][j][1], self.coor_train[i][j][2]))
+        alt.close()
+
+    def get_N(self, N):                                                  #Runs dynamics with random T and random file N times. This may result in running the same molecule multiple times
+        for i in range(N):
+            T = random.randrange(0, 20, 1)                       # random T (random velocities) from 0K to 20K
+            f=random.choice(self.files)
+            mol=read(f)                                          #Read the molecule for the file
+            f=os.path.basename(f)                                #If the drectory name is in the file name, this pulls just the file name. Just to make bookeeping easier
+            mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
+            self.run_md(mol, f, T)
+
