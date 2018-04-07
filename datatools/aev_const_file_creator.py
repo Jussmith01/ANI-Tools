@@ -220,7 +220,7 @@ def show2dcontradialgraph (ShfR,eta,Rc,func,title):
 #         Set Parameters
 #--------------------------------
 #File name
-pf = '/home/jujuman/Research/ccsd_extrapolation/ccsd_new/ccsd_train_new5/rHCNO-4.6A_16-3.1A_a4-8_2.params' # Output filename
+pf = '/home/jujuman/Research/ccsd_extrapolation/ccsd_new/ccsd_train_new5/rHCNO-4.6R_16-3.1A_a4-8_3.params' # Output filename
 #pf = '/nh/nest/u/jsmith/Research/gutzwiller_research/train_test/rX-5.0A_16-3.2A_a4-8.params'
 #pf = '/nh/nest/u/jsmith/Research/datasets/iso17/train/mol0/rHCO-5.0A_16-3.4A_a4-8.params'
 #pf = '/nh/nest/u/jsmith/scratch/Research/gutzwiller_research/gutz_new_data/ML-GQMD-data-NEW/case1/params/rX-2.5R_32-2.0A_a8-8.params'
@@ -234,13 +234,13 @@ TM = 1
 Rcr = 4.6 # radial cutoff
 Rca = 3.1 # Angular cutoff
 
-xs = 0.1
+xs = 1.0
 
 Atyp = '[H,C,N,O]'
 #Atyp = '[H,C]'
-EtaR = np.array([32.0]) # Radial eta parameters
+EtaR = np.array([24.0]) # Radial eta parameters
 EtaA = np.array([8.0]) # Angular/Radial eta parameters
-Zeta = np.array([64.0]) # Angular zeta parameters
+Zeta = np.array([32.0]) # Angular zeta parameters
 # ****************************************************
 cmap = mpl.cm.brg
 
