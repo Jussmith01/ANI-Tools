@@ -18,12 +18,12 @@ fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
 aevsize = 1008
 
 T = 200
-K = 24
+K = 16
 #P = 0.25
 atmlist = []
 
-idir = '/home/jujuman/Research/extensibility_test_sets/COMP6v2/gdb-09/inputs/'
-cdir = '/home/jujuman/Research/extensibility_test_sets/COMP6v2/gdb-09/confs/'
+idir = '/home/jujuman/Research/extensibility_test_sets/COMP6v2/TripeptideS/inputs/'
+cdir = '/home/jujuman/Research/extensibility_test_sets/COMP6v2/TripeptideS/confs/'
 
 #idir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_h2ocluster/h2o_cluster/inputs/'
 #cdir = '/home/jujuman/Research/GDB-11-wB97X-6-31gd/dnnts_h2ocluster/h2o_cluster/confs/'

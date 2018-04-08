@@ -78,14 +78,16 @@ for f,fn in enumerate(h5files):
         E = data['energies']
         #F = data['mp2_tz_grad']
         F = data['forces']
+	
         S = data['species']
 
+        #print(X.shape)
         Fmt.append(np.max(np.linalg.norm(F,axis=2),axis=1))
         Emt.append(E)
         Mv = np.max(np.linalg.norm(F,axis=2),axis=1)
         #print(Mv.shape,X.shape)
-        index = np.where(Mv > 10.5)[0]
-        indexk = np.where(Mv <= 10.5)[0]
+        index = np.where(Mv > 3.00)[0]
+        indexk = np.where(Mv <= 3.00)[0]
         #if index.size > 0:
             #print(Mv[index])
             #hdn.writexyzfile(bddir+'mols_'+str(c).zfill(3)+'_'+str(f).zfill(3)+'.xyz',X[index],S)
