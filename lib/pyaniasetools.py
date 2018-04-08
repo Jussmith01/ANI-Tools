@@ -100,9 +100,9 @@ def getenergyconformerdata(Ncv ,datacv, dataa, datae, e):
         T2.append(dataa[id][bidx].reshape(-1))
     return np.hstack(T1),np.concatenate(T2), Nd, Nt
 
-##-------------------------------------
-## Class for ANI cross validaiton tools
-##--------------------------------------
+# -------------------------------------
+#  Class for ANI cross validaiton tools
+# --------------------------------------
 class anicrossvalidationconformer(object):
     ''' Constructor '''
     def __init__(self,cnstfile,saefile,nnfprefix,Nnet,gpuid=0, sinet=False):
@@ -137,15 +137,15 @@ class anicrossvalidationconformer(object):
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_energyandforce_conformations(self,X,S):
-        energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
-        #charges  = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
-        forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
+        energy = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
+        forces = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
         for i,nc in enumerate(self.ncl):
             nc.setConformers(confs=X,types=list(S))
-            energies[i] = nc.energy().copy()
-            #charges[i] = nc.charge().copy()
+            energy[i] = nc.energy().copy()
             forces[i] = nc.force().copy()
-        return hdt.hatokcal*energies, hdt.hatokcal*forces#, charges
+
+        sigmap = hdt.hatokcal * np.std(energy,axis=1) / np.sqrt(X.shape[1])
+        return hdt.hatokcal*np.mean(energy), hdt.hatokcal*np.mean(forces,axis=0), sigmap#, charges
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_energy_conformations(self,X,S):
@@ -242,6 +242,21 @@ class anicrossvalidationmolecule(object):
             energies[i] = nc.energy()[0]
         sigma = hdt.hatokcal * np.std(energies, axis=0) / float(X.shape[0])
         return sigma, hdt.hatokcal *energies
+
+    def compute_energies_and_forces_molecule(self, x, S):
+        Na = x.shape[0]
+        energy = np.zeros((self.Nn), dtype=np.float64)
+        forces = np.zeros((self.Nn, Na, 3), dtype=np.float32)
+        for i,nc in enumerate(self.ncl):
+            nc.setMolecule(coords=x, types=list(S))
+            energy[i]       = nc.energy()[0]
+            forces[i, :, :] = nc.force()
+
+        sigmap = hdt.hatokcal * np.std(energy) / np.sqrt(Na)
+        energy = hdt.hatokcal * energy.mean()
+        forces = hdt.hatokcal * np.mean(forces, axis=0)
+
+        return energy, forces, sigmap
 
     def compute_stats_multi_molecule(self, X, S):
         Nd = X.shape[0]
