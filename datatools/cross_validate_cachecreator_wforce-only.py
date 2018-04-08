@@ -21,13 +21,13 @@ def interval(v,S):
 #wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
 #saef   = wkdir + "sae_6-31gd.dat"
 
-wkdir = '/nh/nest/u/jsmith/Research/ccsd_extrapolation/ccsd_train/'
+wkdir = '/nh/nest/u/jsmith/Research/train_qm7/train/'
 saef   = wkdir + "sae_linfit.dat"
 
 #wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/cv1/'
 #saef   = wkdir + "sae_wb97x-631gd.dat"
 
-data_root = '/nh/nest/u/jsmith/Research/ccsd_extrapolation/h5files/'
+data_root = '/nh/nest/u/jsmith/Research/train_qm7/qm7_h5/'
 
 h5files = [data_root+f for f in os.listdir(data_root) if '.h5' in f]
 
@@ -74,10 +74,10 @@ for f,fn in enumerate(h5files):
 
         # Extract the data
         X = data['coordinates']
-        E = data['extrapE']
-        #E = data['energies']
-        F = data['mp2_tz_grad']
-        #F = data['forces']
+        #E = data['extrapE']
+        E = data['energies']
+        #F = data['mp2_tz_grad']
+        F = data['forces']
         S = data['species']
 
         Fmt.append(np.max(np.linalg.norm(F,axis=2),axis=1))
@@ -128,7 +128,7 @@ for f,fn in enumerate(h5files):
         #    F[i] = F[0]
         #    E[i] = E[0]
 
-        if (set(S).issubset(['C', 'N', 'O', 'H', 'F', 'S', 'Cl'])):
+        if (set(S).issubset(['C', 'N', 'O', 'H', 'S'])):
 
             # Random mask
             R = np.random.uniform(0.0, 1.0, E.shape[0])
@@ -149,24 +149,30 @@ for f,fn in enumerate(h5files):
                 E_t = np.array(np.concatenate([E[s] for j, s in enumerate(split) if j != i]), order='C', dtype=np.float64)
 
                 if E_t.shape[0] != 0:
+                    #print('\n',E_t.shape)
                     t.insertdata(X_t, F_t, E_t, list(S))
 
                 ## Split test/valid data and store\
-                tv_split = np.array_split(split[i],2)
+                R2 = np.random.uniform(0.0, 1.0, np.array(split[i]).shape[0])
+                va_idx = np.array(split[i])[np.where(R2 >= 0.5)] 
+                te_idx = np.array(split[i])[np.where(R2  < 0.5)] 
+
+                #print(va_idx,te_idx)
 
                 ## Store Validation
-                if tv_split[0].size > 0:
-                    X_v = np.array(X[tv_split[0]], order='C', dtype=np.float32)
-                    F_v = np.array(F[tv_split[0]], order='C', dtype=np.float32)
-                    E_v = np.array(E[tv_split[0]], order='C', dtype=np.float64)
+                if va_idx.size > 0:
+                    X_v = np.array(X[va_idx], order='C', dtype=np.float32)
+                    F_v = np.array(F[va_idx], order='C', dtype=np.float32)
+                    E_v = np.array(E[va_idx], order='C', dtype=np.float64)
                     if E_v.shape[0] != 0:
+                        #print(E_v.shape)
                         v.insertdata(X_v, F_v, E_v, list(S))
 
                 ## Store testset
-                if tv_split[1].size > 0:
-                    X_te = np.array(X[split[i]], order='C', dtype=np.float32)
-                    F_te = np.array(F[split[i]], order='C', dtype=np.float32)
-                    E_te = np.array(E[split[i]], order='C', dtype=np.float64)
+                if te_idx.size > 0:
+                    X_te = np.array(X[te_idx], order='C', dtype=np.float32)
+                    F_te = np.array(F[te_idx], order='C', dtype=np.float32)
+                    E_te = np.array(E[te_idx], order='C', dtype=np.float64)
                     if E_te.shape[0] != 0:
                         te.store_data(Pn, coordinates=X_te, forces=F_te, energies=E_te, species=list(S))
 
