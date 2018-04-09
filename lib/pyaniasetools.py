@@ -159,7 +159,9 @@ class anicrossvalidationconformer(object):
         for j,x in enumerate(X_split):
             for i, nc in enumerate(self.ncl):
                 nc.setConformers(confs=x,types=list(S))
-                energies[i,j+shift] = nc.energy().copy()
+                E = nc.energy().copy()
+                print(E.shape,energies.shape)
+                energies[i,j+shift:j+shift+E.shape[0]] = E
             shift += x.shape[0]
 
         return hdt.hatokcal*np.mean(energies,axis=0)#, charges

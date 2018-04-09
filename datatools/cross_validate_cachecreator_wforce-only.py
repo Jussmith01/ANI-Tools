@@ -21,9 +21,9 @@ def interval(v,S):
 #wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
 #saef   = wkdir + "sae_6-31gd.dat"
 
-wkdir = '/home/jsmith48/scratch/NC_train_test/'
-saef   = wkdir + "sae_linfit.dat"
-data_root = wkdir + 'data/'
+wkdir = '/home/jsmith48/scratch/ANI-AL_retrain/train_ens/'
+saef   = wkdir + "sae_wb97x-631gd.dat"
+data_root = '/home/jsmith48/scratch/auto_al/h5files/original_ani-1x/'
 
 #wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/cv1/'
 #saef   = wkdir + "sae_wb97x-631gd.dat"
@@ -83,8 +83,8 @@ for f,fn in enumerate(h5files):
 
         E = data['energies']
         #E = data['energies']
-        F = 0.0*X
-        #F = -data['forces']
+        #F = 0.0*X
+        F = -data['forces']
         S = data['species']
 
         #print(X.shape)
@@ -92,8 +92,8 @@ for f,fn in enumerate(h5files):
         Emt.append(E)
         Mv = np.max(np.linalg.norm(F,axis=2),axis=1)
         #print(Mv.shape,X.shape)
-        index = np.where(Mv > 3.00)[0]
-        indexk = np.where(Mv <= 3.00)[0]
+        index = np.where(Mv > 1.00)[0]
+        indexk = np.where(Mv <= 1.00)[0]
         #if index.size > 0:
             #print(Mv[index])
             #hdn.writexyzfile(bddir+'mols_'+str(c).zfill(3)+'_'+str(f).zfill(3)+'.xyz',X[index],S)
