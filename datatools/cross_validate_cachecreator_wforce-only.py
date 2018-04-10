@@ -21,9 +21,9 @@ def interval(v,S):
 #wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
 #saef   = wkdir + "sae_6-31gd.dat"
 
-wkdir = '/home/jsmith48/scratch/ANI-AL_retrain/train_ens/'
-saef   = wkdir + "sae_wb97x-631gd.dat"
-data_root = '/home/jsmith48/scratch/auto_al/h5files/original_ani-1x/'
+wkdir = '/home/jsmith48/scratch/ANI-1x_retrain/train_ens/'
+saef   = wkdir + "sae_linfit.dat"
+data_root = '/home/jsmith48/scratch/ANI-1x_dataset/'
 
 #wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/cv1/'
 #saef   = wkdir + "sae_wb97x-631gd.dat"

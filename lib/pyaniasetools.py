@@ -136,7 +136,7 @@ class anicrossvalidationconformer(object):
         return deltas,energies
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
-    def compute_energyandforce_conformations(self,X,S):
+    def compute_energyandforce_conformations(self,X,S,ensemble=True):
         energy = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
         forces = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
         for i,nc in enumerate(self.ncl):
@@ -145,7 +145,10 @@ class anicrossvalidationconformer(object):
             forces[i] = nc.force().copy()
 
         sigmap = hdt.hatokcal * np.std(energy,axis=1) / np.sqrt(X.shape[1])
-        return hdt.hatokcal*np.mean(energy), hdt.hatokcal*np.mean(forces,axis=0), sigmap#, charges
+        if ensemble:
+            return hdt.hatokcal*np.mean(energy), hdt.hatokcal*np.mean(forces,axis=0), sigmap#, charges
+        else:
+            return hdt.hatokcal*energy, hdt.hatokcal*forces, sigmap
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_energy_conformations(self,X,S):

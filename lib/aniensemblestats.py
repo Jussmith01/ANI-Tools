@@ -178,7 +178,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                     #if i > 5:
                     #    break
 
-                    Eani, Fani = self.compute_energyandforce_conformations(data['coordinates'], data['species'])
+                    Eani, Fani, sig = self.compute_energyandforce_conformations(data['coordinates'], data['species'], ensemble=False)
 
                     midx = np.where( data['energies'] - data['energies'].min() < maxe/hdt.hatokcal )[0]
 

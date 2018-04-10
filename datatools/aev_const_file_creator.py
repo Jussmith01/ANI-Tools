@@ -220,15 +220,15 @@ def show2dcontradialgraph (ShfR,eta,Rc,func,title):
 #         Set Parameters
 #--------------------------------
 #File name
-pf = '/home/jsmith48/scratch/ANI-AL_retrain/train_ens/rHCNO-4.6R_16-3.1A_a4-8.params' # Output filename
+pf = '/home/jsmith48/scratch/ANI-1x_retrain/train_ens/rHCNO-4.6R_16-3.1A_a4-8.params' # Output filename
 #pf = '/nh/nest/u/jsmith/Research/gutzwiller_research/train_test/rX-5.0A_16-3.2A_a4-8.params'
 #pf = '/nh/nest/u/jsmith/Research/datasets/iso17/train/mol0/rHCO-5.0A_16-3.4A_a4-8.params'
 #pf = '/nh/nest/u/jsmith/scratch/Research/gutzwiller_research/gutz_new_data/ML-GQMD-data-NEW/case1/params/rX-2.5R_32-2.0A_a8-8.params'
-pf = '/nh/nest/u/jsmith/Research/train_qm7/train/rHCNOS-5.0R_16-3.4A_a8-8.params'
+#pf = '/nh/nest/u/jsmith/Research/train_qm7/train/rHCNOS-5.0R_16-3.4A_a8-8.params'
 
 Nrr = 16 # Number of shifting radial functions
-Na = 5 # Number of atom types
-Nar = 8 # Number of shifting angular/radial parameters
+Na = 4 # Number of atom types
+Nar = 4 # Number of shifting angular/radial parameters
 Nzt = 8 # Number of angular shifting parameters
 
 TM = 1
@@ -237,11 +237,11 @@ Rca = 3.1 # Angular cutoff
 
 xs = 0.9
 
-Atyp = '[H,C,N,O,S]'
+Atyp = '[H,C,N,O]'
 #Atyp = '[H,C]'
 EtaR = np.array([16.0]) # Radial eta parameters
 EtaA = np.array([8.0]) # Angular/Radial eta parameters
-Zeta = np.array([16.0]) # Angular zeta parameters
+Zeta = np.array([32.0]) # Angular zeta parameters
 # ****************************************************
 cmap = mpl.cm.brg
 
