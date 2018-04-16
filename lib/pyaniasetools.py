@@ -374,11 +374,12 @@ class anienscomputetool(object):
         return opt
 
     def optimize_molecule(self, X, S, fmax=0.1, steps=10000, logger='opt.out'):
+        print(S)
         mol = Atoms(symbols=S, positions=X)
         mol.set_pbc((False, False, False))
         mol.set_calculator(ANIENS(self.ens))
-        dyn = LBFGS(mol,logfile=logger)
-        #dyn = LBFGS(mol)
+        #dyn = LBFGS(mol,logfile=logger)
+        dyn = LBFGS(mol)
         #dyn = QuasiNewton(mol,logfile=logger)
         dyn.run(fmax=fmax,steps=steps)
         stps = dyn.get_number_of_steps()
@@ -387,7 +388,7 @@ class anienscomputetool(object):
         if steps == stps:
             opt = False
 
-        return mol.get_positions(), opt
+        return np.array(mol.get_positions(),dtype=np.float32), opt
 
     def energy_rdkit_conformers(self,mol,cids):
         E = []
