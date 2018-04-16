@@ -1,6 +1,8 @@
 import sys
 import time
+import random
 from random import randint
+import os
 
 # Numpy
 import numpy as np
@@ -34,6 +36,7 @@ from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from ase.optimize.fire import FIRE as QuasiNewton
 from ase.optimize import BFGS, LBFGS, FIRE
 from ase.constraints import FixInternals
+from ase.io import read, write
 
 import math
 import copy
