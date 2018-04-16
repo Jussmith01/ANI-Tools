@@ -18,19 +18,17 @@ def interval(v,S):
             return s
         ps = ps + ds
 
-#wkdir = '/home/jujuman/Research/DataReductionMethods/model6r/model-gdb_r06_comb09_1/cv5_6/'
-#saef   = wkdir + "sae_6-31gd.dat"
+#wkdir = '/home/jsmith48/scratch/ccsd_extrapolation/learning_cases/dft_retrain/'
+#saef   = wkdir + "sae_linfit.dat"
+#data_root = '/home/jsmith48/scratch/ccsd_extrapolation/h5files_holdout_split/trainset/prepped/'
 
-wkdir = '/home/jsmith48/scratch/ANI-1x_retrain/train_ens/'
+#wkdir = '/home/jsmith48/scratch/ANI-2x_retrain/model1/'
+#saef   = wkdir + "sae_linfit.dat"
+#data_root = '/home/jsmith48/scratch/auto_al/h5files/'
+
+wkdir = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/rxn_train_it2/'
 saef   = wkdir + "sae_linfit.dat"
-data_root = '/home/jsmith48/scratch/ANI-1x_dataset/'
-
-#wkdir = '/home/jujuman/Research/DataReductionMethods/modelCNOSFCl/ANI-AL-0605/ANI-AL-0605.0001/cv1/'
-#saef   = wkdir + "sae_wb97x-631gd.dat"
-
-#data_root = '/home/jsmith48/scratch/ccsd_extrapolation/h5files_combined/'
-#data_root = '/home/jsmith48/scratch/auto_al/h5files/original_ani-1x/'
-#data_root = '/home/jsmith48/scratch/TZData_force/h5files/train/'
+data_root = '/home/jsmith48/scratch/auto_rxn_al/h5files/'
 
 h5files = [data_root+f for f in os.listdir(data_root) if '.h5' in f]
 
@@ -81,30 +79,37 @@ for f,fn in enumerate(h5files):
         E = data['energies']
         #F = data['mp2_tz_grad']
         F = data['forces']
-	
+        #F = 0.0*X	
+
         S = data['species']
 
+        #X = X.reshape(E.size,-1,3)
+        #if len(X.shape) != 3:
+        #    print('Error! X shape incorrect!',X.shape)
+        #    print(S)
+        #    exit(1)
+
         #print(X.shape)
-        Fmt.append(np.max(np.linalg.norm(F,axis=2),axis=1))
+        #Fmt.append(np.max(np.linalg.norm(F,axis=2),axis=1))
         Emt.append(E)
-        Mv = np.max(np.linalg.norm(F,axis=2),axis=1)
+        #Mv = np.max(np.linalg.norm(F,axis=2),axis=1)
         #print(Mv.shape,X.shape)
-        index = np.where(Mv > 1.00)[0]
-        indexk = np.where(Mv <= 1.00)[0]
+        #index = np.where(Mv > 1.00)[0]
+        #indexk = np.where(Mv <= 1.00)[0]
         #if index.size > 0:
             #print(Mv[index])
             #hdn.writexyzfile(bddir+'mols_'+str(c).zfill(3)+'_'+str(f).zfill(3)+'.xyz',X[index],S)
-        Nbf += index.size
-
+        #Nbf += index.size
+        Nbf = 0
         #if data['path'] == '/dimer7/grp_0':
         #    print(data['path'])
         #    print(E)
         #    print(F)
 
         # CLear forces
-        X = X[indexk]
-        F = F[indexk]
-        E = E[indexk]
+        #X = X[indexk]
+        #F = F[indexk]
+        #E = E[indexk]
 
         #exit(0)
         #print(" MAX FORCE:", F.max(), S)
@@ -127,13 +132,26 @@ for f,fn in enumerate(h5files):
         F = F[nidx]
         E = E[nidx]
 
+        Esae = hdn.compute_sae(saef,S)
+        Hidx = np.where(E-Esae < 4.5)
+
+        X = X[Hidx]
+        F = F[Hidx]
+        E = E[Hidx]
+ 
+        Hidx = np.where(E-Esae > -20.0)
+
+        X = X[Hidx]
+        F = F[Hidx]
+        E = E[Hidx]
+
         Ndc += E.size
         #for i in range(E.size):
         #    X[i] = X[0]
         #    F[i] = F[0]
         #    E[i] = E[0]
 
-        if (set(S).issubset(['C', 'N', 'O', 'H', 'S'])):
+        if (set(S).issubset(['C', 'N', 'O', 'H', 'S', 'F', 'Cl'])):
 
             # Random mask
             R = np.random.uniform(0.0, 1.0, E.shape[0])
