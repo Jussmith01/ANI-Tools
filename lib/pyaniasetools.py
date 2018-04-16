@@ -1,6 +1,8 @@
 import sys
 import time
+import random
 from random import randint
+import os
 
 # Numpy
 import numpy as np
@@ -34,6 +36,7 @@ from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from ase.optimize.fire import FIRE as QuasiNewton
 from ase.optimize import BFGS, LBFGS, FIRE
 from ase.constraints import FixInternals
+from ase.io import read, write
 
 import math
 import copy
@@ -369,6 +372,22 @@ class anienscomputetool(object):
             mrdk.GetConformer(cid).SetAtomPosition(i,x)
 
         return opt
+
+    def optimize_molecule(self, X, S, fmax=0.1, steps=10000, logger='opt.out'):
+        mol = Atoms(symbols=S, positions=X)
+        mol.set_pbc((False, False, False))
+        mol.set_calculator(ANIENS(self.ens))
+        dyn = LBFGS(mol,logfile=logger)
+        #dyn = LBFGS(mol)
+        #dyn = QuasiNewton(mol,logfile=logger)
+        dyn.run(fmax=fmax,steps=steps)
+        stps = dyn.get_number_of_steps()
+
+        opt = True
+        if steps == stps:
+            opt = False
+
+        return mol.get_positions(), opt
 
     def energy_rdkit_conformers(self,mol,cids):
         E = []
