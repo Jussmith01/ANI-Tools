@@ -22,7 +22,7 @@ from multiprocessing import Process
 import shutil
 
 class alconformationalsampler():
-    def __init__(self, ldtdir, datdir, optlfile, fpatoms, netdict):
+    def __init__(self, ldtdir, datdir, optlfile, fpatoms, netdict, tsindir):
         self.ldtdir = ldtdir
         self.datdir = datdir
         self.cdir = ldtdir+datdir+'/confs/'
@@ -31,6 +31,7 @@ class alconformationalsampler():
 
         self.optlfile = optlfile
         self.idir = [f for f in open(optlfile).read().split('\n') if f != '']
+        self.tsfiles = [f for f in tsindir]        #makes a list of files for TS sampling
 
         if not os.path.exists(self.cdir):
             os.mkdir(self.cdir)
@@ -311,6 +312,60 @@ class alconformationalsampler():
                                     solv, solu, gpuid)
 
         dgen.generate_clusters(dictc, mol_sizes, tid)
+
+
+
+    def run_sampling_TS(self, tsparams, gpus=[0], perc=1.0):
+        TS_infiles = []
+        for di, id in enumerate(self.tsindir):
+            files = os.listdir(id)
+            for f in files:
+                TS_infiles.append(id+f)
+
+        gpus2 = gpus+gpus
+
+        TS_infiles = np.array(TSmd_work)
+        np.random.shuffle(TS_infiles)
+        TS_infiles = md_work[0:int(perc*TS_infiles.size)]
+        TS_infiles = np.array_split(TS_infiles,len(gpus2))
+	
+        proc = []
+        for g in gpus2:
+            proc.append(Process(target=self.TS_sampling, args=(TS_infiles, tsparams, g)))
+        print('Running MD Sampling...')
+        for i in proc:
+            p.start()
+
+        for p in proc:
+            p.join()
+
+        print('Finished sampling.')
+
+
+
+    def TS_sampling(self,TS_infiles, tsparams, gpuid):
+        activ = aat.MD_Sampler(TS_infiles,
+                               self.netdict['cnstfile'],
+                               self.netdict['saefile'],
+                               self.netdict['nnfprefix'],
+                               self.netdict['num_nets'],
+                               gpuid)
+        coor=[]
+        species=[]
+        T=tsparams['T']
+        n_steps=tsparams['n_steps']
+        steps=tsparams['steps']
+        for f in TS_infiles:
+            X, S = activ.run_md(f, T, steps, n_steps)
+            coor.append(X)
+            species.append(S)
+
+
+        hdt.writexyzfile(self.cdir + 'TSmd.xyz', coor, species)
+        del activ
+
+
+
 
 def interval(v,S):
     ps = 0.0
