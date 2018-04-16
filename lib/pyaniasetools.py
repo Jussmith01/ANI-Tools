@@ -144,9 +144,9 @@ class anicrossvalidationconformer(object):
             energy[i] = nc.energy().copy()
             forces[i] = nc.force().copy()
 
-        sigmap = hdt.hatokcal * np.std(energy,axis=1) / np.sqrt(X.shape[1])
+        sigmap = hdt.hatokcal * np.std(energy,axis=0) / np.sqrt(X.shape[1])
         if ensemble:
-            return hdt.hatokcal*np.mean(energy), hdt.hatokcal*np.mean(forces,axis=0), sigmap#, charges
+            return hdt.hatokcal*np.mean(energy,axis=0), hdt.hatokcal*np.mean(forces,axis=0), sigmap#, charges
         else:
             return hdt.hatokcal*energy, hdt.hatokcal*forces, sigmap
 

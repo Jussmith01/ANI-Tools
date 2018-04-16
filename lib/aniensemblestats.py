@@ -30,7 +30,7 @@ def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0
     Fmn = Xa.min()
 
     # Plot ground truth line
-    ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='black', linewidth=3)
+    ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='red', linewidth=3)
 
     # Set labels
     ax.set_xlabel(labelx, fontsize=26)
@@ -46,23 +46,22 @@ def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0
     #cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
 
     # Annotate with label
-    ax.text(0.1*((Fmx-Fmn))+Fmn, 0.87*((Fmx-Fmn))+Fmn, plabel, fontsize=40)
+    ax.text(0.25*((Fmx-Fmn))+Fmn, 0.06*((Fmx-Fmn))+Fmn, plabel, fontsize=26)
 
     # Annotate with errors
     PMAE = hdt.calculatemeanabserror(Xa, Xp)
     PRMS = hdt.calculaterootmeansqrerror(Xa, Xp)
-    ax.text(0.6*((Fmx-Fmn))+Fmn, 0.1*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=30,
+    ax.text(0.6*((Fmx-Fmn))+Fmn, 0.2*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=30,
             bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
 
-    '''
-    axins = zoomed_inset_axes(ax, 2.2, loc=2)  # zoom = 6
+    axins = zoomed_inset_axes(ax, 2., loc=2)  # zoom = 6
 
-    sz = 6
-    axins.hist2d(Xa, Xp, bins=50, range=[[Fmn / sz, Fmx / sz], [Fmn / sz, Fmx / sz]], norm=LogNorm(), cmap=cmap)
-    axins.plot([Xa.min(), Xa.max()], [Xa.min(), Xa.max()], '--', c='r', linewidth=3)
+    sz = 0.1*(Fmx-Fmn)
+    axins.hist2d(Xa, Xp, bins=50, range=[[Xa.mean() - sz, Xa.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz]], norm=LogNorm(), cmap=cmap)
+    axins.plot([Xp.mean() - sz, Xp.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz], '--', c='r', linewidth=3)
 
     # sub region of the original image
-    x1, x2, y1, y2 = Fmn / sz, Fmx / sz, Fmn / sz, Fmx / sz
+    x1, x2, y1, y2 = Xa.mean() - sz, Xa.mean() + sz, Xp.mean() - sz, Xp.mean() + sz
     axins.set_xlim(x1, x2)
     axins.set_ylim(y1, y2)
     axins.yaxis.tick_right()
@@ -70,8 +69,7 @@ def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0
     plt.xticks(visible=True)
     plt.yticks(visible=True)
 
-    mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.5")
-    '''
+    mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="1.5")
     return bins
 
 def add_inset_histogram(Xa, Xp, pos, ylim, xlim):
@@ -184,7 +182,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
 
                     Eani = Eani[:,midx]
                     Edft = data['energies'][midx]
-                    Fani = -Fani[:,midx,:,:]
+                    Fani = Fani[:,midx,:,:]
                     Fdft = data['forces'][midx]
 
                     #Eestd = np.std(Eani, axis=0)/np.sqrt(len(data['species']))
