@@ -51,7 +51,7 @@ def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0
     # Annotate with errors
     PMAE = hdt.calculatemeanabserror(Xa, Xp)
     PRMS = hdt.calculaterootmeansqrerror(Xa, Xp)
-    ax.text(0.6*((Fmx-Fmn))+Fmn, 0.2*((Fmx-Fmn))+Fmn, 'MAE='+"{:.1f}".format(PMAE)+'\nRMSE='+"{:.1f}".format(PRMS), fontsize=30,
+    ax.text(0.6*((Fmx-Fmn))+Fmn, 0.2*((Fmx-Fmn))+Fmn, 'MAE='+"{:.2f}".format(PMAE)+'\nRMSE='+"{:.2f}".format(PRMS), fontsize=30,
             bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
 
     axins = zoomed_inset_axes(ax, 2., loc=2)  # zoom = 6
