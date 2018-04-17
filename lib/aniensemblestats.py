@@ -38,9 +38,9 @@ def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0
 
     # Plot 2d Histogram
     if vmin == 0 and vmax ==0:
-        bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), range=[[Fmn, Fmx], [Fmn, Fmx]], cmap=cmap)
+        bins = ax.hist2d(Xp, Xa, bins=200, norm=LogNorm(), range=[[Fmn, Fmx], [Fmn, Fmx]], cmap=cmap)
     else:
-        bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), range=[[Fmn, Fmx], [Fmn, Fmx]], cmap=cmap, vmin=vmin, vmax=vmax)
+        bins = ax.hist2d(Xp, Xa, bins=200, norm=LogNorm(), range=[[Fmn, Fmx], [Fmn, Fmx]], cmap=cmap, vmin=vmin, vmax=vmax)
 
     # Build color bar
     #cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
