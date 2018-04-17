@@ -13,7 +13,7 @@ username = "jsmith8"
 password = open(passfile,'r').read().strip()
 
 root_dir = '/home/jsmith48/scratch/auto_al/'
-
+tsindir = root_dir + 'TSin/'                 #Where the files to run TS sampling should be stored 
 swkdir = '/home/jsmith8/scratch/auto_al_cycles/'# server working directory
 datdir = 'ANI-AL-0808.0302.04'
 
@@ -104,6 +104,12 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             'solu_dirs' : solu_dirs,
             }
 
+
+tsparams = {'T':10.,        #Temperature
+            'steps':50000,  #Max number of steps
+            'n_steps':1,    #How often to check
+           }
+
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
 N = [10]
 
@@ -133,12 +139,12 @@ for i in N:
         os.mkdir(root_dir + datdir + str(i+1).zfill(2))
 
     ## Run active learning sampling ##
-    acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict)
+    acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict, tsindir)
     acs.run_sampling_cluster(gcmddict, GPU)
     acs.run_sampling_dimer(dmrparams, GPU)
     acs.run_sampling_nms(nmsparams, GPU)
     acs.run_sampling_md(mdsparams, perc=0.5, gpus=GPU)
-
+    acs.run_sampling_TS(tsparams, gpus=GPU)         #Run TS sampling
     ## Submit jobs, return and pack data
     ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae, jtime, password=password)
 
