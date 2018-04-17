@@ -173,6 +173,23 @@ class anicrossvalidationconformer(object):
         return hdt.hatokcal*np.mean(energies,axis=0)#, charges
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
+    def compute_energy_conformations_net(self,X,S,netid):
+        Na = X.shape[0] * len(S)
+
+        X_split = np.array_split(X, math.ceil(Na/20000))
+
+        energies = np.zeros((X.shape[0]), dtype=np.float64)
+        forces   = np.zeros((X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
+        shift = 0
+        for j,x in enumerate(X_split):
+            self.ncl[netid].setConformers(confs=x,types=list(S))
+            E = self.ncl[netid].energy().copy()
+            energies[j+shift:j+shift+E.shape[0]] = E
+            shift += x.shape[0]
+
+        return hdt.hatokcal*energies#, charges
+
+    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_separate(self,X,S,i):
         Na = X.shape[0] * len(S)
 
@@ -636,7 +653,7 @@ class ani_tortion_scanner():
         return np.array(ang), np.array(enr)
 
 class MD_Sampler:
-    def __init__(self, files, cnstfile, saefile, nnfprefix, gpuid=0, sinet=False):
+    def __init__(self, files, cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False):
         self.files=files                      #List of files containing the molecules to run md on
         self.coor_train=[]                    #Where the coordinates of the molecules with high standard deviation will be saved
         self.Na_train=[]                      #Where the number of atoms of the molecules with high standard deviation will be saved
@@ -646,11 +663,11 @@ class MD_Sampler:
         #The path to the network
         self.net = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)            #Load the network
 
-    def run_md(self, f, T, steps, n_steps, record=False):
+    def run_md(self, f, T, steps, n_steps, sig=0.34, t=0.1, record=False):
         mol=read(f)
         mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
         f=os.path.basename(f)
-        dyn = Langevin(mol, 0.1 * units.fs, T * units.kB, 0.01)
+        dyn = Langevin(mol, t * units.fs, T * units.kB, 0.01)
         MaxwellBoltzmannDistribution(mol, T * units.kB)
         dyn.set_temperature(T * units.kB)
 #        steps=10000    #10000=1picosecond                             #Max number of steps to run
@@ -673,12 +690,12 @@ class MD_Sampler:
 
         e=mol.get_potential_energy()                             #Calculate the energy of the molecule. Must be done to get the standard deviation
         s=mol.calc.stddev
-        stddev =  s*evkcal
+        stddev =  0
         tot_steps = 0
         while (tot_steps <= steps):
-            if stddev > 0.34:                                #Check the standard deviation
+            if stddev > sig:                                #Check the standard deviation
                 self.hstd.append(stddev)
-                c = mol.get_positions(wrap=True)
+                c = mol.get_positions()
                 s = mol.get_chemical_symbols()
                 Na=mol.get_number_of_atoms()
                 self.Na_train.append(Na)
@@ -691,7 +708,7 @@ class MD_Sampler:
                 s=mol.calc.stddev
                 stddev =  evkcal*s
                 e=mol.get_potential_energy()
-        return c, s
+        return c, s, tot_steps*t
 
 
     def run_md_list(self):

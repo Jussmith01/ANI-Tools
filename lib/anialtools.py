@@ -22,7 +22,7 @@ from multiprocessing import Process
 import shutil
 
 class alconformationalsampler():
-    def __init__(self, ldtdir, datdir, optlfile, fpatoms, netdict, tsindir):
+    def __init__(self, ldtdir, datdir, optlfile, fpatoms, netdict):
         self.ldtdir = ldtdir
         self.datdir = datdir
         self.cdir = ldtdir+datdir+'/confs/'
@@ -31,7 +31,6 @@ class alconformationalsampler():
 
         self.optlfile = optlfile
         self.idir = [f for f in open(optlfile).read().split('\n') if f != '']
-        self.tsfiles = [f for f in tsindir]        #makes a list of files for TS sampling
 
         if not os.path.exists(self.cdir):
             os.mkdir(self.cdir)
@@ -317,23 +316,23 @@ class alconformationalsampler():
 
     def run_sampling_TS(self, tsparams, gpus=[0], perc=1.0):
         TS_infiles = []
-        for di, id in enumerate(self.tsindir):
+        for di, id in enumerate(tsparams['tsfiles']):
             files = os.listdir(id)
             for f in files:
                 TS_infiles.append(id+f)
 
-        gpus2 = gpus+gpus
+        gpus2 = gpus
 
-        TS_infiles = np.array(TSmd_work)
+        TS_infiles = np.array(TS_infiles)
         np.random.shuffle(TS_infiles)
-        TS_infiles = md_work[0:int(perc*TS_infiles.size)]
+        TS_infiles = TS_infiles[0:int(perc*len(TS_infiles))]
         TS_infiles = np.array_split(TS_infiles,len(gpus2))
 	
         proc = []
-        for g in gpus2:
-            proc.append(Process(target=self.TS_sampling, args=(TS_infiles, tsparams, g)))
+        for i,g in enumerate(gpus2):
+            proc.append(Process(target=self.TS_sampling, args=(i, TS_infiles[i], tsparams, g)))
         print('Running MD Sampling...')
-        for i in proc:
+        for p in proc:
             p.start()
 
         for p in proc:
@@ -343,27 +342,31 @@ class alconformationalsampler():
 
 
 
-    def TS_sampling(self,TS_infiles, tsparams, gpuid):
+    def TS_sampling(self, tid, TS_infiles, tsparams, gpuid):
         activ = aat.MD_Sampler(TS_infiles,
                                self.netdict['cnstfile'],
                                self.netdict['saefile'],
                                self.netdict['nnfprefix'],
                                self.netdict['num_nets'],
                                gpuid)
-        coor=[]
-        species=[]
         T=tsparams['T']
+        sig=tsparams['sig']
+        Ns=tsparams['n_samples']
         n_steps=tsparams['n_steps']
         steps=tsparams['steps']
+        difo = open(self.ldtdir + self.datdir + '/info_data_mddimer-'+str(tid)+'.nfo', 'w')
         for f in TS_infiles:
-            X, S = activ.run_md(f, T, steps, n_steps)
-            coor.append(X)
-            species.append(S)
-
-
-        hdt.writexyzfile(self.cdir + 'TSmd.xyz', coor, species)
+            X = []
+            ftme_t = 0.0
+            for i in range(Ns):
+                x, S, t = activ.run_md(f, T, steps, n_steps, sig=sig)
+                X.append(x[np.newaxis,:,:])
+                ftme_t += t
+            difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Ns)) + '\n')
+            X = np.vstack(X)
+            hdt.writexyzfile(self.cdir + os.path.basename(f), X, S)
         del activ
-
+        difo.close()
 
 
 
@@ -456,7 +459,8 @@ class alaniensembletrainer():
 
                 Ndc += E.size
 
-                if (set(S).issubset(['C', 'N', 'O', 'H', 'F', 'S', 'Cl'])):
+                if (set(S).issubset(['C', 'N', 'O', 'H'])):
+                #if (set(S).issubset(['C', 'N', 'O', 'H', 'F', 'S', 'Cl'])):
 
                     # Random mask
                     R = np.random.uniform(0.0, 1.0, E.shape[0])
