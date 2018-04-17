@@ -312,6 +312,64 @@ class alconformationalsampler():
 
         dgen.generate_clusters(dictc, mol_sizes, tid)
 
+
+
+    def run_sampling_TS(self, tsparams, gpus=[0], perc=1.0):
+        TS_infiles = []
+        for di, id in enumerate(tsparams['tsfiles']):
+            files = os.listdir(id)
+            for f in files:
+                TS_infiles.append(id+f)
+
+        gpus2 = gpus
+
+        TS_infiles = np.array(TS_infiles)
+        np.random.shuffle(TS_infiles)
+        TS_infiles = TS_infiles[0:int(perc*len(TS_infiles))]
+        TS_infiles = np.array_split(TS_infiles,len(gpus2))
+	
+        proc = []
+        for i,g in enumerate(gpus2):
+            proc.append(Process(target=self.TS_sampling, args=(i, TS_infiles[i], tsparams, g)))
+        print('Running MD Sampling...')
+        for p in proc:
+            p.start()
+
+        for p in proc:
+            p.join()
+
+        print('Finished sampling.')
+
+
+
+    def TS_sampling(self, tid, TS_infiles, tsparams, gpuid):
+        activ = aat.MD_Sampler(TS_infiles,
+                               self.netdict['cnstfile'],
+                               self.netdict['saefile'],
+                               self.netdict['nnfprefix'],
+                               self.netdict['num_nets'],
+                               gpuid)
+        T=tsparams['T']
+        sig=tsparams['sig']
+        Ns=tsparams['n_samples']
+        n_steps=tsparams['n_steps']
+        steps=tsparams['steps']
+        difo = open(self.ldtdir + self.datdir + '/info_data_mddimer-'+str(tid)+'.nfo', 'w')
+        for f in TS_infiles:
+            X = []
+            ftme_t = 0.0
+            for i in range(Ns):
+                x, S, t = activ.run_md(f, T, steps, n_steps, sig=sig)
+                X.append(x[np.newaxis,:,:])
+                ftme_t += t
+            difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Ns)) + '\n')
+            X = np.vstack(X)
+            hdt.writexyzfile(self.cdir + os.path.basename(f), X, S)
+        del activ
+        difo.close()
+
+
+
 def interval(v,S):
     ps = 0.0
     ds = 1.0 / float(S)
@@ -401,7 +459,8 @@ class alaniensembletrainer():
 
                 Ndc += E.size
 
-                if (set(S).issubset(['C', 'N', 'O', 'H', 'F', 'S', 'Cl'])):
+                if (set(S).issubset(['C', 'N', 'O', 'H'])):
+                #if (set(S).issubset(['C', 'N', 'O', 'H', 'F', 'S', 'Cl'])):
 
                     # Random mask
                     R = np.random.uniform(0.0, 1.0, E.shape[0])

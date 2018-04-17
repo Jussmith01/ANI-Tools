@@ -4,51 +4,53 @@ from time import sleep
 import os
 import sys
 
-passfile = "/home/jsmith48/tkey.dat"
+#passfile = "/home/jsmith48/tkey.dat"
 
-#hostname = "comet.sdsc.xsede.org"
-hostname = "bridges.psc.edu"
+hostname = "comet.sdsc.xsede.org"
+#hostname = "bridges.psc.edu"
 #hostname = "moria.chem.ufl.edu"
-username = "jsmith8"
-password = open(passfile,'r').read().strip()
+username = "jsmith48"
+#password = open(passfile,'r').read().strip()
 
-root_dir = '/home/jsmith48/scratch/auto_al/'
+root_dir = '/home/jsmith48/scratch/auto_rxn_al/'
 
-swkdir = '/home/jsmith8/scratch/auto_al_cycles/'# server working directory
-datdir = 'ANI-AL-0808.0302.04'
+swkdir = '/home/jsmith48/scratch/auto_al_cycles/'# server working directory
+datdir = 'ANI-1x-RXN-0000.00'
+#datdir = 'ANI-AL-0808.0302.04'
 
 h5stor = root_dir + 'h5files/'# h5store location
 
 optlfile = root_dir + 'optimized_input_files.dat'
 
 #Comet
-#mae = 'module load gnu/4.9.2\n' +\
-#      'module load gaussian\n' +\
-#      'export PATH="/home/$USER/Gits/RCDBuilder/build/bin:$PATH"\n' +\
-#      'export LD_LIBRARY_PATH="/home/$USER/Gits/RCDBuilder/build/lib:$LD_LIBRARY_PATH"\n'
+mae = 'module load gnu/4.9.2\n' +\
+      'module load gaussian\n' +\
+      'export PATH="/home/$USER/Gits/RCDBuilder/build/bin:$PATH"\n' +\
+      'export LD_LIBRARY_PATH="/home/$USER/Gits/RCDBuilder/build/lib:$LD_LIBRARY_PATH"\n'
 
 # Bridges
-mae = 'module load gcc/5.3.0\n' +\
-      'module load gaussian/09.D.01\n' +\
-      'export PATH="/home/$USER/Gits/RCDBuilder/build/bin:$PATH"\n' +\
-      'export LD_LIBRARY_PATH="/home/$USER/Gits/RCDBuilder/build/lib:$LD_LIBRARY_PATH"\n' +\
-      "export GAUSS_EXEDIR='/opt/packages/gaussian-RevD.01/g09/' \n"
+#mae = 'module load gcc/5.3.0\n' +\
+#      'module load gaussian/09.D.01\n' +\
+#      'export PATH="/home/$USER/Gits/RCDBuilder/build/bin:$PATH"\n' +\
+#      'export LD_LIBRARY_PATH="/home/$USER/Gits/RCDBuilder/build/lib:$LD_LIBRARY_PATH"\n' +\
+#      "export GAUSS_EXEDIR='/opt/packages/gaussian-RevD.01/g09/' \n"
 
-fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
+#fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
+fpatoms = ['C', 'N', 'O']
 
 jtime = "0-2:30"
 
 #---- Training Parameters ----
-GPU = [2,3,4,6,7] # GPU IDs
+GPU = [0,2,3,4,5] # GPU IDs
 
-M   = 0.34 # Max error per atom in kcal/mol
+M   = 0.27 # Max error per atom in kcal/mol
 Nnets = 5 # networks in ensemble
-aevsize = 1008
+aevsize = 384
 
-wkdir = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/ANI-AL-0808/ANI-AL-0808.0302/'
-iptfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/inputtrain.ipt'
-saefile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/sae_wb97x-631gd.dat'
-cstfile = '/home/jsmith48/scratch/auto_al/modelCNOSFCl/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
+wkdir = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/ANI-1x-RXN-0000/'
+iptfile = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/inputtrain.ipt'
+saefile = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/sae_linfit.dat'
+cstfile = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/rHCNO-4.6R_16-3.1A_a4-8.params'
 #-----------0---------
 
 # Training varibles
@@ -67,6 +69,14 @@ mdsparams = {'N': 2, # trajectories to run
              'Nc': 3000,
              'Ns': 2,
              'sig': M,
+             }
+
+tsparams = {'T': 50, # trajectories to run
+             'n_samples' : 200,
+             'n_steps': 10,
+             'steps': 2000,
+             'sig' : M,
+             'tsfiles': ['/home/jsmith48/scratch/auto_rxn_al/rxns/'],
              }
 
 dmrparams = {#'mdselect' : [(400,0),(60,2),(40,3),(5,4)],
@@ -105,10 +115,10 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             }
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [10]
+N = [0,1,2,3,4,5,6,7,8,9,10]
 
 for i in N:
-    netdir = wkdir+'ANI-AL-0808.0302.04'+str(i).zfill(2)+'/'
+    netdir = wkdir+'ANI-1x-RXN-0000.00'+str(i).zfill(2)+'/'
     if not os.path.exists(netdir):
         os.mkdir(netdir)
 
@@ -126,7 +136,6 @@ for i in N:
     aet = alt.alaniensembletrainer(netdir, netdict, 'train', h5stor, Nnets)
     aet.build_training_cache()
     aet.train_ensemble(GPU)
-    exit(0)
 
     ldtdir = root_dir  # local data directories
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
@@ -134,12 +143,15 @@ for i in N:
 
     ## Run active learning sampling ##
     acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict)
-    acs.run_sampling_cluster(gcmddict, GPU)
-    acs.run_sampling_dimer(dmrparams, GPU)
-    acs.run_sampling_nms(nmsparams, GPU)
-    acs.run_sampling_md(mdsparams, perc=0.5, gpus=GPU)
+    #acs.run_sampling_cluster(gcmddict, GPU)
+    #acs.run_sampling_dimer(dmrparams, GPU)
+    #acs.run_sampling_nms(nmsparams, GPU)
+    #acs.run_sampling_md(mdsparams, perc=0.5, gpus=GPU)
+    acs.run_sampling_TS(tsparams, gpus=[2])
+    #acs.run_sampling_TS(tsparams, gpus=GPU)
+    #exit(0)
 
     ## Submit jobs, return and pack data
-    ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae, jtime, password=password)
+    ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae, jtime)
 
 

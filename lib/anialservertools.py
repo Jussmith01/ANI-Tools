@@ -120,7 +120,7 @@ class alQMserversubmission():
         self.job_list.append(f+'.sh')
         sf = open(fname, 'w')
 
-        parti = 'RM-shared'
+        parti = 'shared'
         times = time 
         #times = '0-1:30'
         Nmemr = 3000
@@ -137,7 +137,8 @@ class alQMserversubmission():
         sf.write('#SBATCH -e slurm.cgfp.%j.err # STDERR\n')
         #sf.write('#SBATCH --mail-type=END,FAIL # notifications for job done & fail\n')
         #sf.write('#SBATCH --mail-user=jsmith48@ufl.edu # send-to address\n')
-        sf.write('#SBATCH -A mr3bdtp\n')
+        #sf.write('#SBATCH -A mr3bdtp\n') #BRIDGES
+        sf.write('#SBATCH -A jsu101\n')
         sf.write('\n')
         sf.write('cd ' + self.swkdir+self.datdir+'/working/' + '\n\n')
 
@@ -323,8 +324,8 @@ class alQMserversubmission():
         return complete,Nj,N,len(self.job_list)-self.jobs_cnt
 
     def load_to_server(self):
-        pwd = " sshpass -p "+self.password
-        command = pwd + ' rsync -a ' + self.ldtdir + self.datdir + ' ' + self.username  + '@' + self.hostname + ':' + self.swkdir
+        #pwd = " sshpass -p "+self.password
+        command = 'rsync -a ' + self.ldtdir + self.datdir + ' ' + self.username  + '@' + self.hostname + ':' + self.swkdir
         proc = subprocess.Popen (command, shell=True)
         r = proc.communicate()
         print('Wait')
@@ -332,8 +333,8 @@ class alQMserversubmission():
         print(r)
 
     def load_from_server(self):
-        pwd = " sshpass -p "+self.password
-        command = pwd + ' rsync -a --delete ' + self.username  + '@' + self.hostname + ':' + self.swkdir + self.datdir + ' ' + self.ldtdir
+        #pwd = " sshpass -p "+self.password
+        command = 'rsync -a --delete ' + self.username  + '@' + self.hostname + ':' + self.swkdir + self.datdir + ' ' + self.ldtdir
         print('Execute transfer from server...')
         proc = subprocess.Popen (command, shell=True)
         r = proc.communicate()
@@ -382,7 +383,7 @@ class alQMserversubmission():
     def disconnect(self):
         self.server.close()
 
-def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae, jtime, password):
+def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae, jtime, password=''):
     # Declare server submission class and connect to ssh
     print('Connecting...')
     alserv = alQMserversubmission(hostname, username, swkdir, ldtdir, datdir, jtime, password=password)
