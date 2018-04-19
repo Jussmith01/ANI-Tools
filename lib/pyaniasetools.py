@@ -692,6 +692,7 @@ class MD_Sampler:
         s=mol.calc.stddev
         stddev =  0
         tot_steps = 0
+        failed = False
         while (tot_steps <= steps):
             if stddev > sig:                                #Check the standard deviation
                 self.hstd.append(stddev)
@@ -701,13 +702,17 @@ class MD_Sampler:
                 self.Na_train.append(Na)
                 self.coor_train.append(c)
                 self.S_train.append(s)
+                failed=True
                 break
             else:                                           #if the standard deviation is low, run dynamics, then check it again
                 tot_steps = tot_steps + n_steps
                 dyn.run(n_steps)
                 stddev =  evkcal*mol.calc.stddev
+                c = mol.get_positions()
+                s = mol.get_chemical_symbols()
                 e=mol.get_potential_energy()
-        return c, s, tot_steps*t, stddev
+                #print("{0:.2f}".format(tot_steps*t),':',"{0:.2f}".format(stddev),':',"{0:.2f}".format(evkcal*e))
+        return c, s, tot_steps*t, stddev, failed
 
 
     def run_md_list(self):

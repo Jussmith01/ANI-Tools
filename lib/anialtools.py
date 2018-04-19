@@ -354,15 +354,24 @@ class alconformationalsampler():
         Ns=tsparams['n_samples']
         n_steps=tsparams['n_steps']
         steps=tsparams['steps']
-        difo = open(self.ldtdir + self.datdir + '/info_data_mddimer-'+str(tid)+'.nfo', 'w')
+        difo = open(self.ldtdir + self.datdir + '/info_tssampler-'+str(tid)+'.nfo', 'w')
         for f in TS_infiles:
             X = []
             ftme_t = 0.0
+            fail_count=0
+            sumsig = 0.0
             for i in range(Ns):
-                x, S, t, stddev = activ.run_md(f, T, steps, n_steps, sig=sig)
-                X.append(x[np.newaxis,:,:])
+                x, S, t, stddev,fail = activ.run_md(f, T, steps, n_steps, sig=sig)
+                sumsig += stddev
+                if fail:
+                    difo.write('Job '+str(i)+' failed in '+"{:.2f}".format(t)+' Sigma: ' + "{:.2f}".format(stddev) + '\n')
+                    X.append(x[np.newaxis,:,:])
+                    fail_count+=1
+                else:
+                    difo.write('Job '+str(i)+' succeeded.\n')
                 ftme_t += t
-            difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Ns)) + '\n')
+            #print('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Ns)) + ' failed ' + str(fail_count) + '/' + str(Ns) + '\n')
+            difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Ns)) + ' failed ' + str(fail_count) + '/' + str(Ns) + ' MeanSig: ' + "{:.2f}".format(sumsig / float(Ns)) + '\n')
             X = np.vstack(X)
             hdt.writexyzfile(self.cdir + os.path.basename(f), X, S)
         del activ
