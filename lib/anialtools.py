@@ -341,7 +341,6 @@ class alconformationalsampler():
         print('Finished sampling.')
 
 
-
     def TS_sampling(self, tid, TS_infiles, tsparams, gpuid):
         activ = aat.MD_Sampler(TS_infiles,
                                self.netdict['cnstfile'],
@@ -388,9 +387,9 @@ def interval(v,S):
         ps = ps + ds
 
 class alaniensembletrainer():
-    def __init__(self, train_root, netdict, train_pref, h5dir, Nn):
+    def __init__(self, train_root, netdict, h5dir, Nn):
         self.train_root = train_root
-        self.train_pref = train_pref
+        #self.train_pref = train_pref
         self.h5dir = h5dir
         self.Nn = Nn
         self.netdict = netdict
@@ -496,13 +495,13 @@ class alaniensembletrainer():
                             t.insertdata(X_t, F_t, E_t, list(S))
 
                         ## Split test/valid data and store\
-                        tv_split = np.array_split(split[i], 2)
+                        #tv_split = np.array_split(split[i], 2)
 
                         ## Store Validation
-                        if tv_split[0].size > 0:
-                            X_v = np.array(X[tv_split[0]], order='C', dtype=np.float32)
-                            F_v = np.array(F[tv_split[0]], order='C', dtype=np.float32)
-                            E_v = np.array(E[tv_split[0]], order='C', dtype=np.float64)
+                        if split[i].size > 0:
+                            X_v = np.array(X[split[i]], order='C', dtype=np.float32)
+                            F_v = np.array(F[split[i]], order='C', dtype=np.float32)
+                            E_v = np.array(E[split[i]], order='C', dtype=np.float64)
                             if E_v.shape[0] != 0:
                                 v.insertdata(X_v, F_v, E_v, list(S))
 
@@ -529,6 +528,17 @@ class alaniensembletrainer():
             t.makemetadata()
             v.makemetadata()
             th.cleanup()
+
+    def build_strided_training_cache(self):
+        h5d = self.h5dir
+
+        E = []
+        for f in self.h5file:
+            adl = pyt.anidataloader(h5d+f)
+            for data in adl:
+                print(data['path'])
+                E.append(data['energies'])
+        return np.concatenate(E)
 
     def train_ensemble(self, GPUList):
         print('Training Ensemble...')
@@ -564,40 +574,3 @@ class alaniensembletrainer():
         command = "cd " + pyncdict['wkdir'] + " && HDAtomNNP-Trainer -i inputtrain.ipt -d " + pyncdict['datadir'] + " -p 1.0 -m -g " + pyncdict['gpuid'] + " > output.opt"
         proc = subprocess.Popen (command, shell=True)
         proc.communicate()
-
-#    def train_ensemble(self, GPUList, pyncdict, trdict, layers):
-#        print('Training Ensemble...')
-#        processes = []
-#        for i,id in enumerate(GPUList):
-#            processes.append(Process(target=self.train_network, args=(pyncdict, trdict, layers, id, i)))
-#            processes[-1].start()
-#            #self.train_network(pyncdict, trdict, layers, id, i)
-#
-#        for p in processes:
-#            p.join()
-#        print('Training Complete.')
-
-#    def train_network(self, pyncdict, trdict, layers, gpuid, index):
-#        pyncdict['wkdir'] = self.train_root + 'train' + str(index) + '/'
-#        pyncdict['ntwkStoreDir'] = self.train_root + 'train' + str(index) + '/' + 'networks/'
-#        pyncdict['datadir'] = self.train_root + "cache-data-" + str(index) + '/'
-#        pyncdict['gpuid'] = str(gpuid)
-#
-#        if not os.path.exists(pyncdict['wkdir']):
-#            os.mkdir(pyncdict['wkdir'])
-#
-#        if not os.path.exists(pyncdict['ntwkStoreDir']):
-#            os.mkdir(pyncdict['ntwkStoreDir'])
-#
-#        outputfile = pyncdict['wkdir']+'output.opt'
-#
-#        # Setup trainer
-#        tr = atr.anitrainer(pyncdict, layers)
-#
-#        # Train network
-#        tr.train_network(trdict['learningrate'],
-#                         trdict['lrannealing'],
-#                         trdict['lrconvergence'],
-#                         trdict['ST'],
-#                         outputfile,
-#                         trdict['printstep'])
