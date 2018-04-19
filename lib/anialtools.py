@@ -359,7 +359,7 @@ class alconformationalsampler():
             X = []
             ftme_t = 0.0
             for i in range(Ns):
-                x, S, t = activ.run_md(f, T, steps, n_steps, sig=sig)
+                x, S, t, stddev = activ.run_md(f, T, steps, n_steps, sig=sig)
                 X.append(x[np.newaxis,:,:])
                 ftme_t += t
             difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Ns)) + '\n')

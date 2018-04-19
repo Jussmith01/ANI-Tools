@@ -663,20 +663,20 @@ class MD_Sampler:
         #The path to the network
         self.net = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)            #Load the network
 
-    def run_md(self, f, T, steps, n_steps, sig=0.34, t=0.1, record=False):
+    def run_md(self, f, Tmax, steps, n_steps, sig=0.34, t=0.1, record=False):
         mol=read(f)
         mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
         f=os.path.basename(f)
-        dyn = Langevin(mol, t * units.fs, T * units.kB, 0.01)
-        MaxwellBoltzmannDistribution(mol, T * units.kB)
-        dyn.set_temperature(T * units.kB)
+        T_eff = float(random.randrange(5, Tmax, 1)) # random T (random velocities) from 0K to TK
+        dyn = Langevin(mol, t * units.fs, T_eff * units.kB, 0.01)
+        MaxwellBoltzmannDistribution(mol, T_eff * units.kB)
 #        steps=10000    #10000=1picosecond                             #Max number of steps to run
 #        n_steps = 1                                                #Number of steps to run for before checking the standard deviation
         hsdt_Na=[]
         evkcal=hdt.evtokcal
 
         if record==True:                                           #Records the coordinates at every step of the dynamics
-            fname = f + '_record_' + str(T) + 'K' + '.xyz'     #name of file to store coodinated in
+            fname = f + '_record_' + str(T_eff) + 'K' + '.xyz'     #name of file to store coodinated in
             def printenergy(name=fname, a=mol):
                 """Function to print the potential, kinetic and total energy."""
                 fil= open(name,'a')
@@ -705,14 +705,14 @@ class MD_Sampler:
             else:                                           #if the standard deviation is low, run dynamics, then check it again
                 tot_steps = tot_steps + n_steps
                 dyn.run(n_steps)
-                s=mol.calc.stddev
-                stddev =  evkcal*s
+                stddev =  evkcal*mol.calc.stddev
                 e=mol.get_potential_energy()
-        return c, s, tot_steps*t
+        return c, s, tot_steps*t, stddev
 
 
     def run_md_list(self):
-        T = random.randrange(0, 20, 1)                              # random T (random velocities) from 0K to 20K
+        #T = random.randrange(0, 20, 1)                              # random T (random velocities) from 0K to 20K
+        T=20.0
         for f in self.files:
             self.run_md(f, T)
 

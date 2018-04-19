@@ -26,9 +26,9 @@ def interval(v,S):
 #saef   = wkdir + "sae_linfit.dat"
 #data_root = '/home/jsmith48/scratch/auto_al/h5files/'
 
-wkdir = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/rxn_train_it2/'
+wkdir = '/home/jsmith48/scratch/ccsd_extrapolation/learning_cases/delta_DZ_retrain/delta_dft_1/'
 saef   = wkdir + "sae_linfit.dat"
-data_root = '/home/jsmith48/scratch/auto_rxn_al/h5files/'
+data_root = '/home/jsmith48/scratch/ccsd_extrapolation/h5files_holdout_split/trainset/delta/'
 
 h5files = [data_root+f for f in os.listdir(data_root) if '.h5' in f]
 
@@ -78,8 +78,8 @@ for f,fn in enumerate(h5files):
         #E = data['extrapE']
         E = data['energies']
         #F = data['mp2_tz_grad']
-        F = data['forces']
-        #F = 0.0*X	
+        #F = data['forces']
+        F = 0.0*X	
 
         S = data['species']
 
