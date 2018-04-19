@@ -409,7 +409,7 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
                 #'ERRMS': hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey]['Erani'][idx], self.fdata[ntkey][tskey]['rdft'][idx]),
                 }
 
-    def determine_min_error_by_sigma(self, ntkey, minerror, percent, tskeys = ['GDB07to09'], figsize=(15.0, 12.0), labelx='', labely='', xymax=(10.0,10.0), storepath='', cmap=mpl.cm.viridis):
+    def determine_min_error_by_sigma(self, ntkey, minerror, percent, tskeys = ['GDB07to09'], figsize=(15.0, 12.0), labelx='', labely='', xyrange=(0.0,10.0,0.0,10.0), storepath='', cmap=mpl.cm.viridis):
         #tskeys = self.fdata[ntkey].keys()
 
         mpl.rcParams['xtick.labelsize'] = 18
@@ -431,6 +431,8 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         Sani = Sani / np.sqrt(Na)
         Eerr = np.max(np.abs(Eani - Edft),axis=0) / np.sqrt(Na)
         #Eerr = np.abs(Eani - Edft) / np.sqrt(Na)
+        print(Eerr)
+        print(Sani)
 
         Nmax = np.where(Eerr > minerror)[0].size
 
@@ -438,11 +440,12 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         dS = Sani.max()
         step = 0
         while perc < percent:
-            S = dS - step*0.001
+            S = dS - step*0.0001
             Sidx = np.where(Sani > S)
             step += 1
 
-            perc = 100.0*np.where(Eerr[Sidx] > minerror)[0].size/Nmax
+            perc = 100.0*np.where(Eerr[Sidx] > minerror)[0].size/(Nmax+1.0E-7)
+            print(step,perc,S,Sidx)
         print('Step:',step, 'S:',S,'  -Perc over:',perc,'Total',100.0*Sidx[0].size/Edft.size)
 
         #dE = np.max(Eerr, axis=0) / np.sqrt(Na)
@@ -459,7 +462,7 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         poa = np.where(Eerr[So] > minerror)[0].size / So[0].size
         pob = np.where(Eerr > minerror)[0].size / Eerr.size
 
-        ax.text(0.57*xymax[0], 0.04*xymax[1], 'Total Captured:    ' + str(int(100.0 * Sidx[0].size / Edft.size)) + '%' +
+        ax.text(0.57*(xyrange[1]), 0.04*(xyrange[3]), 'Total Captured:    ' + str(int(100.0 * Sidx[0].size / Edft.size)) + '%' +
                 '\n' + r'($\mathrm{\mathcal{E}>}$'+ "{:.1f}".format(minerror) + r'$\mathrm{) \forall \rho}$:           ' + str(int(100*pob)) + '%' +
                 '\n' + r'($\mathrm{\mathcal{E}>}$'+ "{:.1f}".format(minerror) + r'$\mathrm{) \forall \rho >}$' + "{:.2f}".format(S) + ': ' + str(int(100*poa)) + '%' +
                 '\n' + r'$\mathrm{E}$ RMSE ($\mathrm{\rho>}$'+ "{:.2f}".format(S) + r'$\mathrm{)}$: ' + "{:.1f}".format(hdt.calculaterootmeansqrerror(Eanimu[So],Edft[So])) +
@@ -473,7 +476,7 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         ax.set_ylabel(labely, fontsize=24)
 
         # Plot 2d Histogram
-        bins = ax.hist2d(Sani, Eerr, bins=400, norm=LogNorm(), range=[[0.0, xymax[0]], [0.0, xymax[1]]], cmap=cmap)
+        bins = ax.hist2d(Sani, Eerr, bins=400, norm=LogNorm(), range=[[xyrange[0], xyrange[1]], [xyrange[2], xyrange[3]]], cmap=cmap)
 
         # Build color bar
         # cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])

@@ -353,6 +353,7 @@ class alconformationalsampler():
         Ns=tsparams['n_samples']
         n_steps=tsparams['n_steps']
         steps=tsparams['steps']
+        min_steps=tsparams['min_steps']
         difo = open(self.ldtdir + self.datdir + '/info_tssampler-'+str(tid)+'.nfo', 'w')
         for f in TS_infiles:
             X = []
@@ -360,16 +361,18 @@ class alconformationalsampler():
             fail_count=0
             sumsig = 0.0
             for i in range(Ns):
-                x, S, t, stddev,fail = activ.run_md(f, T, steps, n_steps, sig=sig)
+                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, min_steps, sig=sig)
                 sumsig += stddev
                 if fail:
-                    difo.write('Job '+str(i)+' failed in '+"{:.2f}".format(t)+' Sigma: ' + "{:.2f}".format(stddev) + '\n')
+                    #print('Job '+str(i)+' failed in '+"{:.2f}".format(t)+' Sigma: ' + "{:.2f}".format(stddev)+' SetTemp: '+"{:.2f}".format(temp))
+                    difo.write('Job '+str(i)+' failed in '+"{:.2f}".format(t)+'fs Sigma: ' + "{:.2f}".format(stddev) + ' SetTemp: ' + "{:.2f}".format(temp) + '\n')
                     X.append(x[np.newaxis,:,:])
                     fail_count+=1
                 else:
+                    #print('Job '+str(i)+' succeeded.')
                     difo.write('Job '+str(i)+' succeeded.\n')
                 ftme_t += t
-            #print('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Ns)) + ' failed ' + str(fail_count) + '/' + str(Ns) + '\n')
+            print('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Ns)) + ' failed ' + str(fail_count) + '/' + str(Ns) + '\n')
             difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Ns)) + ' failed ' + str(fail_count) + '/' + str(Ns) + ' MeanSig: ' + "{:.2f}".format(sumsig / float(Ns)) + '\n')
             X = np.vstack(X)
             hdt.writexyzfile(self.cdir + os.path.basename(f), X, S)
@@ -498,7 +501,7 @@ class alaniensembletrainer():
                         #tv_split = np.array_split(split[i], 2)
 
                         ## Store Validation
-                        if split[i].size > 0:
+                        if np.array(split[i]).size > 0:
                             X_v = np.array(X[split[i]], order='C', dtype=np.float32)
                             F_v = np.array(F[split[i]], order='C', dtype=np.float32)
                             E_v = np.array(E[split[i]], order='C', dtype=np.float64)

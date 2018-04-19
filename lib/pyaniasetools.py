@@ -663,11 +663,12 @@ class MD_Sampler:
         #The path to the network
         self.net = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)            #Load the network
 
-    def run_md(self, f, Tmax, steps, n_steps, sig=0.34, t=0.1, record=False):
+    def run_md(self, f, Tmax, steps, n_steps, min_steps=0, sig=0.34, t=0.1, record=False):
         mol=read(f)
         mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
         f=os.path.basename(f)
         T_eff = float(random.randrange(5, Tmax, 1)) # random T (random velocities) from 0K to TK
+        minstep_eff = float(random.randrange(1, min_steps, 1)) # random T (random velocities) from 0K to TK
         dyn = Langevin(mol, t * units.fs, T_eff * units.kB, 0.01)
         MaxwellBoltzmannDistribution(mol, T_eff * units.kB)
 #        steps=10000    #10000=1picosecond                             #Max number of steps to run
@@ -694,7 +695,7 @@ class MD_Sampler:
         tot_steps = 0
         failed = False
         while (tot_steps <= steps):
-            if stddev > sig:                                #Check the standard deviation
+            if stddev > sig and tot_steps > minstep_eff:                                #Check the standard deviation
                 self.hstd.append(stddev)
                 c = mol.get_positions()
                 s = mol.get_chemical_symbols()
@@ -712,7 +713,7 @@ class MD_Sampler:
                 s = mol.get_chemical_symbols()
                 e=mol.get_potential_energy()
                 #print("{0:.2f}".format(tot_steps*t),':',"{0:.2f}".format(stddev),':',"{0:.2f}".format(evkcal*e))
-        return c, s, tot_steps*t, stddev, failed
+        return c, s, tot_steps*t, stddev, failed, T_eff
 
 
     def run_md_list(self):
