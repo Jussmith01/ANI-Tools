@@ -41,10 +41,13 @@ fpatoms = ['C', 'N', 'O']
 jtime = "0-2:30"
 
 #---- Training Parameters ----
-GPU = [0,2,3,4,5] # GPU IDs
+GPU = [2,3,4,5] # GPU IDs
 
 M   = 0.35 # Max error per atom in kcal/mol
-Nnets = 5 # networks in ensemble
+Nnets = 8 # networks in ensemble
+Nblock = 8 # Number of blocks in split
+Nbvald = 1 # number of valid blocks
+Nbtest = 2 # number of test blocks
 aevsize = 384
 
 wkdir = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/ANI-1x-RXN-0000/'
@@ -136,7 +139,7 @@ for i in N:
 
     ## Train the ensemble ##
     aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
-    aet.build_training_cache()
+    aet.build_strided_training_cache(Nblock,Nbvald,Nbtest)
     aet.train_ensemble(GPU)
 
     ldtdir = root_dir  # local data directories
