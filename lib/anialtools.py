@@ -590,7 +590,7 @@ class alaniensembletrainer():
                         set_idx = np.concatenate([Didx[(Ntrain+bid+nid) % Nblocks] for bid in range(Nvalid)])
                         if set_idx.size != 0:
                             data_count[nid, 2] += set_idx.size
-                            th5.store_data(data['path'], coordinates=X[set_idx], forces=F[set_idx], energies=E[set_idx], species=list(S))
+                            th5.store_data(f+data['path'], coordinates=X[set_idx], forces=F[set_idx], energies=E[set_idx], species=list(S))
 
         # Save train and valid meta file and cleanup testh5
         for t, v, th in zip(cachet, cachev, testh5):
