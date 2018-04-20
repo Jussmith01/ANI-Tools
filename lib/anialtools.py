@@ -12,7 +12,7 @@ import numpy as np
 from time import sleep
 import subprocess
 import random
-import pyssh
+#import pyssh
 import re
 import os
 
@@ -532,22 +532,82 @@ class alaniensembletrainer():
             v.makemetadata()
             th.cleanup()
 
-    def build_strided_training_cache(self):
+    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest):
         h5d = self.h5dir
 
+        store_dir = self.train_root + "cache-data-"
+        N = self.Nn
+        Ntrain = Nblocks - Nvalid - Ntest
+
+
+        for i in range(N):
+            if not os.path.exists(store_dir + str(i)):
+                os.mkdir(store_dir + str(i))
+
+            if os.path.exists(store_dir + str(i) + '/../testset/testset' + str(i) + '.h5'):
+                os.remove(store_dir + str(i) + '/../testset/testset' + str(i) + '.h5')
+
+            if not os.path.exists(store_dir + str(i) + '/../testset'):
+                os.mkdir(store_dir + str(i) + '/../testset')
+
+        cachet = [cg('_train', self.netdict['saefile'], store_dir + str(r) + '/', False) for r in range(N)]
+        cachev = [cg('_valid', self.netdict['saefile'], store_dir + str(r) + '/', False) for r in range(N)]
+        testh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/testset' + str(r) + '.h5') for r in range(N)]
+
         E = []
+        data_count = np.zeros((N,3),dtype=np.int32)
         for f in self.h5file:
             adl = pyt.anidataloader(h5d+f)
             for data in adl:
-                print(data['path'])
-                E.append(data['energies'])
-        return np.concatenate(E)
+                #print(data['path'],data['energies'].size)
+
+                S = data['species']
+
+                if data['energies'].size > 0 and (set(S).issubset(['C', 'N', 'O', 'H'])):
+
+                    X = np.array(data['coordinates'], order='C',dtype=np.float32)
+                    E = np.array(data['energies'], order='C',dtype=np.float64)
+                    F = np.array(data['forces'], order='C',dtype=np.float32)
+
+                    # Build random split index
+                    ridx = np.random.randint(0,Nblocks,size=E.size)
+                    Didx = [np.argsort(ridx)[np.where(ridx == i)] for i in range(Nblocks)]
+
+                    # Build training cache
+                    for nid,cache in enumerate(cachet):
+                        set_idx = np.concatenate([Didx[(bid+nid) % Nblocks] for bid in range(Ntrain)])
+                        if set_idx.size != 0:
+                            data_count[nid,0]+=set_idx.size
+                            cache.insertdata(X[set_idx], F[set_idx], E[set_idx], list(S))
+
+                    for nid,cache in enumerate(cachev):
+                        set_idx = np.concatenate([Didx[(Ntrain+bid+nid) % Nblocks] for bid in range(Nvalid)])
+                        if set_idx.size != 0:
+                            data_count[nid, 1] += set_idx.size
+                            cache.insertdata(X[set_idx], F[set_idx], E[set_idx], list(S))
+
+                    for nid,th5 in enumerate(testh5):
+                        set_idx = np.concatenate([Didx[(Ntrain+bid+nid) % Nblocks] for bid in range(Nvalid)])
+                        if set_idx.size != 0:
+                            data_count[nid, 2] += set_idx.size
+                            th5.store_data(data['path'], coordinates=X[set_idx], forces=F[set_idx], energies=E[set_idx], species=list(S))
+
+        # Save train and valid meta file and cleanup testh5
+        for t, v, th in zip(cachet, cachev, testh5):
+            t.makemetadata()
+            v.makemetadata()
+            th.cleanup()
+        print(' Train ',' Valid ',' Test ')
+        print(data_count)
+        print('Training set built.')
 
     def train_ensemble(self, GPUList):
         print('Training Ensemble...')
         processes = []
-        for i,id in enumerate(GPUList):
-            processes.append(Process(target=self.train_network, args=(id, i)))
+        indicies = np.array_split(np.arange(self.Nn), len(GPUList))
+
+        for gpu,idc in enumerate(indicies):
+            processes.append(Process(target=self.train_network, args=(gpu, idc)))
             processes[-1].start()
             #self.train_network(pyncdict, trdict, layers, id, i)
 
@@ -555,25 +615,26 @@ class alaniensembletrainer():
             p.join()
         print('Training Complete.')
 
-    def train_network(self, gpuid, index):
-        pyncdict = dict()
-        pyncdict['wkdir'] = self.train_root + 'train' + str(index) + '/'
-        pyncdict['ntwkStoreDir'] = self.train_root + 'train' + str(index) + '/' + 'networks/'
-        pyncdict['datadir'] = self.train_root + "cache-data-" + str(index) + '/'
-        pyncdict['gpuid'] = str(gpuid)
+    def train_network(self, gpuid, indicies):
+        for index in indicies:
+            pyncdict = dict()
+            pyncdict['wkdir'] = self.train_root + 'train' + str(index) + '/'
+            pyncdict['ntwkStoreDir'] = self.train_root + 'train' + str(index) + '/' + 'networks/'
+            pyncdict['datadir'] = self.train_root + "cache-data-" + str(index) + '/'
+            pyncdict['gpuid'] = str(gpuid)
 
-        if not os.path.exists(pyncdict['wkdir']):
-            os.mkdir(pyncdict['wkdir'])
+            if not os.path.exists(pyncdict['wkdir']):
+                os.mkdir(pyncdict['wkdir'])
 
-        if not os.path.exists(pyncdict['ntwkStoreDir']):
-            os.mkdir(pyncdict['ntwkStoreDir'])
+            if not os.path.exists(pyncdict['ntwkStoreDir']):
+                os.mkdir(pyncdict['ntwkStoreDir'])
 
-        outputfile = pyncdict['wkdir']+'output.opt'
+            outputfile = pyncdict['wkdir']+'output.opt'
 
-        shutil.copy2(self.netdict['iptfile'], pyncdict['wkdir'])
-        shutil.copy2(self.netdict['cnstfile'], pyncdict['wkdir'])
-        shutil.copy2(self.netdict['saefile'], pyncdict['wkdir'])
+            shutil.copy2(self.netdict['iptfile'], pyncdict['wkdir'])
+            shutil.copy2(self.netdict['cnstfile'], pyncdict['wkdir'])
+            shutil.copy2(self.netdict['saefile'], pyncdict['wkdir'])
 
-        command = "cd " + pyncdict['wkdir'] + " && HDAtomNNP-Trainer -i inputtrain.ipt -d " + pyncdict['datadir'] + " -p 1.0 -m -g " + pyncdict['gpuid'] + " > output.opt"
-        proc = subprocess.Popen (command, shell=True)
-        proc.communicate()
+            command = "cd " + pyncdict['wkdir'] + " && HDAtomNNP-Trainer -i inputtrain.ipt -d " + pyncdict['datadir'] + " -p 1.0 -m -g " + pyncdict['gpuid'] + " > output.opt"
+            proc = subprocess.Popen (command, shell=True)
+            proc.communicate()
