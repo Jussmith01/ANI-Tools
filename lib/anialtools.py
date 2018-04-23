@@ -397,6 +397,9 @@ class alaniensembletrainer():
         self.Nn = Nn
         self.netdict = netdict
 
+        if not os.path.isfile(self.netdict['saefile']):
+            self.sae_linear_fitting()
+
         self.h5file = [f for f in os.listdir(self.h5dir) if f.rsplit('.',1)[1] == 'h5']
         #print(self.h5dir,self.h5file)
 
@@ -475,7 +478,7 @@ class alaniensembletrainer():
 
                 Ndc += E.size
 
-                if (set(S).issubset(['C', 'N', 'O', 'H'])):
+                if (set(S).issubset(self.netdict['atomtyp'])):
                 #if (set(S).issubset(['C', 'N', 'O', 'H', 'F', 'S', 'Cl'])):
 
                     # Random mask
@@ -538,7 +541,53 @@ class alaniensembletrainer():
             th.cleanup()
 
     def sae_linear_fitting(self):
-        
+        from sklearn import linear_model
+        print('Performing linear fitting...')
+
+        datadir = self.h5dir
+        sae_out = self.netdict['saefile']
+
+        smap = dict()
+        for i,Z in enumerate(self.netdict['atomtyp']):
+            smap.update({Z:i})
+
+        Na = len(smap)
+        files = os.listdir(datadir)
+
+        X = []
+        y = []
+        for f in files[0:20]:
+            print(f)
+            adl = pyt.anidataloader(datadir + f)
+            for data in adl:
+                # print(data['path'])
+                S = data['species']
+                E = data['energies']
+                unique, counts = np.unique(S, return_counts=True)
+                x = np.zeros(Na, dtype=np.float64)
+                for u, c in zip(unique, counts):
+                    x[smap[u]] = c
+
+                for e in E:
+                    X.append(np.array(x))
+                    y.append(np.array(e))
+
+        X = np.array(X)
+        y = np.array(y).reshape(-1, 1)
+
+        lin = linear_model.LinearRegression(fit_intercept=False)
+        lin.fit(X, y)
+
+        coef = lin.coef_
+        print(coef)
+
+        sae = open(sae_out, 'w')
+        for i, c in enumerate(coef[0]):
+            sae.write(next(key for key, value in smap.items() if value == i) + ',' + str(i) + '=' + str(c) + '\n')
+
+        sae.close()
+
+        print('Linear fitting complete.')
 
     def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True,forces=True):
         h5d = self.h5dir
@@ -574,7 +623,7 @@ class alaniensembletrainer():
 
                 S = data['species']
 
-                if data['energies'].size > 0 and (set(S).issubset(['C', 'N', 'O', 'H'])):
+                if data['energies'].size > 0 and (set(S).issubset(self.netdict['atomtyp'])):
 
                     X = np.array(data['coordinates'], order='C',dtype=np.float32)
                     E = np.array(data['energies'], order='C',dtype=np.float64)
@@ -658,3 +707,5 @@ class alaniensembletrainer():
             command = "cd " + pyncdict['wkdir'] + " && HDAtomNNP-Trainer -i inputtrain.ipt -d " + pyncdict['datadir'] + " -p 1.0 -m -g " + pyncdict['gpuid'] + " > output.opt"
             proc = subprocess.Popen (command, shell=True)
             proc.communicate()
+
+            print('  -Model',index,'complete')
