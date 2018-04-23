@@ -400,7 +400,7 @@ class alaniensembletrainer():
         self.h5file = [f for f in os.listdir(self.h5dir) if f.rsplit('.',1)[1] == 'h5']
         #print(self.h5dir,self.h5file)
 
-    def build_training_cache(self):
+    def build_training_cache(self,forces=True):
         store_dir = self.train_root + "cache-data-"
         N = self.Nn
 
@@ -440,8 +440,13 @@ class alaniensembletrainer():
                 # Extract the data
                 X = data['coordinates']
                 E = data['energies']
-                F = data['forces']
                 S = data['species']
+
+                # 0.0 forces if key doesnt exist
+                if forces:
+                    F = data['forces']
+                else:
+                    F = 0.0*X
 
                 Fmt.append(np.max(np.linalg.norm(F, axis=2), axis=1))
                 Emt.append(E)
@@ -532,7 +537,10 @@ class alaniensembletrainer():
             v.makemetadata()
             th.cleanup()
 
-    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True):
+    def sae_linear_fitting(self):
+        
+
+    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True,forces=True):
         h5d = self.h5dir
 
         store_dir = self.train_root + "cache-data-"
@@ -570,7 +578,11 @@ class alaniensembletrainer():
 
                     X = np.array(data['coordinates'], order='C',dtype=np.float32)
                     E = np.array(data['energies'], order='C',dtype=np.float64)
-                    F = np.array(data['forces'], order='C',dtype=np.float32)
+
+                    if forces:
+                        F = np.array(data['forces'], order='C', dtype=np.float32)
+                    else:
+                        F = 0.0*X
 
                     # Build random split index
                     ridx = np.random.randint(0,Nblocks,size=E.size)
