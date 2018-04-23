@@ -46,8 +46,8 @@ GPU = [2,3,4,5] # GPU IDs
 M   = 0.35 # Max error per atom in kcal/mol
 Nnets = 8 # networks in ensemble
 Nblock = 8 # Number of blocks in split
-Nbvald = 1 # number of valid blocks
-Nbtest = 2 # number of test blocks
+Nbvald = 2 # number of valid blocks
+Nbtest = 1 # number of test blocks
 aevsize = 384
 
 wkdir = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/ANI-1x-RXN-0000/'
@@ -74,7 +74,7 @@ mdsparams = {'N': 2, # trajectories to run
              'sig': M,
              }
 
-tsparams = {'T':100, # trajectories to run
+tsparams = {'T':200, # trajectories to run
              'n_samples' : 200,
              'n_steps': 10,
              'steps': 1500,
@@ -119,7 +119,7 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             }
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [1,2,3,4,5,6,7,8,9,10]
+N = [21,22,23,24,25,26,27,28,29,30]
 #N = [0]
 
 for i in N:
@@ -139,7 +139,7 @@ for i in N:
 
     ## Train the ensemble ##
     aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
-    aet.build_strided_training_cache(Nblock,Nbvald,Nbtest)
+    aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
     aet.train_ensemble(GPU)
 
     ldtdir = root_dir  # local data directories

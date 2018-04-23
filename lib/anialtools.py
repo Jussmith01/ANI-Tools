@@ -532,7 +532,7 @@ class alaniensembletrainer():
             v.makemetadata()
             th.cleanup()
 
-    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest):
+    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True):
         h5d = self.h5dir
 
         store_dir = self.train_root + "cache-data-"
@@ -544,15 +544,18 @@ class alaniensembletrainer():
             if not os.path.exists(store_dir + str(i)):
                 os.mkdir(store_dir + str(i))
 
-            if os.path.exists(store_dir + str(i) + '/../testset/testset' + str(i) + '.h5'):
-                os.remove(store_dir + str(i) + '/../testset/testset' + str(i) + '.h5')
+            if build_test:
+                if os.path.exists(store_dir + str(i) + '/../testset/testset' + str(i) + '.h5'):
+                    os.remove(store_dir + str(i) + '/../testset/testset' + str(i) + '.h5')
 
-            if not os.path.exists(store_dir + str(i) + '/../testset'):
-                os.mkdir(store_dir + str(i) + '/../testset')
+                if not os.path.exists(store_dir + str(i) + '/../testset'):
+                    os.mkdir(store_dir + str(i) + '/../testset')
 
         cachet = [cg('_train', self.netdict['saefile'], store_dir + str(r) + '/', False) for r in range(N)]
         cachev = [cg('_valid', self.netdict['saefile'], store_dir + str(r) + '/', False) for r in range(N)]
-        testh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/testset' + str(r) + '.h5') for r in range(N)]
+
+        if build_test:
+            testh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/testset' + str(r) + '.h5') for r in range(N)]
 
         E = []
         data_count = np.zeros((N,3),dtype=np.int32)
@@ -586,17 +589,22 @@ class alaniensembletrainer():
                             data_count[nid, 1] += set_idx.size
                             cache.insertdata(X[set_idx], F[set_idx], E[set_idx], list(S))
 
-                    for nid,th5 in enumerate(testh5):
-                        set_idx = np.concatenate([Didx[(Ntrain+bid+nid) % Nblocks] for bid in range(Nvalid)])
-                        if set_idx.size != 0:
-                            data_count[nid, 2] += set_idx.size
-                            th5.store_data(f+data['path'], coordinates=X[set_idx], forces=F[set_idx], energies=E[set_idx], species=list(S))
+                    if build_test: 
+                        for nid,th5 in enumerate(testh5):
+                            set_idx = np.concatenate([Didx[(Ntrain+bid+nid) % Nblocks] for bid in range(Nvalid)])
+                            if set_idx.size != 0:
+                                data_count[nid, 2] += set_idx.size
+                                th5.store_data(f+data['path'], coordinates=X[set_idx], forces=F[set_idx], energies=E[set_idx], species=list(S))
 
         # Save train and valid meta file and cleanup testh5
-        for t, v, th in zip(cachet, cachev, testh5):
+        for t, v in zip(cachet, cachev):
             t.makemetadata()
             v.makemetadata()
-            th.cleanup()
+
+        if build_test:
+            for th in testh5:
+                th.cleanup()
+
         print(' Train ',' Valid ',' Test ')
         print(data_count)
         print('Training set built.')
@@ -607,7 +615,7 @@ class alaniensembletrainer():
         indicies = np.array_split(np.arange(self.Nn), len(GPUList))
 
         for gpu,idc in enumerate(indicies):
-            processes.append(Process(target=self.train_network, args=(gpu, idc)))
+            processes.append(Process(target=self.train_network, args=(GPUList[gpu], idc)))
             processes[-1].start()
             #self.train_network(pyncdict, trdict, layers, id, i)
 

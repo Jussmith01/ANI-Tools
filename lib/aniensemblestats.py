@@ -57,7 +57,7 @@ def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0
     axins = zoomed_inset_axes(ax, 2., loc=2)  # zoom = 6
 
     sz = 0.1*(Fmx-Fmn)
-    axins.hist2d(Xa, Xp, bins=50, range=[[Xa.mean() - sz, Xa.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz]], norm=LogNorm(), cmap=cmap)
+    axins.hist2d(Xp, Xa, bins=50, range=[[Xa.mean() - sz, Xa.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz]], norm=LogNorm(), cmap=cmap)
     axins.plot([Xp.mean() - sz, Xp.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz], '--', c='r', linewidth=3)
 
     # sub region of the original image
