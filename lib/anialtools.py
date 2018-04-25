@@ -596,6 +596,10 @@ class alaniensembletrainer():
         N = self.Nn
         Ntrain = Nblocks - Nvalid - Ntest
 
+        if Nblocks % N != 0:
+            raise ValueError('Error: number of networks must evenly divide number of blocks.')
+
+        Nstride = Nblocks/N
 
         for i in range(N):
             if not os.path.exists(store_dir + str(i)):
@@ -639,20 +643,20 @@ class alaniensembletrainer():
 
                     # Build training cache
                     for nid,cache in enumerate(cachet):
-                        set_idx = np.concatenate([Didx[(bid+nid) % Nblocks] for bid in range(Ntrain)])
+                        set_idx = np.concatenate([Didx[((bid+nid*int(Nstride)) % Nblocks)] for bid in range(Ntrain)])
                         if set_idx.size != 0:
                             data_count[nid,0]+=set_idx.size
                             cache.insertdata(X[set_idx], F[set_idx], E[set_idx], list(S))
 
                     for nid,cache in enumerate(cachev):
-                        set_idx = np.concatenate([Didx[(Ntrain+bid+nid) % Nblocks] for bid in range(Nvalid)])
+                        set_idx = np.concatenate([Didx[(Ntrain+bid+nid*int(Nstride)) % Nblocks] for bid in range(Nvalid)])
                         if set_idx.size != 0:
                             data_count[nid, 1] += set_idx.size
                             cache.insertdata(X[set_idx], F[set_idx], E[set_idx], list(S))
 
-                    if build_test: 
+                    if build_test:
                         for nid,th5 in enumerate(testh5):
-                            set_idx = np.concatenate([Didx[(Ntrain+bid+nid) % Nblocks] for bid in range(Nvalid)])
+                            set_idx = np.concatenate([Didx[(Ntrain+Nvalid+bid+nid*int(Nstride)) % Nblocks] for bid in range(Ntest)])
                             if set_idx.size != 0:
                                 data_count[nid, 2] += set_idx.size
                                 th5.store_data(f+data['path'], coordinates=X[set_idx], forces=F[set_idx], energies=E[set_idx], species=list(S))
