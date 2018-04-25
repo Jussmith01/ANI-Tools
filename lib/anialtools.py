@@ -713,3 +713,41 @@ class alaniensembletrainer():
             proc.communicate()
 
             print('  -Model',index,'complete')
+
+    def get_train_stats(self):
+        #rerr = re.compile('EPOCH\s+?(\d+?)\n[\s\S]+?E \(kcal\/mol\)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\n\s+?dE \(kcal\/mol\)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\n[\s\S]+?Current best:\s+?(\d+?)\n[\s\S]+?Learning Rate:\s+?(\S+?)\n[\s\S]+?TotalEpoch:\s+([\s\S]+?)\n')
+        #rerr = re.compile('EPOCH\s+?(\d+?)\s+?\n[\s\S]+?E \(kcal\/mol\)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\n\s+?dE \(kcal\/mol\)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\n')
+        rblk = re.compile('=+?\n([\s\S]+?=+?\n[\s\S]+?(?:=|Deleting))')
+        repo = re.compile('EPOCH\s+?(\d+?)\s+?\n')
+        rerr = re.compile('\s+?(\S+?\s+?\(\S+?)\s+?((?:\d|inf)\S*?)\s+?((?:\d|inf)\S*?)\s+?((?:\d|inf)\S*?)\n')
+        rtme = re.compile('TotalEpoch:\s+?(\d+?)\s+?dy\.\s+?(\d+?)\s+?hr\.\s+?(\d+?)\s+?mn\.\s+?(\d+?\.\d+?)\s+?sc\.')
+
+        allnets = []
+        for index in range(self.Nn):
+            print('reading:',self.train_root + 'train' + str(index) + '/' + 'output.opt')
+            optfile = open(self.train_root + 'train' + str(index) + '/' + 'output.opt','r').read()
+            matches = re.findall(rblk, optfile)
+
+            run = dict({'EPOCH':[],'RTIME':[],'ERROR':dict()})
+            for i,data in enumerate(matches):
+                run['EPOCH'].append(int(re.search(repo,data).group(1)))
+
+                m = re.search(rtme, data)
+                run['RTIME'].append(86400.0*float(m.group(1))+
+                                     3600.0*float(m.group(2))+
+                                       60.0*float(m.group(3))+
+                                            float(m.group(4)))
+
+
+                err = re.findall(rerr,data)
+                for e in err:
+                    if e[0] in run['ERROR']:
+                        run['ERROR'][e[0]].append(np.array([float(e[1]),float(e[2]),float(e[3])],dtype=np.float64))
+                    else:
+                        run['ERROR'].update({e[0]:[np.array([float(e[1]), float(e[2]), float(e[3])], dtype=np.float64)]})
+
+            for key in run['ERROR'].keys():
+                run['ERROR'][key] = np.vstack(run['ERROR'][key])
+
+            allnets.append(run)
+        return allnets
