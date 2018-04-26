@@ -721,7 +721,7 @@ class alaniensembletrainer():
             shutil.copy2(self.netdict['cnstfile'], pyncdict['wkdir'])
             shutil.copy2(self.netdict['saefile'], pyncdict['wkdir'])
 
-            command = "cd " + pyncdict['wkdir'] + " && HDAtomNNP-Trainer -i inputtrain.ipt -d " + pyncdict['datadir'] + " -p 1.0 -m -g " + pyncdict['gpuid'] + " > output.opt"
+            command = "cd " + pyncdict['wkdir'] + " && HDAtomNNP-Trainer -i " + self.netdict['iptfile'].rsplit("/",1)[1] + " -d " + pyncdict['datadir'] + " -p 1.0 -m -g " + pyncdict['gpuid'] + " > output.opt"
             proc = subprocess.Popen (command, shell=True)
             proc.communicate()
 
