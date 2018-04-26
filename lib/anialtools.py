@@ -397,9 +397,6 @@ class alaniensembletrainer():
         self.Nn = Nn
         self.netdict = netdict
 
-        if not os.path.isfile(self.netdict['saefile']):
-            self.sae_linear_fitting()
-
         self.h5file = [f for f in os.listdir(self.h5dir) if f.rsplit('.',1)[1] == 'h5']
         #print(self.h5dir,self.h5file)
 
@@ -540,7 +537,7 @@ class alaniensembletrainer():
             v.makemetadata()
             th.cleanup()
 
-    def sae_linear_fitting(self):
+    def sae_linear_fitting(self, Ekey='energies', energy_unit=1.0, Eax0sum=False):
         from sklearn import linear_model
         print('Performing linear fitting...')
 
@@ -562,15 +559,22 @@ class alaniensembletrainer():
             for data in adl:
                 # print(data['path'])
                 S = data['species']
-                E = data['energies']
-                unique, counts = np.unique(S, return_counts=True)
-                x = np.zeros(Na, dtype=np.float64)
-                for u, c in zip(unique, counts):
-                    x[smap[u]] = c
 
-                for e in E:
-                    X.append(np.array(x))
-                    y.append(np.array(e))
+                if data[Ekey].size > 0:
+                    if Eax0sum:
+                        E = energy_unit*np.sum(np.array(data[Ekey], order='C', dtype=np.float64), axis=1)
+                    else:
+                        E = energy_unit*np.array(data[Ekey], order='C', dtype=np.float64)
+
+                    S = S[0:data['coordinates'].shape[1]]
+                    unique, counts = np.unique(S, return_counts=True)
+                    x = np.zeros(Na, dtype=np.float64)
+                    for u, c in zip(unique, counts):
+                        x[smap[u]] = c
+
+                    for e in E:
+                        X.append(np.array(x))
+                        y.append(np.array(e))
 
         X = np.array(X)
         y = np.array(y).reshape(-1, 1)
@@ -589,7 +593,10 @@ class alaniensembletrainer():
 
         print('Linear fitting complete.')
 
-    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True,forces=True):
+    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False):
+        if not os.path.isfile(self.netdict['saefile']):
+            self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
+
         h5d = self.h5dir
 
         store_dir = self.train_root + "cache-data-"
@@ -627,13 +634,19 @@ class alaniensembletrainer():
 
                 S = data['species']
 
-                if data['energies'].size > 0 and (set(S).issubset(self.netdict['atomtyp'])):
+                if data[Ekey].size > 0 and (set(S).issubset(self.netdict['atomtyp'])):
 
                     X = np.array(data['coordinates'], order='C',dtype=np.float32)
-                    E = np.array(data['energies'], order='C',dtype=np.float64)
 
-                    if forces:
-                        F = np.array(data['forces'], order='C', dtype=np.float32)
+                    if Eax0sum:
+                        E = energy_unit*np.sum(np.array(data[Ekey], order='C', dtype=np.float64),axis=1)
+                    else:
+                        E = energy_unit*np.array(data[Ekey], order='C',dtype=np.float64)
+
+                    if forces and not grad:
+                        F = forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
+                    if forces and grad:
+                        F = -forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
                     else:
                         F = 0.0*X
 
