@@ -3,6 +3,7 @@ import time
 import random
 from random import randint
 import os
+import re
 
 # Numpy
 import numpy as np
@@ -664,7 +665,7 @@ class MD_Sampler:
         self.net = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)            #Load the network
 
 
-    def getfreqdata(self, fi, Na, mn=0):                           #Gets the normal modes and frequencies from the gaussian log file
+    def get_mode(self, fi, Na, mn=0):                           #Gets the normal modes and frequencies from the gaussian log file
         fil= open(fi,'r')
         mod=[]
 
@@ -686,7 +687,7 @@ class MD_Sampler:
         for i in range(len(mod)):
             for j in range(Na):
                 mod[i][j]=mod[i][j].split( )
-            mod[i]=np.array(mod[i])
+            mod[i]=np.array(mod[i], dtype=np.float32)
             mod[i]=np.reshape(mod[i], (Na, 3))
         return mod[mn]
 
@@ -695,10 +696,12 @@ class MD_Sampler:
 
 
     def run_md(self, f, Tmax, steps, n_steps, nmfile=None, perc=0, min_steps=0, sig=0.34, t=0.1, nm=0, record=False):
-        X, S, Na, cm = hdn.readxyz2(f)
+        X, S, Na, cm = hdt.readxyz2(f)
+        
         if nmfile != None:
-            mode=self.getfreqdata(nmfile, Na, mn=nm)
+            mode=self.get_mode(nmfile, Na, mn=nm)
             X=X+mode*perc
+        X=X[0]
         mol=Atoms(symbols=S, positions=X)
         mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
         f=os.path.basename(f)
