@@ -81,6 +81,9 @@ tsparams = {'T':200, # trajectories to run
              'min_steps': 300,
              'sig' : M,
              'tsfiles': ['/home/jsmith48/scratch/auto_rxn_al/rxns/'],
+             'nmfile':None,                          #path to gaussian log file containing the data
+             'nm':0,                                 #id of normal mode
+             'perc':0,                               #Move the molecules initial coordiantes along the mode by this amount. Negative numbers are ok. 
              }
 
 dmrparams = {#'mdselect' : [(400,0),(60,2),(40,3),(5,4)],

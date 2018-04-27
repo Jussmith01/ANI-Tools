@@ -330,7 +330,7 @@ class alconformationalsampler():
 	
         proc = []
         for i,g in enumerate(gpus2):
-            proc.append(Process(target=self.TS_sampling, args=(i, TS_infiles[i], tsparams, g)))
+            proc.append(Process(target=self.TS_sampling, args=(i, TS_infiles[i], tsparams, nmfile, nm, g)))
         print('Running MD Sampling...')
         for p in proc:
             p.start()
@@ -354,6 +354,9 @@ class alconformationalsampler():
         n_steps=tsparams['n_steps']
         steps=tsparams['steps']
         min_steps=tsparams['min_steps']
+        nmfile=tsparam['nmfile']
+        nm=tsparam['nm']
+        perc=tsparam['perc']
         difo = open(self.ldtdir + self.datdir + '/info_tssampler-'+str(tid)+'.nfo', 'w')
         for f in TS_infiles:
             X = []
@@ -361,7 +364,7 @@ class alconformationalsampler():
             fail_count=0
             sumsig = 0.0
             for i in range(Ns):
-                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, min_steps, sig=sig)
+                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, nmfile=nmfile, perc=perc, min_steps=min_steps, sig=sig, nm=nm)
                 sumsig += stddev
                 if fail:
                     #print('Job '+str(i)+' failed in '+"{:.2f}".format(t)+' Sigma: ' + "{:.2f}".format(stddev)+' SetTemp: '+"{:.2f}".format(temp))
