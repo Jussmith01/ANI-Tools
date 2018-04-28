@@ -156,7 +156,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
         self.Nn = networks['nts']
 
     '''Stat generator'''
-    def generate_stats(self, maxe = sys.float_info.max):
+    def generate_stats(self, maxe=sys.float_info.max, forces=True):
         self.tdata = dict()
         for key in self.tsfiles.keys():
             print('   -Working on',key,'...')
@@ -175,46 +175,49 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                 for i, data in enumerate(adl):
                     #if i > 5:
                     #    break
+                    if data['coordinates'].shape[0] != 0:
+                        Eani, Fani, sig = self.compute_energyandforce_conformations(data['coordinates'], data['species'], ensemble=False)
 
-                    Eani, Fani, sig = self.compute_energyandforce_conformations(data['coordinates'], data['species'], ensemble=False)
+                        midx = np.where( data['energies'] - data['energies'].min() < maxe/hdt.hatokcal )[0]
 
-                    midx = np.where( data['energies'] - data['energies'].min() < maxe/hdt.hatokcal )[0]
+                        Eani = Eani[:,midx]
+                        Edft = data['energies'][midx]
+                        Fani = Fani[:,midx,:,:]
+                        if forces:
+                            Fdft = data['forces'][midx]
+                        else:
+                            Fdft = 0.0*data['coordinates']
 
-                    Eani = Eani[:,midx]
-                    Edft = data['energies'][midx]
-                    Fani = Fani[:,midx,:,:]
-                    Fdft = data['forces'][midx]
+                        #Eestd = np.std(Eani, axis=0)/np.sqrt(len(data['species']))
+                        Eeani = np.mean(Eani, axis=0).reshape(1,-1)
+                        Feani = np.mean(Fani, axis=0).flatten().reshape(1,-1)
 
-                    #Eestd = np.std(Eani, axis=0)/np.sqrt(len(data['species']))
-                    Eeani = np.mean(Eani, axis=0).reshape(1,-1)
-                    Feani = np.mean(Fani, axis=0).flatten().reshape(1,-1)
+                        Fani = Fani.reshape(Fani.shape[0],-1)
 
-                    Fani = Fani.reshape(Fani.shape[0],-1)
+                        Eani = np.vstack([Eani, Eeani])
+                        Fani = np.vstack([Fani, Feani])
 
-                    Eani = np.vstack([Eani, Eeani])
-                    Fani = np.vstack([Fani, Feani])
+                        Edft = hdt.hatokcal * Edft
+                        Fdft = hdt.hatokcal * Fdft.flatten()
 
-                    Edft = hdt.hatokcal * Edft
-                    Fdft = hdt.hatokcal * Fdft.flatten()
+                        cdata['Na'].append(np.full(Edft.size, len(data['species']), dtype=np.int32))
 
-                    cdata['Na'].append(np.full(Edft.size, len(data['species']), dtype=np.int32))
+                        cdata['Eani'].append(Eani)
+                        cdata['Edft'].append(Edft)
 
-                    cdata['Eani'].append(Eani)
-                    cdata['Edft'].append(Edft)
+                        cdata['Fani'].append(Fani)
+                        cdata['Fdft'].append(Fdft)
 
-                    cdata['Fani'].append(Fani)
-                    cdata['Fdft'].append(Fdft)
+                        #cdata['Frmse'].append(np.sqrt(np.mean((Fani-Fdft).reshape(Fdft.shape[0], -1)**2, axis=1)))
+                        #cdata['Frmae'].append(np.sqrt(np.mean(np.abs((Fani - Fdft).reshape(Fdft.shape[0], -1)), axis=1)))
 
-                    #cdata['Frmse'].append(np.sqrt(np.mean((Fani-Fdft).reshape(Fdft.shape[0], -1)**2, axis=1)))
-                    #cdata['Frmae'].append(np.sqrt(np.mean(np.abs((Fani - Fdft).reshape(Fdft.shape[0], -1)), axis=1)))
+                        cdata['dEani'].append(hdt.calculateKdmat(self.Nn+1, Eani))
+                        cdata['dEdft'].append(hdt.calculatedmat(Edft))
 
-                    cdata['dEani'].append(hdt.calculateKdmat(self.Nn+1, Eani))
-                    cdata['dEdft'].append(hdt.calculatedmat(Edft))
+                        cdata['Na2'].append(np.full(cdata['dEdft'][-1].size, len(data['species']), dtype=np.int32))
 
-                    cdata['Na2'].append(np.full(cdata['dEdft'][-1].size, len(data['species']), dtype=np.int32))
-
-                    #cdata['Erani'].append(Eani-Eani.min())
-                    #cdata['Erdft'].append(Edft-Edft.min())
+                        #cdata['Erani'].append(Eani-Eani.min())
+                        #cdata['Erdft'].append(Edft-Edft.min())
 
             for k in ['Na', 'Na2', 'Edft', 'Fdft', 'dEdft']:
                 cdata[k] = np.concatenate(cdata[k])
@@ -272,6 +275,7 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
             tskeys = tslist
 
         Nn = self.fdata[ntkey][list(tskeys)[0]]['Eani'].shape[0]-1
+        #print(self.fdata[ntkey][tskey]['Fdft'].shape)
         return {names[0]: hdt.calculatemeanabserror(
                     np.concatenate([self.fdata[ntkey][tskey]['Eani'][Nn,:] for tskey in tskeys]),
                     np.concatenate([self.fdata[ntkey][tskey]['Edft'] for tskey in tskeys])),
@@ -430,9 +434,10 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         #print(Sani.shape, Na.shape)
         Sani = Sani / np.sqrt(Na)
         Eerr = np.max(np.abs(Eani - Edft),axis=0) / np.sqrt(Na)
+        #Eerr = np.abs(np.mean(Eani,axis=0) - Edft) / np.sqrt(Na)
         #Eerr = np.abs(Eani - Edft) / np.sqrt(Na)
-        print(Eerr)
-        print(Sani)
+        #print(Eerr)
+        #print(Sani)
 
         Nmax = np.where(Eerr > minerror)[0].size
 
@@ -440,13 +445,13 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         dS = Sani.max()
         step = 0
         while perc < percent:
-            S = dS - step*0.0001
+            S = dS - step*0.001
             Sidx = np.where(Sani > S)
             step += 1
 
             perc = 100.0*np.where(Eerr[Sidx] > minerror)[0].size/(Nmax+1.0E-7)
-            print(step,perc,S,Sidx)
-        print('Step:',step, 'S:',S,'  -Perc over:',perc,'Total',100.0*Sidx[0].size/Edft.size)
+            #print(step,perc,S,Sidx)
+        #print('Step:',step, 'S:',S,'  -Perc over:',perc,'Total',100.0*Sidx[0].size/Edft.size)
 
         #dE = np.max(Eerr, axis=0) / np.sqrt(Na)
         #print(Eerr.shape,Eerr)
@@ -491,8 +496,6 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
             pp.close()
         else:
             plt.show()
-
-
     def get_net_keys(self):
         return self.fdata.keys()
 
@@ -512,7 +515,6 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         pd.set_option('expand_frame_repr', False)
         edat = pd.DataFrame(errors).transpose()
         return edat
-
 
     def get_totalmeanerror_table(self):
         errors = dict()
@@ -541,6 +543,10 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
     def generate_correlation_plot(self, ntkey, tskey, prop1, prop2, figsize=[13,10],cmap=mpl.cm.viridis):
         Nn = self.fdata[ntkey][tskey][prop1].shape[0]-1
         plot_corr_dist(self.fdata[ntkey][tskey][prop1][Nn,:], self.fdata[ntkey][tskey][prop2], True, figsize, cmap)
+
+    def generate_rmserror(self, ntkey, tskey, prop1, prop2):
+        Nn = self.fdata[ntkey][tskey][prop1].shape[0]-1
+        return hdt.calculaterootmeansqrerror(self.fdata[ntkey][tskey][prop1][Nn,:], self.fdata[ntkey][tskey][prop2])
 
     def generate_violin_distribution(self, tskey, maxstd=0.34):
         import seaborn as sns

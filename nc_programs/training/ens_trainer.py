@@ -12,9 +12,9 @@ netdict = {'iptfile' :nwdir+'inputtrain.ipt',
            'cnstfile':nwdir+'rHCNO-4.6R_16-3.1A_a4-8.params',
            'saefile' :nwdir+'sae_linfit.dat',}
 
-GPU = [0]
+GPU = [0,1,2,3]
 
 ## Train the ensemble ##
 aet = alt.alaniensembletrainer(nwdir, netdict, h5dir, Nnets)
-aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
+aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,build_test=False,forces=True)
 aet.train_ensemble(GPU)

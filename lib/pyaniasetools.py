@@ -37,6 +37,7 @@ from ase.optimize.fire import FIRE as QuasiNewton
 from ase.optimize import BFGS, LBFGS, FIRE
 from ase.constraints import FixInternals
 from ase.io import read, write
+from ase.vibrations import Vibrations
 
 import math
 import copy
@@ -108,12 +109,14 @@ def getenergyconformerdata(Ncv ,datacv, dataa, datae, e):
 # --------------------------------------
 class anicrossvalidationconformer(object):
     ''' Constructor '''
-    def __init__(self,cnstfile,saefile,nnfprefix,Nnet,gpuid=0, sinet=False):
+    def __init__(self,cnstfile,saefile,nnfprefix,Nnet,gpuid=[0], sinet=False):
         # Number of networks
         self.Nn = Nnet
 
+        gpua = [gpuid[int(np.floor(i/(Nnet/len(gpuid))))] for i in range(self.Nn)]
+
         # Construct pyNeuroChem class
-        self.ncl = [pync.conformers(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
+        self.ncl = [pync.conformers(cnstfile, saefile, nnfprefix+str(i)+'/networks/', gpua[i], sinet) for i in range(self.Nn)]
         #self.ncl = [pync.conformers(cnstfile, saefile, nnfprefix+str(1)+'/networks/', gpuid, sinet) for i in range(self.Nn)]
 
     ''' Compute the std. dev. from cross validation networks on a set of comformers '''
@@ -143,7 +146,7 @@ class anicrossvalidationconformer(object):
         energy = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
         forces = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
         for i,nc in enumerate(self.ncl):
-            nc.setConformers(confs=X,types=list(S))
+            nc.setConformers(confs=np.array(X,dtype=np.float32),types=list(S))
             energy[i] = nc.energy().copy()
             forces[i] = nc.force().copy()
 
@@ -166,11 +169,12 @@ class anicrossvalidationconformer(object):
             for i, nc in enumerate(self.ncl):
                 nc.setConformers(confs=x,types=list(S))
                 E = nc.energy().copy()
-                print(E.shape,energies.shape)
-                energies[i,j+shift:j+shift+E.shape[0]] = E
+                #print(E.shape,x.shape,energies.shape,shift)
+                energies[i,shift:shift+E.shape[0]] = E
             shift += x.shape[0]
 
-        return hdt.hatokcal*np.mean(energies,axis=0)#, charges
+        sigma = hdt.hatokcal * np.std(energies,axis=0) / np.sqrt(float(len(S)))
+        return hdt.hatokcal*np.mean(energies,axis=0),sigma#, charges
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_energy_conformations_net(self,X,S,netid):
@@ -599,25 +603,27 @@ class diverseconformers():
         return ids
 
 class ani_tortion_scanner():
-    def __init__(self,ens):
+    def __init__(self,ens,fmax=0.000514221):
         self.ens = ens
+        self.fmax=fmax
 
     def opt(self, rdkmol, atid, logger='optlog.out'):
         Na = rdkmol.GetNumAtoms()
         X, S = __convert_rdkitmol_to_nparr__(rdkmol)
-        mol=Atoms(symbols=S, positions=X)
-        mol.set_calculator(ANIENS(self.ens))                #Set the ANI Ensemble as the calculator
-        phi_restraint=mol.get_dihedral(atid)
+        atm=Atoms(symbols=S, positions=X)
+        atm.set_calculator(ANIENS(self.ens))                #Set the ANI Ensemble as the calculator
+        phi_restraint=atm.get_dihedral(atid)
         phi_fix = [phi_restraint, atid]
         c = FixInternals(dihedrals=[phi_fix], epsilon=1.e-9)
-        mol.set_constraint(c)
-        dyn = BFGS(mol, logfile=logger)                               #Choose optimization algorith
-        dyn.run(fmax=0.000514221, steps=1000, )         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
-        e=mol.get_potential_energy()*hdt.evtokcal
-        phi_value=mol.get_dihedral(atid)*180./np.pi
-        X = mol.get_positions()
-        print('Phi value (degrees), energy (kcal/mol)= ', "{0:.2f}".format(phi_value), "{0:.2f}".format(e))
-        return phi_value, e, X
+        atm.set_constraint(c)
+        dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorith
+        dyn.run(fmax=self.fmax, steps=1000)         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
+        e=atm.get_potential_energy()*hdt.evtokcal
+        s=atm.calc.stddev*hdt.evtokcal
+        phi_value=atm.get_dihedral(atid)*180./np.pi
+        #X = mol.get_positions()
+        #print('Phi value (degrees), energy (kcal/mol)= ', "{0:.2f}".format(phi_value), "{0:.2f}".format(e), "{0:.2f}".format(s))
+        return phi_value, e, s, atm
 
     def rot(self, mol, atid, phi):
         
@@ -628,9 +634,9 @@ class ani_tortion_scanner():
         
         c=mol.GetConformer()
         Chem.rdMolTransforms.SetDihedralDeg(c, a0, a1, a2, a3, phi)
-        phi_value, e, X = self.opt(mol, atid)
+        phi_value, e, s, atm = self.opt(mol, atid)
         #print(X)
-        return phi_value, e, X
+        return phi_value, e, s, atm
 
     def scan_tortion(self, mol, atid, inc, stps):
         mol_copy = copy.deepcopy(mol)
@@ -642,15 +648,63 @@ class ani_tortion_scanner():
 
         c=mol_copy.GetConformer()
         init = Chem.rdMolTransforms.GetDihedralDeg(c, a0, a1, a2, a3)
-        print(init)
 
         ang = []
+        sig = []
         enr = []
         for i in range(stps):
-            phi, e, X = self.rot(mol, atid, init - i*inc)
+            phi, e, s, atm = self.rot(mol_copy, atid, init + i*inc)
             ang.append(phi)
             enr.append(e)
-        return np.array(ang), np.array(enr)
+            sig.append(s)
+        return np.array(ang), np.array(enr), np.array(sig)
+
+    def get_modes(self,atm):
+        new_target = open(os.devnull, "w")
+        old_target, sys.stdout = sys.stdout, new_target
+        atm.set_calculator(ANIENS(self.ens))
+        vib = Vibrations(atm, nfree=2)
+        vib.run()
+        freq = vib.get_frequencies()
+        modes = np.stack(vib.get_mode(i) for i in range(freq.size))
+        vib.clean()
+        sys.stdout = old_target
+        return modes
+
+    def tortional_sampler(self, mol, Ngen, atid, inc, stps, sigma=0.15,rng=0.3):
+        mol_copy = copy.deepcopy(mol)
+
+        a0=int(atid[0])
+        a1=int(atid[1])
+        a2=int(atid[2])
+        a3=int(atid[3])
+
+        c=mol_copy.GetConformer()
+        init = Chem.rdMolTransforms.GetDihedralDeg(c, a0, a1, a2, a3)
+
+        ang = []
+        sig = []
+        enr = []
+        X = []
+        for i in range(stps):
+            phi, e, s, atm = self.rot(mol_copy, atid, init + i*inc)
+            if s > sigma:
+                ang.append(phi)
+                sig.append(s)
+                enr.append(e)
+                modes = self.get_modes(atm)
+                x = atm.get_positions()
+                for i in range(Ngen):
+                    r = x+np.sum(np.random.uniform(-rng,rng,modes.shape[0])[:,np.newaxis,np.newaxis]*modes,axis=0)
+                    X.append(r)
+        X_null, S = __convert_rdkitmol_to_nparr__(mol)
+        return np.stack(X), S, np.array(ang), np.array(enr), np.array(sig) 
+
+class aniTortionSampler:
+    def __init__(self, storedir, smilefile, sigma, rng):
+        self.storedir=storedir
+        self.smiledir=smiledir
+
 
 class MD_Sampler:
     def __init__(self, files, cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False):
