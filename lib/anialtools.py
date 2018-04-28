@@ -382,6 +382,15 @@ class alconformationalsampler():
         del activ
         difo.close()
 
+    def run_sampling_dhl(self, dhlparams, gpuid):
+        activ = aat.aniTortionSampler(self.netdict,
+                                      self.cdir,
+                                      dhlparams['smilefile'],
+                                      dhlparams['Nmol'],
+                                      dhlparams['Nsamp'],
+                                      dhlparams['sig'],
+                                      gpuid)
+        activ.generate_dhl_samples()
 
 
 def interval(v,S):

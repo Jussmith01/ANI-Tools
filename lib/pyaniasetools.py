@@ -715,7 +715,7 @@ class aniTortionSampler:
         np.random.shuffle(smiles)
         self.smiles = smiles[0:Nmol*10]
 
-        self.ens = ensemblemolecule(netdict['cns'], netdict['sae'], netdict['nnf'], netdict['Nn'], gpuid)
+        self.ens = ensemblemolecule(netdict['cnstfile'], netdict['saefile'], netdict['nnfprefix'], netdict['num_nets'], gpuid)
 
     def get_mol_set(self, smiles, atsym=['H', 'C', 'N', 'O'], MaxNa=20):
         mols = []

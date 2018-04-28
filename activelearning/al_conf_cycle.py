@@ -12,10 +12,12 @@ hostname = "comet.sdsc.xsede.org"
 username = "jsmith48"
 #password = open(passfile,'r').read().strip()
 
-root_dir = '/home/jsmith48/scratch/auto_rxn_al/'
+root_dir = '/home/jsmith48/scratch/auto_dhl_al/'
+#root_dir = '/home/jsmith48/scratch/auto_rxn_al/'
 
 swkdir = '/home/jsmith48/scratch/auto_al_cycles/'# server working directory
-datdir = 'ANI-1x-RXN-0000.00'
+datdir = 'ANI-1x-DHL-0000.00'
+#datdir = 'ANI-1x-RXN-0000.00'
 #datdir = 'ANI-AL-0808.0302.04'
 
 h5stor = root_dir + 'h5files/'# h5store location
@@ -38,7 +40,7 @@ mae = 'module load gnu/4.9.2\n' +\
 #fpatoms = ['C', 'N', 'O', 'S', 'F', 'Cl']
 fpatoms = ['C', 'N', 'O']
 
-jtime = "0-2:30"
+jtime = "0-6:00"
 
 #---- Training Parameters ----
 GPU = [2,3,4,5] # GPU IDs
@@ -50,10 +52,16 @@ Nbvald = 2 # number of valid blocks
 Nbtest = 1 # number of test blocks
 aevsize = 384
 
-wkdir = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/ANI-1x-RXN-0000/'
-iptfile = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/inputtrain.ipt'
-saefile = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/sae_linfit.dat'
-cstfile = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/rHCNO-4.6R_16-3.1A_a4-8.params'
+#wkdir = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/ANI-1x-RXN-0000/'
+#iptfile = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/inputtrain.ipt'
+#saefile = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/sae_linfit.dat'
+#cstfile = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/rHCNO-4.6R_16-3.1A_a4-8.params'
+
+wkdir = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/ANI-1x-RXN-0000/'
+iptfile = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/inputtrain.ipt'
+saefile = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/sae_linfit.dat'
+cstfile = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/rHCNO-4.6R_16-3.1A_a4-8.params'
+
 #-----------0---------
 
 # Training varibles
@@ -84,6 +92,12 @@ tsparams = {'T':200, # trajectories to run
              'nmfile':None,                          #path to gaussian log file containing the data
              'nm':0,                                 #id of normal mode
              'perc':0,                               #Move the molecules initial coordiantes along the mode by this amount. Negative numbers are ok. 
+             }
+
+dhparams = { 'Nmol': 100,
+             'Nsamp': 5,
+             'sig' : M,
+             'smilefile': '/home/jsmith48/scratch/Drug_moles_raw/chembl_22_clean_1576904_sorted_std_final.smi',
              }
 
 dmrparams = {#'mdselect' : [(400,0),(60,2),(40,3),(5,4)],
@@ -122,11 +136,13 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             }
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [31,32,33,34,35,36,37,38,39,40]
+N = [0,1,2,3,4,5,6,7,8,9]
 #N = [0]
 
 for i in N:
-    netdir = wkdir+'ANI-1x-RXN-0000.00'+str(i).zfill(2)+'/'
+    #netdir = wkdir+'ANI-1x-RXN-0000.00'+str(i).zfill(2)+'/'
+    netdir = wkdir + 'ANI-1x-DHL-0000.00' + str(i).zfill(2) + '/'
+
     if not os.path.exists(netdir):
         os.mkdir(netdir)
 
@@ -155,7 +171,8 @@ for i in N:
     #acs.run_sampling_dimer(dmrparams, GPU)
     #acs.run_sampling_nms(nmsparams, GPU)
     #acs.run_sampling_md(mdsparams, perc=0.5, gpus=GPU)
-    acs.run_sampling_TS(tsparams, gpus=[2])
+    #acs.run_sampling_TS(tsparams, gpus=[2])
+    acs.run_sampling_dhl(dhparams,2)
     #acs.run_sampling_TS(tsparams, gpus=GPU)
     #exit(0)
 
