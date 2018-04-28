@@ -702,10 +702,72 @@ class ani_tortion_scanner():
         return np.stack(X), S, np.array(ang), np.array(enr), np.array(sig) 
 
 class aniTortionSampler:
-    def __init__(self, storedir, smilefile, sigma, rng):
-        self.storedir=storedir
-        self.smiledir=smiledir
+    def __init__(self, storedir, smilefile, Nmol, Nsamp, sigma, rng, gpuid=0):
+        self.storedir = storedir
+        self.Nmol = Nmol
+        self.Nsamp = Nsamp
+        self.sigma = sigma
+        self.rng = rng
 
+        smiles = [sm for sm in np.loadtxt(smiledir, dtype=np.str)]
+        np.random.shuffle(smiles)
+        smiles = smiles[0:Nmol*10]
+
+        ens = ensemblemolecule(nets['cns'], nets['sae'], nets['nnf'], nets['Nn'], gpuid)
+
+    def get_mol_set(self, smiles, atsym=['H', 'C', 'N', 'O'], MaxNa=20):
+        mols = []
+        for i, sm in enumerate(smiles):
+            mol = Chem.MolFromSmiles(sm)
+            if mol:
+                mol = Chem.AddHs(mol)
+                AllChem.EmbedMolecule(mol)
+                fc = 0
+                for a in mol.GetAtoms():
+                    fc += a.GetFormalCharge()
+
+                X, S = pya.__convert_rdkitmol_to_nparr__(mol)
+                if set(S).issubset(atsym) and len(S) < MaxN and fc == 0:
+                    dec = Descriptors.NumRotatableBonds(mol)
+                    if dec > 0:
+                        mols.append(mol)
+        return mols
+
+    def get_index_set(self, smiles, Nmol, MaxNa):
+        mols = get_mol_set(smiles, MaxN=MaxNa)[0:Nmol]
+        dihedrals = []
+        for i, mol in enumerate(mols):
+            bonds = [[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds() if
+                     b.GetBondType() == Chem.rdchem.BondType.SINGLE and not b.IsInRing() and len(
+                         mol.GetAtomWithIdx(b.GetBeginAtomIdx()).GetNeighbors()) > 1 and len(
+                         mol.GetAtomWithIdx(b.GetEndAtomIdx()).GetNeighbors()) > 1]
+            if len(bonds) > 0:
+                AllChem.MMFFOptimizeMolecule(mol)
+                idx = np.random.randint(0, len(bonds))
+                bonds = bonds[idx]
+
+                for n in mol.GetAtomWithIdx(bonds[0]).GetNeighbors():
+                    if n.GetIdx() != bonds[1]:
+                        bond1 = n.GetIdx()
+
+                for n in mol.GetAtomWithIdx(bonds[1]).GetNeighbors():
+                    if n.GetIdx() != bonds[0]:
+                        bond4 = n.GetIdx()
+
+                dihedrals.append((mol, np.array([bond1, bonds[0], bonds[1], bond4])))
+        return dihedrals
+
+    def generate_dhl_samples(self,MaxNa=25,fmax=0.005,fpref='dhl_scan-'):
+        ts = pya.ani_tortion_scanner(self.ens, fmax)
+        dhls = get_index_set(smiles, self.Nmol, MaxNa=MaxNa)
+        for i, dhl in enumerate(dhls):
+            mol = dhl[0]
+            X, S, p, e, s = ts.tortional_sampler(mol, self.Nsamp, dhl[1], 10.0, 36, sigma=self.sigma)
+            if e.size > 0:
+                comment = Chem.MolToSmiles(dhl[0]) + '[' + ' '.join([str(j) for j in dhl[1]]) + ']'
+                comment = [comment for i in range(e.size * self.Nsamp)]
+
+                hdt.writexyzfilewc(self.storedir + fpref + str(i).zfill(3) + '.xyz', xyz=X, typ=S, cmt=comment)
 
 class MD_Sampler:
     def __init__(self, files, cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False):
