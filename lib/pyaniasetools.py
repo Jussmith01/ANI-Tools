@@ -3,6 +3,7 @@ import time
 import random
 from random import randint
 import os
+import re
 
 # Numpy
 import numpy as np
@@ -717,8 +718,45 @@ class MD_Sampler:
         #The path to the network
         self.net = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)            #Load the network
 
-    def run_md(self, f, Tmax, steps, n_steps, min_steps=0, sig=0.34, t=0.1, record=False):
-        mol=read(f)
+
+    def get_mode(self, fi, Na, mn=0):                           #Gets the normal modes and frequencies from the gaussian log file
+        fil= open(fi,'r')
+        mod=[]
+
+        string = fil.read()
+        regex="\s\d\d?\d?\s\s\s\s\s?([-]?\d*\.\d\d\s\s\s?[-]?\d\d?\.\d\d\s\s\s?[-]?\d\d?\.\d\d)"
+
+        regex2="\s\d\d?\d?\s\s\s\s\s?[-]?\d*\.\d\d\s\s\s?[-]?\d\d?\.\d\d\s\s\s?[-]?\d\d?\.\d\d\s\s\s\s?\s?([-]?\d*\.\d\d\s\s\s?[-]?\d\d?\.\d\d\s\s\s?[-]?\d\d?\.\d\d)"
+
+        regex3="\s\d\d?\d?\s\s\s\s\s?[-]?\d*\.\d\d\s\s\s?[-]?\d\d?\.\d\d\s\s\s?[-]?\d\d?\.\d\d\s\s\s\s?\s?[-]?\d*\.\d\d\s\s\s?[-]?\d\d?\.\d\d\s\s\s?[-]?\d\d?\.\d\d\s\s\s\s?\s?([-]?\d*\.\d\d\s\s\s?[-]?\d\d?\.\d\d\s\s\s?[-]?\d\d?\.\d\d)"
+
+        matches2 = re.findall(regex,string)
+        matches3 = re.findall(regex2,string)
+        matches4 = re.findall(regex3,string)
+        for i in range(Na):
+            mod.append(matches2[0+Na*i:Na*(i+1)])
+            mod.append(matches3[0+Na*i:Na*(i+1)])
+            mod.append(matches4[0+Na*i:Na*(i+1)])
+        mod=mod[:-6]
+        for i in range(len(mod)):
+            for j in range(Na):
+                mod[i][j]=mod[i][j].split( )
+            mod[i]=np.array(mod[i], dtype=np.float32)
+            mod[i]=np.reshape(mod[i], (Na, 3))
+        return mod[mn]
+
+
+
+
+
+    def run_md(self, f, Tmax, steps, n_steps, nmfile=None, perc=0, min_steps=0, sig=0.34, t=0.1, nm=0, record=False):
+        X, S, Na, cm = hdt.readxyz2(f)
+        
+        if nmfile != None:
+            mode=self.get_mode(nmfile, Na, mn=nm)
+            X=X+mode*perc
+        X=X[0]
+        mol=Atoms(symbols=S, positions=X)
         mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
         f=os.path.basename(f)
         T_eff = float(random.randrange(5, Tmax, 1)) # random T (random velocities) from 0K to TK

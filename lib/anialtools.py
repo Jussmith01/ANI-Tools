@@ -330,7 +330,7 @@ class alconformationalsampler():
 	
         proc = []
         for i,g in enumerate(gpus2):
-            proc.append(Process(target=self.TS_sampling, args=(i, TS_infiles[i], tsparams, g)))
+            proc.append(Process(target=self.TS_sampling, args=(i, TS_infiles[i], tsparams, nmfile, nm, g)))
         print('Running MD Sampling...')
         for p in proc:
             p.start()
@@ -354,6 +354,9 @@ class alconformationalsampler():
         n_steps=tsparams['n_steps']
         steps=tsparams['steps']
         min_steps=tsparams['min_steps']
+        nmfile=tsparam['nmfile']
+        nm=tsparam['nm']
+        perc=tsparam['perc']
         difo = open(self.ldtdir + self.datdir + '/info_tssampler-'+str(tid)+'.nfo', 'w')
         for f in TS_infiles:
             X = []
@@ -361,7 +364,7 @@ class alconformationalsampler():
             fail_count=0
             sumsig = 0.0
             for i in range(Ns):
-                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, min_steps, sig=sig)
+                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, nmfile=nmfile, perc=perc, min_steps=min_steps, sig=sig, nm=nm)
                 sumsig += stddev
                 if fail:
                     #print('Job '+str(i)+' failed in '+"{:.2f}".format(t)+' Sigma: ' + "{:.2f}".format(stddev)+' SetTemp: '+"{:.2f}".format(temp))
@@ -400,7 +403,7 @@ class alaniensembletrainer():
         self.h5file = [f for f in os.listdir(self.h5dir) if f.rsplit('.',1)[1] == 'h5']
         #print(self.h5dir,self.h5file)
 
-    def build_training_cache(self):
+    def build_training_cache(self,forces=True):
         store_dir = self.train_root + "cache-data-"
         N = self.Nn
 
@@ -440,8 +443,13 @@ class alaniensembletrainer():
                 # Extract the data
                 X = data['coordinates']
                 E = data['energies']
-                F = data['forces']
                 S = data['species']
+
+                # 0.0 forces if key doesnt exist
+                if forces:
+                    F = data['forces']
+                else:
+                    F = 0.0*X
 
                 Fmt.append(np.max(np.linalg.norm(F, axis=2), axis=1))
                 Emt.append(E)
@@ -470,7 +478,7 @@ class alaniensembletrainer():
 
                 Ndc += E.size
 
-                if (set(S).issubset(['C', 'N', 'O', 'H'])):
+                if (set(S).issubset(self.netdict['atomtyp'])):
                 #if (set(S).issubset(['C', 'N', 'O', 'H', 'F', 'S', 'Cl'])):
 
                     # Random mask
@@ -532,13 +540,76 @@ class alaniensembletrainer():
             v.makemetadata()
             th.cleanup()
 
-    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True):
+    def sae_linear_fitting(self, Ekey='energies', energy_unit=1.0, Eax0sum=False):
+        from sklearn import linear_model
+        print('Performing linear fitting...')
+
+        datadir = self.h5dir
+        sae_out = self.netdict['saefile']
+
+        smap = dict()
+        for i,Z in enumerate(self.netdict['atomtyp']):
+            smap.update({Z:i})
+
+        Na = len(smap)
+        files = os.listdir(datadir)
+
+        X = []
+        y = []
+        for f in files[0:20]:
+            print(f)
+            adl = pyt.anidataloader(datadir + f)
+            for data in adl:
+                # print(data['path'])
+                S = data['species']
+
+                if data[Ekey].size > 0:
+                    if Eax0sum:
+                        E = energy_unit*np.sum(np.array(data[Ekey], order='C', dtype=np.float64), axis=1)
+                    else:
+                        E = energy_unit*np.array(data[Ekey], order='C', dtype=np.float64)
+
+                    S = S[0:data['coordinates'].shape[1]]
+                    unique, counts = np.unique(S, return_counts=True)
+                    x = np.zeros(Na, dtype=np.float64)
+                    for u, c in zip(unique, counts):
+                        x[smap[u]] = c
+
+                    for e in E:
+                        X.append(np.array(x))
+                        y.append(np.array(e))
+
+        X = np.array(X)
+        y = np.array(y).reshape(-1, 1)
+
+        lin = linear_model.LinearRegression(fit_intercept=False)
+        lin.fit(X, y)
+
+        coef = lin.coef_
+        print(coef)
+
+        sae = open(sae_out, 'w')
+        for i, c in enumerate(coef[0]):
+            sae.write(next(key for key, value in smap.items() if value == i) + ',' + str(i) + '=' + str(c) + '\n')
+
+        sae.close()
+
+        print('Linear fitting complete.')
+
+    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False):
+        if not os.path.isfile(self.netdict['saefile']):
+            self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
+
         h5d = self.h5dir
 
         store_dir = self.train_root + "cache-data-"
         N = self.Nn
         Ntrain = Nblocks - Nvalid - Ntest
 
+        if Nblocks % N != 0:
+            raise ValueError('Error: number of networks must evenly divide number of blocks.')
+
+        Nstride = Nblocks/N
 
         for i in range(N):
             if not os.path.exists(store_dir + str(i)):
@@ -566,11 +637,21 @@ class alaniensembletrainer():
 
                 S = data['species']
 
-                if data['energies'].size > 0 and (set(S).issubset(['C', 'N', 'O', 'H'])):
+                if data[Ekey].size > 0 and (set(S).issubset(self.netdict['atomtyp'])):
 
                     X = np.array(data['coordinates'], order='C',dtype=np.float32)
-                    E = np.array(data['energies'], order='C',dtype=np.float64)
-                    F = np.array(data['forces'], order='C',dtype=np.float32)
+
+                    if Eax0sum:
+                        E = energy_unit*np.sum(np.array(data[Ekey], order='C', dtype=np.float64),axis=1)
+                    else:
+                        E = energy_unit*np.array(data[Ekey], order='C',dtype=np.float64)
+
+                    if forces and not grad:
+                        F = forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
+                    if forces and grad:
+                        F = -forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
+                    else:
+                        F = 0.0*X
 
                     # Build random split index
                     ridx = np.random.randint(0,Nblocks,size=E.size)
@@ -578,20 +659,20 @@ class alaniensembletrainer():
 
                     # Build training cache
                     for nid,cache in enumerate(cachet):
-                        set_idx = np.concatenate([Didx[(bid+nid) % Nblocks] for bid in range(Ntrain)])
+                        set_idx = np.concatenate([Didx[((bid+nid*int(Nstride)) % Nblocks)] for bid in range(Ntrain)])
                         if set_idx.size != 0:
                             data_count[nid,0]+=set_idx.size
                             cache.insertdata(X[set_idx], F[set_idx], E[set_idx], list(S))
 
                     for nid,cache in enumerate(cachev):
-                        set_idx = np.concatenate([Didx[(Ntrain+bid+nid) % Nblocks] for bid in range(Nvalid)])
+                        set_idx = np.concatenate([Didx[(Ntrain+bid+nid*int(Nstride)) % Nblocks] for bid in range(Nvalid)])
                         if set_idx.size != 0:
                             data_count[nid, 1] += set_idx.size
                             cache.insertdata(X[set_idx], F[set_idx], E[set_idx], list(S))
 
-                    if build_test: 
+                    if build_test:
                         for nid,th5 in enumerate(testh5):
-                            set_idx = np.concatenate([Didx[(Ntrain+bid+nid) % Nblocks] for bid in range(Nvalid)])
+                            set_idx = np.concatenate([Didx[(Ntrain+Nvalid+bid+nid*int(Nstride)) % Nblocks] for bid in range(Ntest)])
                             if set_idx.size != 0:
                                 data_count[nid, 2] += set_idx.size
                                 th5.store_data(f+data['path'], coordinates=X[set_idx], forces=F[set_idx], energies=E[set_idx], species=list(S))
@@ -643,6 +724,51 @@ class alaniensembletrainer():
             shutil.copy2(self.netdict['cnstfile'], pyncdict['wkdir'])
             shutil.copy2(self.netdict['saefile'], pyncdict['wkdir'])
 
-            command = "cd " + pyncdict['wkdir'] + " && HDAtomNNP-Trainer -i inputtrain.ipt -d " + pyncdict['datadir'] + " -p 1.0 -m -g " + pyncdict['gpuid'] + " > output.opt"
+            if "/" in self.netdict['iptfile']:
+                nfile = self.netdict['iptfile'].rsplit("/",1)[1]
+            else:
+                nfile = self.netdict['iptfile']
+
+            command = "cd " + pyncdict['wkdir'] + " && HDAtomNNP-Trainer -i " + nfile + " -d " + pyncdict['datadir'] + " -p 1.0 -m -g " + pyncdict['gpuid'] + " > output.opt"
             proc = subprocess.Popen (command, shell=True)
             proc.communicate()
+
+            print('  -Model',index,'complete')
+
+    def get_train_stats(self):
+        #rerr = re.compile('EPOCH\s+?(\d+?)\n[\s\S]+?E \(kcal\/mol\)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\n\s+?dE \(kcal\/mol\)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\n[\s\S]+?Current best:\s+?(\d+?)\n[\s\S]+?Learning Rate:\s+?(\S+?)\n[\s\S]+?TotalEpoch:\s+([\s\S]+?)\n')
+        #rerr = re.compile('EPOCH\s+?(\d+?)\s+?\n[\s\S]+?E \(kcal\/mol\)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\n\s+?dE \(kcal\/mol\)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\n')
+        rblk = re.compile('=+?\n([\s\S]+?=+?\n[\s\S]+?(?:=|Deleting))')
+        repo = re.compile('EPOCH\s+?(\d+?)\s+?\n')
+        rerr = re.compile('\s+?(\S+?\s+?\(\S+?)\s+?((?:\d|inf)\S*?)\s+?((?:\d|inf)\S*?)\s+?((?:\d|inf)\S*?)\n')
+        rtme = re.compile('TotalEpoch:\s+?(\d+?)\s+?dy\.\s+?(\d+?)\s+?hr\.\s+?(\d+?)\s+?mn\.\s+?(\d+?\.\d+?)\s+?sc\.')
+
+        allnets = []
+        for index in range(self.Nn):
+            print('reading:',self.train_root + 'train' + str(index) + '/' + 'output.opt')
+            optfile = open(self.train_root + 'train' + str(index) + '/' + 'output.opt','r').read()
+            matches = re.findall(rblk, optfile)
+
+            run = dict({'EPOCH':[],'RTIME':[],'ERROR':dict()})
+            for i,data in enumerate(matches):
+                run['EPOCH'].append(int(re.search(repo,data).group(1)))
+
+                m = re.search(rtme, data)
+                run['RTIME'].append(86400.0*float(m.group(1))+
+                                     3600.0*float(m.group(2))+
+                                       60.0*float(m.group(3))+
+                                            float(m.group(4)))
+
+
+                err = re.findall(rerr,data)
+                for e in err:
+                    if e[0] in run['ERROR']:
+                        run['ERROR'][e[0]].append(np.array([float(e[1]),float(e[2]),float(e[3])],dtype=np.float64))
+                    else:
+                        run['ERROR'].update({e[0]:[np.array([float(e[1]), float(e[2]), float(e[3])], dtype=np.float64)]})
+
+            for key in run['ERROR'].keys():
+                run['ERROR'][key] = np.vstack(run['ERROR'][key])
+
+            allnets.append(run)
+        return allnets
