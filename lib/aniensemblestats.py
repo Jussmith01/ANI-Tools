@@ -156,7 +156,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
         self.Nn = networks['nts']
 
     '''Stat generator'''
-    def generate_stats(self, maxe=sys.float_info.max, forces=True):
+    def generate_stats(self, maxe=sys.float_info.max, forces=True, grad=False):
         self.tdata = dict()
         for key in self.tsfiles.keys():
             print('   -Working on',key,'...')
@@ -184,7 +184,10 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                         Edft = data['energies'][midx]
                         Fani = Fani[:,midx,:,:]
                         if forces:
-                            Fdft = data['forces'][midx]
+                            if grad:
+                                Fdft = -data['forces'][midx]
+                            else:
+                                Fdft = data['forces'][midx]
                         else:
                             Fdft = 0.0*data['coordinates']
 

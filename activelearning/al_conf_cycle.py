@@ -47,8 +47,8 @@ GPU = [2,3,4,5] # GPU IDs
 
 M   = 0.35 # Max error per atom in kcal/mol
 Nnets = 8 # networks in ensemble
-Nblock = 8 # Number of blocks in split
-Nbvald = 2 # number of valid blocks
+Nblock = 16 # Number of blocks in split
+Nbvald = 3 # number of valid blocks
 Nbtest = 1 # number of test blocks
 aevsize = 384
 
@@ -57,7 +57,7 @@ aevsize = 384
 #saefile = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/sae_linfit.dat'
 #cstfile = '/home/jsmith48/scratch/auto_rxn_al/modelrxn/rHCNO-4.6R_16-3.1A_a4-8.params'
 
-wkdir = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/ANI-1x-RXN-0000/'
+wkdir = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/ANI-1x-DHL-0000/'
 iptfile = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/inputtrain.ipt'
 saefile = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/sae_linfit.dat'
 cstfile = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/rHCNO-4.6R_16-3.1A_a4-8.params'
@@ -94,9 +94,11 @@ tsparams = {'T':200, # trajectories to run
              'perc':0,                               #Move the molecules initial coordiantes along the mode by this amount. Negative numbers are ok. 
              }
 
-dhparams = { 'Nmol': 100,
-             'Nsamp': 5,
-             'sig' : M,
+dhparams = { 'Nmol': 200,
+             'Nsamp': 4,
+             'sig' : 0.1,
+             'rng' : 0.25,
+             'MaxNa' : 20,
              'smilefile': '/home/jsmith48/scratch/Drug_moles_raw/chembl_22_clean_1576904_sorted_std_final.smi',
              }
 
@@ -136,7 +138,7 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             }
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [0,1,2,3,4,5,6,7,8,9]
+N = [11,12]
 #N = [0]
 
 for i in N:
@@ -154,12 +156,17 @@ for i in N:
                'nnfprefix': netdir+'train',
                'aevsize': aevsize,
                'num_nets': Nnets,
+               'atomtyp' : ['H','C','N','O']
                }
 
     ## Train the ensemble ##
-    aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
-    aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
-    aet.train_ensemble(GPU)
+    if i > 11:
+        aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
+        aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
+        aet.train_ensemble(GPU)
+
+    if i == 12:
+        exit(0)
 
     ldtdir = root_dir  # local data directories
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
@@ -172,7 +179,7 @@ for i in N:
     #acs.run_sampling_nms(nmsparams, GPU)
     #acs.run_sampling_md(mdsparams, perc=0.5, gpus=GPU)
     #acs.run_sampling_TS(tsparams, gpus=[2])
-    acs.run_sampling_dhl(dhparams,2)
+    acs.run_sampling_dhl(dhparams, gpus=GPU+GPU)
     #acs.run_sampling_TS(tsparams, gpus=GPU)
     #exit(0)
 

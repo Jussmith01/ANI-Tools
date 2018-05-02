@@ -660,13 +660,13 @@ class ani_tortion_scanner():
             sig.append(s)
         return np.array(ang), np.array(enr), np.array(sig)
 
-    def get_modes(self,atm):
-        for f in [f for f in os.listdir(".") if 'vib.' in f and '.pckl' in f]:
+    def get_modes(self,atm,freqname="vib."):
+        for f in [f for f in os.listdir(".") if freqname in f and  '.pckl' in f]:
             os.remove(f)
         new_target = open(os.devnull, "w")
         old_target, sys.stdout = sys.stdout, new_target
         atm.set_calculator(ANIENS(self.ens))
-        vib = Vibrations(atm, nfree=2)
+        vib = Vibrations(atm, nfree=2, name=freqname)
         vib.run()
         freq = vib.get_frequencies()
         modes = np.stack(vib.get_mode(i) for i in range(freq.size))
@@ -674,7 +674,7 @@ class ani_tortion_scanner():
         sys.stdout = old_target
         return modes
 
-    def tortional_sampler(self, mol, Ngen, atid, inc, stps, sigma=0.15,rng=0.3):
+    def tortional_sampler(self, mol, Ngen, atid, inc, stps, sigma=0.15,rng=0.3, freqname="vib."):
         mol_copy = copy.deepcopy(mol)
 
         a0=int(atid[0])
@@ -695,25 +695,28 @@ class ani_tortion_scanner():
                 ang.append(phi)
                 sig.append(s)
                 enr.append(e)
-                modes = self.get_modes(atm)
+                modes = self.get_modes(atm, freqname=freqname)
                 x = atm.get_positions()
                 for i in range(Ngen):
                     r = x+np.sum(np.random.uniform(-rng,rng,modes.shape[0])[:,np.newaxis,np.newaxis]*modes,axis=0)
                     X.append(r)
         X_null, S = __convert_rdkitmol_to_nparr__(mol)
-        return np.stack(X), S, np.array(ang), np.array(enr), np.array(sig) 
-
+        if len(enr) > 0:
+            return np.stack(X), S, np.array(ang), np.array(enr), np.array(sig) 
+        else:
+            return np.empty((0,len(S),2),dtype=np.float32), S, np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64)
 class aniTortionSampler:
-    def __init__(self, netdict, storedir, smilefile, Nmol, Nsamp, sigma, rng, gpuid=0):
+    def __init__(self, netdict, storedir, smilefile, Nmol, Nsamp, sigma, rng, seed, gpuid=0):
         self.storedir = storedir
         self.Nmol = Nmol
         self.Nsamp = Nsamp
         self.sigma = sigma
         self.rng = rng
 
-        smiles = [sm for sm in np.loadtxt(smilefile, dtype=np.str)]
+        smiles = [sm for sm in np.loadtxt(smilefile, dtype=np.str,comments=None)]
+        np.random.seed(seed)
         np.random.shuffle(smiles)
-        self.smiles = smiles[0:Nmol*10]
+        self.smiles = smiles[0:Nmol*20]
 
         self.ens = ensemblemolecule(netdict['cnstfile'], netdict['saefile'], netdict['nnfprefix'], netdict['num_nets'], gpuid)
 
@@ -723,26 +726,54 @@ class aniTortionSampler:
             mol = Chem.MolFromSmiles(sm)
             if mol:
                 mol = Chem.AddHs(mol)
-                AllChem.EmbedMolecule(mol)
+                check = AllChem.EmbedMolecule(mol)
                 fc = 0
                 for a in mol.GetAtoms():
                     fc += a.GetFormalCharge()
-
-                X, S = __convert_rdkitmol_to_nparr__(mol)
-                if set(S).issubset(atsym) and len(S) < MaxNa and fc == 0:
-                    dec = Descriptors.NumRotatableBonds(mol)
-                    if dec > 0:
-                        mols.append(mol)
+                    
+                if check == 0:
+                    X, S = __convert_rdkitmol_to_nparr__(mol)
+                    if set(S).issubset(atsym) and len(S) < MaxNa and fc == 0:
+                        dec = Descriptors.NumRotatableBonds(mol)
+                        if dec > 0:
+                            mols.append(mol)
         return mols
 
-    def get_index_set(self, smiles, Nmol, MaxNa):
+    def get_index_set(self, smiles, Nmol, MaxNa, considerH=False):
         mols = self.get_mol_set(smiles, MaxNa=MaxNa)[0:Nmol]
         dihedrals = []
         for i, mol in enumerate(mols):
             bonds = [[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds() if
-                     b.GetBondType() == Chem.rdchem.BondType.SINGLE and not b.IsInRing() and len(
-                         mol.GetAtomWithIdx(b.GetBeginAtomIdx()).GetNeighbors()) > 1 and len(
-                         mol.GetAtomWithIdx(b.GetEndAtomIdx()).GetNeighbors()) > 1]
+                      b.GetBondType() == Chem.rdchem.BondType.SINGLE and not b.IsInRing() and len(
+                      mol.GetAtomWithIdx(b.GetBeginAtomIdx()).GetNeighbors()) > 1 and len(
+                      mol.GetAtomWithIdx(b.GetEndAtomIdx()).GetNeighbors()) > 1 and 
+                      mol.GetAtomWithIdx(b.GetBeginAtomIdx()).GetHybridization()!=Chem.rdchem.HybridizationType.SP and 
+                      mol.GetAtomWithIdx(b.GetEndAtomIdx()).GetHybridization()!=Chem.rdchem.HybridizationType.SP]
+
+            if len(bonds) > 0 and not considerH:
+                new_bonds = []
+                for bidx,b in enumerate(bonds):
+                    h_fail = False
+
+                    nsym = []
+                    for n in mol.GetAtomWithIdx(b[0]).GetNeighbors():
+                        if n.GetIdx() != b[1]:
+                    	    nsym.append(n.GetSymbol())
+
+                    if set(nsym) == set('H'):
+                        h_fail = True
+
+                    nsym = []
+                    for n in mol.GetAtomWithIdx(b[1]).GetNeighbors():
+                        if n.GetIdx() != b[0]:
+                            nsym.append(n.GetSymbol())
+                    if set(nsym) == set('H'):
+                        h_fail = True
+                   
+                    if not h_fail:
+                        new_bonds.append(b)
+                bonds = new_bonds
+
             if len(bonds) > 0:
                 AllChem.MMFFOptimizeMolecule(mol)
                 idx = np.random.randint(0, len(bonds))
@@ -759,12 +790,12 @@ class aniTortionSampler:
                 dihedrals.append((mol, np.array([bond1, bonds[0], bonds[1], bond4])))
         return dihedrals
 
-    def generate_dhl_samples(self,MaxNa=25,fmax=0.005,fpref='dhl_scan-'):
+    def generate_dhl_samples(self,MaxNa=25,fmax=0.005,fpref='dhl_scan-', freqname="vib."):
         ts = ani_tortion_scanner(self.ens, fmax)
         dhls = self.get_index_set(self.smiles, self.Nmol, MaxNa=MaxNa)
         for i, dhl in enumerate(dhls):
             mol = dhl[0]
-            X, S, p, e, s = ts.tortional_sampler(mol, self.Nsamp, dhl[1], 10.0, 36, sigma=self.sigma, rng=self.rng)
+            X, S, p, e, s = ts.tortional_sampler(mol, self.Nsamp, dhl[1], 10.0, 36, sigma=self.sigma, rng=self.rng, freqname=freqname)
             if e.size > 0:
                 comment = Chem.MolToSmiles(dhl[0]) + '[' + ' '.join([str(j) for j in dhl[1]]) + ']'
                 comment = [comment for i in range(e.size * self.Nsamp)]

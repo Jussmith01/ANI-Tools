@@ -382,15 +382,37 @@ class alconformationalsampler():
         del activ
         difo.close()
 
-    def run_sampling_dhl(self, dhlparams, gpuid):
+    def run_sampling_dhl(self, dhlparams, gpus):
+        dhlparams['Nmol'] = int(np.ceil(dhlparams['Nmol']/len(gpus)))
+
+        seeds = np.random.randint(0,1000000,len(gpus))
+
+        proc = []
+        for i,g in enumerate(gpus):
+            proc.append(Process(target=self.DHL_sampling, args=(i, dhlparams, g, seeds[i])))
+
+        print('Running DHL Sampling...')
+        for p in proc:
+            p.start()
+
+        for p in proc:
+            p.join()
+
+        print('Finished sampling.')
+
+
+    def DHL_sampling(self, i, dhlparams, gpuid, seed):
         activ = aat.aniTortionSampler(self.netdict,
                                       self.cdir,
                                       dhlparams['smilefile'],
                                       dhlparams['Nmol'],
                                       dhlparams['Nsamp'],
                                       dhlparams['sig'],
+                                      dhlparams['rng'],
+                                      seed,
                                       gpuid)
-        activ.generate_dhl_samples()
+
+        activ.generate_dhl_samples(MaxNa=dhlparams['MaxNa'], fpref='dhl_scan-'+str(i).zfill(2), freqname='vib'+str(i)+'.')
 
 
 def interval(v,S):
