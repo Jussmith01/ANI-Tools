@@ -60,7 +60,7 @@ aevsize = 384
 wkdir = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/ANI-1x-DHL-0000/'
 iptfile = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/inputtrain.ipt'
 saefile = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/sae_linfit.dat'
-cstfile = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/rHCNO-4.6R_16-3.1A_a4-8.params'
+cstfile = '/home/jsmith48/scratch/auto_dhl_al/modeldhl/rHCNO-5.2R_16-3.5A_a4-8.params'
 
 #-----------0---------
 
@@ -138,7 +138,7 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             }
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [11,12]
+N = [13]
 #N = [0]
 
 for i in N:
@@ -160,13 +160,11 @@ for i in N:
                }
 
     ## Train the ensemble ##
-    if i > 11:
-        aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
-        aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
-        aet.train_ensemble(GPU)
+    aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
+    aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
+    aet.train_ensemble(GPU)
 
-    if i == 12:
-        exit(0)
+    exit(0)
 
     ldtdir = root_dir  # local data directories
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
