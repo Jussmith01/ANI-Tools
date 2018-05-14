@@ -122,7 +122,6 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
     print('Working on:', name, 'Heavyatoms(', m.GetNumHeavyAtoms(), ')')
     
     # Conf generation routine
-    m = Chem.MolFromSmiles(smi)
     m = EmbedConformers(m)
     m = OptimizeConformersFF(m)
     nrot = Chem.rdMolDescriptors.CalcNumRotatableBonds(m)
