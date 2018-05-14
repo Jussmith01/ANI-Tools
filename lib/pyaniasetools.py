@@ -705,6 +705,7 @@ class ani_tortion_scanner():
             return np.stack(X), S, np.array(ang), np.array(enr), np.array(sig) 
         else:
             return np.empty((0,len(S),2),dtype=np.float32), S, np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64)
+
 class aniTortionSampler:
     def __init__(self, netdict, storedir, smilefile, Nmol, Nsamp, sigma, rng, seed, gpuid=0):
         self.storedir = storedir
