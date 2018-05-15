@@ -61,7 +61,7 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
     # Add hydrogens
     m = Chem.AddHs(m)
 
-    # Embed 50 random conformations
+    # Embed NCONF random conformations
     cids = AllChem.EmbedMultipleConfs(m, useExpTorsionAnglePrefs=True, useBasicKnowledge=True, numConfs=NCONF)
     print('   -Confs:', len(cids), 'Total atoms:', m.GetNumAtoms())
     if len(cids) < 1:
@@ -92,9 +92,9 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
     # Build index < Ew kcal/mol
     mask = np.ones(E.size, dtype=bool)
 
-    if np.where(E < 5.0)[0].size > 25:
+    if np.where(E < 5.0)[0].size > 30:
         mask[np.where(E < 5.0)[0]] = 0
-    elif E.size > 25:
+    elif E.size > 30:
         mask[np.argsort(E)[25]] = 0
     else:
         mask = np.zeros(E.size, dtype=bool)

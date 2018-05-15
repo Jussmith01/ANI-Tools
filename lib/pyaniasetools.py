@@ -146,20 +146,20 @@ class anicrossvalidationconformer(object):
         deltas = deltas
         return deltas,energies
 
-    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
-    def compute_energyandforce_conformations(self,X,S,ensemble=True):
-        energy = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
-        forces = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
-        for i,nc in enumerate(self.ncl):
-            nc.setConformers(confs=np.array(X,dtype=np.float32),types=list(S))
-            energy[i] = nc.energy().copy()
-            forces[i] = nc.force().copy()
-
-        sigmap = hdt.hatokcal * np.std(energy,axis=0) / np.sqrt(X.shape[1])
-        if ensemble:
-            return hdt.hatokcal*np.mean(energy,axis=0), hdt.hatokcal*np.mean(forces,axis=0), sigmap#, charges
-        else:
-            return hdt.hatokcal*energy, hdt.hatokcal*forces, sigmap
+#    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
+#    def compute_energyandforce_conformations(self,X,S,ensemble=True):
+#        energy = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
+#        forces = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
+#        for i,nc in enumerate(self.ncl):
+#            nc.setConformers(confs=np.array(X,dtype=np.float32),types=list(S))
+#            energy[i] = nc.energy().copy()
+#            forces[i] = nc.force().copy()
+#
+#        sigmap = hdt.hatokcal * np.std(energy,axis=0) / np.sqrt(X.shape[1])
+#        if ensemble:
+#            return hdt.hatokcal*np.mean(energy,axis=0), hdt.hatokcal*np.mean(forces,axis=0), sigmap#, charges
+#        else:
+#            return hdt.hatokcal*energy, hdt.hatokcal*forces, sigmap
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_energy_conformations(self,X,S):
@@ -180,6 +180,31 @@ class anicrossvalidationconformer(object):
 
         sigma = hdt.hatokcal * np.std(energies,axis=0) / np.sqrt(float(len(S)))
         return hdt.hatokcal*np.mean(energies,axis=0),sigma#, charges
+
+    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
+    def compute_energyandforce_conformations(self,X,S,ensemble=True):
+        Na = X.shape[0] * len(S)
+
+        X_split = np.array_split(X, math.ceil(Na/20000))
+
+        energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
+        forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
+        shift = 0
+        for j,x in enumerate(X_split):
+            for i, nc in enumerate(self.ncl):
+                nc.setConformers(confs=x,types=list(S))
+                E = nc.energy().copy()
+                F = nc.force().copy()
+                #print(E.shape,x.shape,energies.shape,shift)
+                energies[i,shift:shift+E.shape[0]] = E
+                forces[i,shift:shift+E.shape[0]] = F
+            shift += x.shape[0]
+
+        sigma = hdt.hatokcal * np.std(energies,axis=0) / np.sqrt(float(len(S)))
+        if ensemble:
+            return hdt.hatokcal*np.mean(energies,axis=0), hdt.hatokcal*np.mean(forces,axis=0), sigma#, charges
+        else:
+            return hdt.hatokcal*energies, hdt.hatokcal*forces, sigma
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_energy_conformations_net(self,X,S,netid):
@@ -723,7 +748,7 @@ class ani_tortion_scanner():
         X = []
         for i in range(stps):
             n_dir = -1.0 if np.random.uniform(-1.0,1.0,1) < 0.0 else 1.0 
-            phi, e, s, atm = self.rot(mol_copy, atid, init + n_dir*i*inc)
+            phi, e, s, atm = self.rot(mol_copy, [atid], [init + n_dir*i*inc])
 
             x = atm.get_positions()
             conf = mol_copy.GetConformer(-1)

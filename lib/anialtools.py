@@ -363,7 +363,8 @@ class alconformationalsampler():
             fail_count=0
             sumsig = 0.0
             for i in range(Ns):
-                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, nmfile=f.rsplit(".",1)[0]+'.log', displacement=displacement, min_steps=min_steps, sig=sig, nm=nm)
+                #x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, nmfile=f.rsplit(".",1)[0]+'.log', displacement=displacement, min_steps=min_steps, sig=sig, nm=nm)
+                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, min_steps=min_steps, sig=sig, nm=nm)
                 sumsig += stddev
                 if fail:
                     #print('Job '+str(i)+' failed in '+"{:.2f}".format(t)+' Sigma: ' + "{:.2f}".format(stddev)+' SetTemp: '+"{:.2f}".format(temp))
