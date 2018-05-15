@@ -14,26 +14,24 @@ import time
 
 #################PARAMETERS#######################
 #netdir = '/home/jsmith48/Libraries/ANI-Networks/networks/al_networks/ANI-AL-0808.0303.0400/'
-netdir = '/nh/nest/u/jsmith/scratch/Gits/ANI-Networks/networks/al_networks/ANI-AL-0808.0303.0400/'
-cns = netdir+'train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
-sae = netdir+'train0/sae_wb97x-631gd.dat'
+netdir = '/nh/nest/u/jsmith/Research/confs_test/conf_test_2/model1/'
+cns = netdir+'rHCNOSFCl-4.6R_16-3.1A_a4-8.params'
+sae = netdir+'sae_linfit.dat'
 nnf = netdir+'train'
 Nn = 5 # Number of models in the ensemble
 
 num_consumers = 1 # This is the number of threads to be spawned
 NGPUS = 1 # Number of GPUs on the node (num_consumers/NGPUS jobs will run on each GPU at the same time)
-NCONF = 1000 # Number of conformations to embed
-Ew = 25.0 # kcal/mol window for optimization selection
 
 ## SMILES file (actually each line should be formatted: "[Unique Ident.] [Smiles string]" without brakets)
-#smiles = '/home/jsmith48/Chembl_opt/chembl_23_CHNOSFCl_neutral.smi'
-smiles = '/scratch/Research/confs_test/Chembl_opt/chembl_23_CHNOSFCl_neutral.smi'
+smiles = '/nh/nest/u/jsmith/Research/confs_test/conf_test_2/moles.smi'
+#smiles = '/scratch/Research/confs_test/Chembl_opt/chembl_23_CHNOSFCl_neutral.smi'
 
 #optd = '/home/jsmith48/Chembl_opt/opt_pdb/' # pdb file output
 #datd = '/home/jsmith48/Chembl_opt/opt_dat/' # conformer data output
 
-optd = '/scratch/Research/confs_test/Chembl_opt/opt_pdb/' # pdb file output
-datd = '/scratch/Research/confs_test/Chembl_opt/opt_dat/' # conformer data output
+optd = '/nh/nest/u/jsmith/Research/confs_test/conf_test_2/opt_pdb/' # pdb file output
+datd = '/nh/nest/u/jsmith/Research/confs_test/conf_test_2/opt_dat/' # conformer data output
 #################PARAMETERS#######################
 
 ## Roman's code!
@@ -116,7 +114,7 @@ def rdmol2obmol(rdmol, conf_id=-1):
     return pmol.OBMol
 
 
-def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
+def confsearchsmiles(name, smiles, cmp, eout, optd):
     # Create RDKit MOL
     m = Chem.MolFromSmiles(smiles)
     print('Working on:', name, 'Heavyatoms(', m.GetNumHeavyAtoms(), ')')
@@ -125,11 +123,12 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
     m = EmbedConformers(m)
     m = OptimizeConformersFF(m)
     nrot = Chem.rdMolDescriptors.CalcNumRotatableBonds(m)
-    m = CleanConformers(m, max_keep=max(20, nrot*4), max_energy=20.0, rmsd_thresh=0.5)
+    m = CleanConformers(m, max_keep=max(20, nrot*4), max_energy=25.0, rmsd_thresh=0.5)
     del nrot
 
     # Get new cids
     cids = [x.GetId() for x in m.GetConformers()]
+    print(len(cids))
 
     if len(cids) < 1:
         print('Skipping '+name+': not enough confs to continue.')
@@ -138,7 +137,7 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
     # ANI OPT
     ochk = np.zeros(len(cids), dtype=np.int64)
     for i, cid in enumerate(cids):
-        #print('   -Optimizing confid:', cid)
+        print('   -Optimizing confid:', cid)
         ochk[i] = cmp.optimize_rdkit_molecule(m, cid=cid, fmax=0.001)
 
     # Align conformers
@@ -150,6 +149,8 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
     E, V = cmp.energy_rdkit_conformers(m, cids)
     E = hdt.hatokcal * E
     V = hdt.hatokcal * V
+
+    print(E-E.min())
 
     # Sort by energy (low to high)
     idx = np.argsort(E)
@@ -178,13 +179,11 @@ def confsearchsmiles(name, smiles, Ew, NCONF, cmp, eout, optd):
 
 class multianiconformersearch(multiprocessing.Process):
 
-    def __init__(self, task_queue, Ew, ncon, ngpu, ntd, optd, datd):
+    def __init__(self, task_queue, ngpu, ntd, optd, datd):
         multiprocessing.Process.__init__(self)
 
         self.task_queue = task_queue # tasks
 
-        self.Ew   = Ew   # Energy cut
-        self.ncon = ncon # Number of conformers
         self.ngpu = ngpu # Number of GPUs
         self.optd = optd # Optimization file dir
 
@@ -211,7 +210,7 @@ class multianiconformersearch(multiprocessing.Process):
             gpuid = (int(proc_name[-1])-1) % self.ngpu
             #print (proc_name, next_task, gpuid)
             self.cmp = pya.anienscomputetool(self.ntd['cns'], self.ntd['sae'], self.ntd['nnf'], self.ntd['Nn'], self.GPU)
-            confsearchsmiles(next_task['name'], next_task['smiles'], self.Ew, self.ncon, self.cmp, self.eout, self.optd)
+            confsearchsmiles(next_task['name'], next_task['smiles'], self.cmp, self.eout, self.optd)
             self.task_queue.task_done()
             self.eout.flush()
         return
@@ -225,7 +224,7 @@ tasks = multiprocessing.JoinableQueue()
 
 # Start consumers
 print ('Creating %d consumers' % num_consumers)
-consumers = [ multianiconformersearch(tasks, Ew, NCONF, NGPUS, netdict, optd, datd) for i in range(num_consumers) ]
+consumers = [ multianiconformersearch(tasks, NGPUS, netdict, optd, datd) for i in range(num_consumers) ]
 
 for w in consumers:
     w.start()
@@ -233,7 +232,7 @@ for w in consumers:
 print('reading...')
 
 data = (open(smiles , 'r').read()).split('\n')
-for dat in data[0:3]:
+for dat in data:
     mol = dat.split(" ")
     if mol[0]:
         print(mol)
