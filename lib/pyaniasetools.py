@@ -841,9 +841,6 @@ class MD_Sampler:
         return mod[mn]
 
 
-
-
-
     def run_md(self, f, Tmax, steps, n_steps, nmfile=None, perc=0, min_steps=0, sig=0.34, t=0.1, nm=0, record=False):
         X, S, Na, cm = hdt.readxyz2(f)
         
