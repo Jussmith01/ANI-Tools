@@ -317,7 +317,7 @@ class alconformationalsampler():
     def run_sampling_TS(self, tsparams, gpus=[0], perc=1.0):
         TS_infiles = []
         for di, id in enumerate(tsparams['tsfiles']):
-            files = os.listdir(id)
+            files = [fl for fl in os.listdir(id) if '.xyz' in fl]
             for f in files:
                 TS_infiles.append(id+f)
 
@@ -330,7 +330,7 @@ class alconformationalsampler():
 	
         proc = []
         for i,g in enumerate(gpus2):
-            proc.append(Process(target=self.TS_sampling, args=(i, TS_infiles[i], tsparams, nmfile, nm, g)))
+            proc.append(Process(target=self.TS_sampling, args=(i, TS_infiles[i], tsparams, g)))
         print('Running MD Sampling...')
         for p in proc:
             p.start()
@@ -354,9 +354,8 @@ class alconformationalsampler():
         n_steps=tsparams['n_steps']
         steps=tsparams['steps']
         min_steps=tsparams['min_steps']
-        nmfile=tsparam['nmfile']
-        nm=tsparam['nm']
-        perc=tsparam['perc']
+        nm=tsparams['normalmode']
+        displacement=tsparams['displacement']
         difo = open(self.ldtdir + self.datdir + '/info_tssampler-'+str(tid)+'.nfo', 'w')
         for f in TS_infiles:
             X = []
@@ -364,7 +363,7 @@ class alconformationalsampler():
             fail_count=0
             sumsig = 0.0
             for i in range(Ns):
-                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, nmfile=nmfile, perc=perc, min_steps=min_steps, sig=sig, nm=nm)
+                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, nmfile=f.rsplit(".",1)[0]+'.log', displacement=displacement, min_steps=min_steps, sig=sig, nm=nm)
                 sumsig += stddev
                 if fail:
                     #print('Job '+str(i)+' failed in '+"{:.2f}".format(t)+' Sigma: ' + "{:.2f}".format(stddev)+' SetTemp: '+"{:.2f}".format(temp))
@@ -422,6 +421,89 @@ def interval(v,S):
         if v > ps and v <= ps+ds:
             return s
         ps = ps + ds
+
+class anitrainerinputdesigner:
+    def __init__(self):
+        self.params = {"sflparamsfile":None, # AEV parameters file
+                       "ntwkStoreDir":"networks/", # Store network dir
+                       "atomEnergyFile":None, # Atomic energy shift file
+                       "nmax": 0, # Max training iterations
+                       "tolr": 50, # Annealing tolerance (patience)
+                       "emult": 0.5, # Annealing multiplier
+                       "eta": 0.001, # Learning rate
+                       "tcrit": 1.0e-5, # eta termination crit.
+                       "tmax": 0, # Maximum time (0 = inf)
+                       "tbtchsz": 2048, # training batch size
+                       "vbtchsz": 2048, # validation batch size
+                       "gpuid": 0, # Default GPU id (is overridden by -g flag for HDAtomNNP-Trainer exe)
+                       "ntwshr": 0, # Use a single network for all types... (THIS IS BROKEN, DO NOT USE)
+                       "nkde": 2, # Energy delta regularization
+                       "energy": 1, # Enable/disable energy training
+                       "force": 0, # Enable/disable force training
+                       "fmult": 1.0, # Multiplier of force cost
+                       "pbc": 0, # Use PBC in training (Warning, this only works for data with a single rect. box size)
+                       "cmult": 1.0, # Charge cost multiplier (CHARGE TRAINING BROKEN IN CURRENT VERSION)
+                       "runtype" : "ANNP_CREATE_HDNN_AND_TRAIN", # DO NOT CHANGE - For NeuroChem backend
+                       "adptlrn" : "OFF",
+                       "decrate" : 0.9,
+                       "moment" : "ADAM",
+                       "mu" : 0.99
+                       }
+
+        self.layers = dict()
+
+    def add_layer(self, atomtype, layer_dict):
+        layer_dict.update({"type":0})
+        if atomtype not in self.layers:
+            self.layers[atomtype]=[layer_dict]
+        else:
+            self.layers[atomtype].append(layer_dict)
+
+    def set_parameter(self,key,value):
+        self.params[key]=value
+
+    def print_layer_parameters(self):
+        for ak in self.layers.keys():
+            print('Species:',ak)
+            for l in self.layers[ak]:
+                print('  -',l)
+
+    def print_training_parameters(self):
+        print(self.params)
+
+    def __get_value_string__(self,value):
+
+        if type(value)==float:
+            string="{0:10.3e}".format(value)
+        else:
+            string=str(value)
+
+        return string
+
+    def __build_network_str__(self, iptsize):
+
+        network  = "network_setup {\n"
+        network += "    inputsize="+str(iptsize)+";\n"
+
+        for ak in self.layers.keys():
+            network += "    atom_net " + ak + " $\n"
+            self.layers[ak].append({"nodes":1,"activation":6,"type":0})
+            for l in self.layers[ak]:
+                network += "        layer [\n"
+                for key in l.keys():
+                    network += "            "+key+"="+self.__get_value_string__(l[key])+";\n"
+                network += "        ]\n"
+            network += "    $\n"
+        network += "}\n"
+        return network
+
+    def write_input_file(self, file, iptsize):
+        f = open(file,'w')
+        for key in self.params.keys():
+            f.write(key+'='+self.__get_value_string__(self.params[key])+'\n')
+        f.write(self.__build_network_str__(iptsize))
+        f.close()
+
 
 class alaniensembletrainer():
     def __init__(self, train_root, netdict, h5dir, Nn):
@@ -721,13 +803,13 @@ class alaniensembletrainer():
         print(data_count)
         print('Training set built.')
 
-    def train_ensemble(self, GPUList):
+    def train_ensemble(self, GPUList, remove_existing=False):
         print('Training Ensemble...')
         processes = []
         indicies = np.array_split(np.arange(self.Nn), len(GPUList))
 
         for gpu,idc in enumerate(indicies):
-            processes.append(Process(target=self.train_network, args=(GPUList[gpu], idc)))
+            processes.append(Process(target=self.train_network, args=(GPUList[gpu], idc, remove_existing)))
             processes[-1].start()
             #self.train_network(pyncdict, trdict, layers, id, i)
 
@@ -735,7 +817,7 @@ class alaniensembletrainer():
             p.join()
         print('Training Complete.')
 
-    def train_network(self, gpuid, indicies):
+    def train_network(self, gpuid, indicies, remove_existing=False):
         for index in indicies:
             pyncdict = dict()
             pyncdict['wkdir'] = self.train_root + 'train' + str(index) + '/'
@@ -745,6 +827,9 @@ class alaniensembletrainer():
 
             if not os.path.exists(pyncdict['wkdir']):
                 os.mkdir(pyncdict['wkdir'])
+
+            if remove_existing:
+                shutil.rmtree(pyncdict['ntwkStoreDir'])
 
             if not os.path.exists(pyncdict['ntwkStoreDir']):
                 os.mkdir(pyncdict['ntwkStoreDir'])

@@ -43,7 +43,7 @@ fpatoms = ['C', 'N', 'O']
 jtime = "0-6:00"
 
 #---- Training Parameters ----
-GPU = [2,3,4,5] # GPU IDs
+GPU = [2,3] # GPU IDs
 
 M   = 0.35 # Max error per atom in kcal/mol
 Nnets = 8 # networks in ensemble
@@ -94,12 +94,13 @@ tsparams = {'T':200, # trajectories to run
              'perc':0,                               #Move the molecules initial coordiantes along the mode by this amount. Negative numbers are ok. 
              }
 
-dhparams = { 'Nmol': 200,
+dhparams = { 'Nmol': 100,
              'Nsamp': 4,
-             'sig' : 0.1,
-             'rng' : 0.25,
-             'MaxNa' : 20,
-             'smilefile': '/home/jsmith48/scratch/Drug_moles_raw/chembl_22_clean_1576904_sorted_std_final.smi',
+             'sig' : 0.08,
+             'rng' : 0.2,
+             'MaxNa' : 40,
+             'smilefile': '/home/jsmith48/scratch/auto_dhl_al/dhl_files/dhl_genentech.smi',
+             #'smilefile': '/home/jsmith48/scratch/Drug_moles_raw/chembl_22_clean_1576904_sorted_std_final.smi',
              }
 
 dmrparams = {#'mdselect' : [(400,0),(60,2),(40,3),(5,4)],
@@ -138,7 +139,7 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             }
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [13]
+N = [15,16,17]
 #N = [0]
 
 for i in N:
@@ -160,11 +161,10 @@ for i in N:
                }
 
     ## Train the ensemble ##
-    aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
-    aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
-    aet.train_ensemble(GPU)
-
-    exit(0)
+    if i > 15:
+        aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
+        aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
+        aet.train_ensemble(GPU)
 
     ldtdir = root_dir  # local data directories
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
