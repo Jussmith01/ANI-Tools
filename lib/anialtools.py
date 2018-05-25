@@ -715,7 +715,7 @@ class alaniensembletrainer():
 
         print('Linear fitting complete.')
 
-    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False):
+    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False, rmhighe=True):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
 
@@ -772,16 +772,17 @@ class alaniensembletrainer():
                     else:
                         F = 0.0*X
 
-                    Esae = hdt.compute_sae(self.netdict['saefile'], S)
+                    if rmhighe:
+                        Esae = hdt.compute_sae(self.netdict['saefile'], S)
 
-                    hidx = np.where(np.abs(E - Esae) > 5.0)
-                    lidx = np.where(np.abs(E - Esae) <= 5.0)
-                    if hidx[0].size > 0:
-                        print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ', E[hidx])
+                        hidx = np.where(np.abs(E - Esae) > 5.0)
+                        lidx = np.where(np.abs(E - Esae) <= 5.0)
+                        if hidx[0].size > 0:
+                            print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ', E[hidx])
 
-                    X = X[lidx]
-                    E = E[lidx]
-                    F = F[lidx]
+                        X = X[lidx]
+                        E = E[lidx]
+                        F = F[lidx]
 
                     # Build random split index
                     ridx = np.random.randint(0,Nblocks,size=E.size)
