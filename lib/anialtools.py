@@ -777,7 +777,7 @@ class alaniensembletrainer():
                     hidx = np.where(np.abs(E - Esae) > 5.0)
                     lidx = np.where(np.abs(E - Esae) <= 5.0)
                     if hidx[0].size > 0:
-                        print('  -(' + str(c).zfill(3) + ')High energies detected:\n    ', E[hidx])
+                        print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ', E[hidx])
 
                     X = X[lidx]
                     E = E[lidx]
