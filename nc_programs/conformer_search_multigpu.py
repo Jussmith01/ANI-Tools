@@ -20,8 +20,8 @@ sae = netdir+'sae_linfit.dat'
 nnf = netdir+'train'
 Nn = 5 # Number of models in the ensemble
 
-num_consumers = 1 # This is the number of threads to be spawned
-NGPUS = 1 # Number of GPUs on the node (num_consumers/NGPUS jobs will run on each GPU at the same time)
+num_consumers = 12 # This is the number of threads to be spawned
+GPUS = [0,2,3,4,5,7] # Number of GPUs on the node (num_consumers/NGPUS jobs will run on each GPU at the same time)
 
 ## SMILES file (actually each line should be formatted: "[Unique Ident.] [Smiles string]" without brakets)
 smiles = '/nh/nest/u/jsmith/Research/confs_test/conf_test_2/moles.smi'
@@ -179,18 +179,19 @@ def confsearchsmiles(name, smiles, cmp, eout, optd):
 
 class multianiconformersearch(multiprocessing.Process):
 
-    def __init__(self, task_queue, ngpu, ntd, optd, datd):
+    def __init__(self, task_queue, gpus, ntd, optd, datd):
         multiprocessing.Process.__init__(self)
 
         self.task_queue = task_queue # tasks
 
-        self.ngpu = ngpu # Number of GPUs
+        self.ngpu = len(gpus) # Number of GPUs
+        self.gpus = gpus
         self.optd = optd # Optimization file dir
 
         proc_name = self.name
         ID = int(proc_name.rsplit("-",1)[1])
         print('ThreadID:',ID)
-        self.GPU = (ID-1) % self.ngpu # What GPU are we working on?
+        self.GPU = gpus[(ID-1) % self.ngpu] # What GPU are we working on?
 
         print(proc_name,self.GPU)
         self.ntd = ntd
@@ -207,7 +208,7 @@ class multianiconformersearch(multiprocessing.Process):
                 self.task_queue.task_done()
                 self.eout.close()
                 break
-            gpuid = (int(proc_name[-1])-1) % self.ngpu
+            gpuid = self.gpus[(int(proc_name[-1])-1) % self.ngpu]
             #print (proc_name, next_task, gpuid)
             self.cmp = pya.anienscomputetool(self.ntd['cns'], self.ntd['sae'], self.ntd['nnf'], self.ntd['Nn'], self.GPU)
             confsearchsmiles(next_task['name'], next_task['smiles'], self.cmp, self.eout, self.optd)
@@ -224,7 +225,7 @@ tasks = multiprocessing.JoinableQueue()
 
 # Start consumers
 print ('Creating %d consumers' % num_consumers)
-consumers = [ multianiconformersearch(tasks, NGPUS, netdict, optd, datd) for i in range(num_consumers) ]
+consumers = [ multianiconformersearch(tasks, GPUS, netdict, optd, datd) for i in range(num_consumers) ]
 
 for w in consumers:
     w.start()
