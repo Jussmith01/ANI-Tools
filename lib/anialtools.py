@@ -107,12 +107,15 @@ class alconformationalsampler():
 
         print(Nmols)
 
-        mol_sizes = np.split(Nmols, len(gpus))
+        seeds = np.random.randint(0,1000000,len(gpus))
+
+        mol_sizes = np.array_split(Nmols, len(gpus))
 
         proc = []
         for i,g in enumerate(gpus):
             proc.append(Process(target=self.cluster_sampling, args=(i, int(gcmddict['Nr']/len(gpus)),
                                                                     mol_sizes[i],
+                                                                    seeds[i],
                                                                     gcmddict,
                                                                     g)))
         print('Running Cluster-MD Sampling...')
@@ -288,10 +291,12 @@ class alconformationalsampler():
         difo.write('Generated '+str(Nd)+' of '+str(Nt)+' tested dimers. Percent: ' + "{:.2f}".format(100.0*Nd/float(Nt)))
         difo.close()
 
-    def cluster_sampling(self, tid, Nr, mol_sizes, gcmddict, gpuid):
+    def cluster_sampling(self, tid, Nr, mol_sizes, seed, gcmddict, gpuid):
         dictc = gcmddict.copy()
         solv_file = dictc['solv_file']
         solu_dirs = dictc['solu_dirs']
+
+        np.random.seed(seed)
 
         dictc['Nr'] = Nr
         dictc['molfile'] = self.cdir + 'clst'
@@ -363,7 +368,8 @@ class alconformationalsampler():
             fail_count=0
             sumsig = 0.0
             for i in range(Ns):
-                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, nmfile=f.rsplit(".",1)[0]+'.log', displacement=displacement, min_steps=min_steps, sig=sig, nm=nm)
+                #x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, nmfile=f.rsplit(".",1)[0]+'.log', displacement=displacement, min_steps=min_steps, sig=sig, nm=nm)
+                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, min_steps=min_steps, sig=sig, nm=nm)
                 sumsig += stddev
                 if fail:
                     #print('Job '+str(i)+' failed in '+"{:.2f}".format(t)+' Sigma: ' + "{:.2f}".format(stddev)+' SetTemp: '+"{:.2f}".format(temp))

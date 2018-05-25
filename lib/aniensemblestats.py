@@ -25,7 +25,7 @@ pd.options.display.float_format = '{:.2f}'.format
 # ----------------------------------
 # Plot force histogram
 # ----------------------------------
-def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0):
+def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0, inset=True):
     Fmx = Xa.max()
     Fmn = Xa.min()
 
@@ -54,22 +54,24 @@ def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0
     ax.text(0.6*((Fmx-Fmn))+Fmn, 0.2*((Fmx-Fmn))+Fmn, 'MAE='+"{:.3f}".format(PMAE)+'\nRMSE='+"{:.3f}".format(PRMS), fontsize=30,
             bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
 
-    axins = zoomed_inset_axes(ax, 2., loc=2)  # zoom = 6
+    if inset:
+        axins = zoomed_inset_axes(ax, 2., loc=2)  # zoom = 6
 
-    sz = 0.1*(Fmx-Fmn)
-    axins.hist2d(Xp, Xa, bins=50, range=[[Xa.mean() - sz, Xa.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz]], norm=LogNorm(), cmap=cmap)
-    axins.plot([Xp.mean() - sz, Xp.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz], '--', c='r', linewidth=3)
+        sz = 0.1*(Fmx-Fmn)
+        axins.hist2d(Xp, Xa, bins=50, range=[[Xa.mean() - sz, Xa.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz]], norm=LogNorm(), cmap=cmap)
+        axins.plot([Xp.mean() - sz, Xp.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz], '--', c='r', linewidth=3)
 
-    # sub region of the original image
-    x1, x2, y1, y2 = Xa.mean() - sz, Xa.mean() + sz, Xp.mean() - sz, Xp.mean() + sz
-    axins.set_xlim(x1, x2)
-    axins.set_ylim(y1, y2)
-    axins.yaxis.tick_right()
+        # sub region of the original image
+        x1, x2, y1, y2 = Xa.mean() - sz, Xa.mean() + sz, Xp.mean() - sz, Xp.mean() + sz
+        axins.set_xlim(x1, x2)
+        axins.set_ylim(y1, y2)
+        axins.yaxis.tick_right()
+
+        mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="1.5")
 
     plt.xticks(visible=True)
     plt.yticks(visible=True)
 
-    mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="1.5")
     return bins
 
 def add_inset_histogram(Xa, Xp, pos, ylim, xlim):
@@ -176,7 +178,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                     #if i > 5:
                     #    break
                     if data['coordinates'].shape[0] != 0:
-                        Eani, Fani, sig = self.compute_energyandforce_conformations(data['coordinates'], data['species'], ensemble=False)
+                        Eani, Fani, sig = self.compute_energyandforce_conformations(np.array(data['coordinates'],dtype=np.float32), data['species'], ensemble=False)
 
                         midx = np.where( data['energies'] - data['energies'].min() < maxe/hdt.hatokcal )[0]
 

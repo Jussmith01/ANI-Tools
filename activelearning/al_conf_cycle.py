@@ -43,7 +43,7 @@ fpatoms = ['C', 'N', 'O']
 jtime = "0-6:00"
 
 #---- Training Parameters ----
-GPU = [2,3] # GPU IDs
+GPU = [0, 7] # GPU IDs
 
 M   = 0.35 # Max error per atom in kcal/mol
 Nnets = 8 # networks in ensemble
@@ -139,7 +139,7 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             }
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [15,16,17]
+N = [20]
 #N = [0]
 
 for i in N:
@@ -161,10 +161,11 @@ for i in N:
                }
 
     ## Train the ensemble ##
-    if i > 15:
-        aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
-        aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
-        aet.train_ensemble(GPU)
+    aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
+    aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
+    aet.train_ensemble(GPU)
+
+    exit(0)
 
     ldtdir = root_dir  # local data directories
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
