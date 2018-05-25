@@ -772,6 +772,17 @@ class alaniensembletrainer():
                     else:
                         F = 0.0*X
 
+                    Esae = hdt.compute_sae(self.netdict['saefile'], S)
+
+                    hidx = np.where(np.abs(E - Esae) > 5.0)
+                    lidx = np.where(np.abs(E - Esae) <= 5.0)
+                    if hidx[0].size > 0:
+                        print('  -(' + str(c).zfill(3) + ')High energies detected:\n    ', E[hidx])
+
+                    X = X[lidx]
+                    E = E[lidx]
+                    F = F[lidx]
+
                     # Build random split index
                     ridx = np.random.randint(0,Nblocks,size=E.size)
                     Didx = [np.argsort(ridx)[np.where(ridx == i)] for i in range(Nblocks)]
