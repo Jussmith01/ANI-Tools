@@ -771,7 +771,7 @@ class ani_tortion_scanner():
             return np.empty((0,len(S),2),dtype=np.float32), S, np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64)
 
 class aniTortionSampler:
-    def __init__(self, netdict, storedir, smilefile, Nmol, Nsamp, sigma, rng, seed, gpuid=0):
+    def __init__(self, netdict, storedir, smilefile, Nmol, Nsamp, sigma, rng, seed=np.random.randint(0,100000,1), gpuid=0):
         self.storedir = storedir
         self.Nmol = Nmol
         self.Nsamp = Nsamp
@@ -783,7 +783,8 @@ class aniTortionSampler:
         np.random.shuffle(smiles)
         self.smiles = smiles[0:Nmol*20]
 
-        self.ens = ensemblemolecule(netdict['cnstfile'], netdict['saefile'], netdict['nnfprefix'], netdict['num_nets'], gpuid)
+        if len(netdict) > 0:
+            self.ens = ensemblemolecule(netdict['cnstfile'], netdict['saefile'], netdict['nnfprefix'], netdict['num_nets'], gpuid)
 
     def get_mol_set(self, smiles, atsym=['H', 'C', 'N', 'O'], MaxNa=20):
         mols = []

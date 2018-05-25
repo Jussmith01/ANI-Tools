@@ -296,7 +296,7 @@ class dimergenerator():
                                     if v < min:
                                         min = v
 
-                            if min < 4.2 and min > 1.1:
+                            if min < 5.2 and min > 1.1:
                                 Xf = np.vstack([Xi, Xj])
                                 Sf = self.S[si:si+Nai]
                                 Sf.extend(self.S[sj:sj+Naj])
@@ -304,7 +304,7 @@ class dimergenerator():
                                 Xcf = np.sum(Xf, axis=0) / (Nai+Naj)
                                 Xf = Xf - Xcf
 
-                                E = np.empty(5, dtype=np.float64)
+                                E = np.empty(len(self.aens.ncl), dtype=np.float64)
                                 for id,nc in enumerate(self.aens.ncl):
                                     nc.setMolecule(coords=np.array(Xf,dtype=np.float32), types=Sf)
                                     E[id] = nc.energy()[0]
@@ -485,7 +485,7 @@ class clustergenerator():
                     Xf = Xi
                     Sf = self.S[si:si + Nai]
 
-                    Nmax = random.randint(2, 14)
+                    Nmax = np.random.randint(4, 7)
                     Nmol = 0
                     for j in range(len(self.Na)):
                         if i != j:
@@ -507,7 +507,7 @@ class clustergenerator():
                                             if v < min:
                                                 min = v
 
-                                    if min < 4.5 and min > 0.70:
+                                    if min < 6.0 and min > 0.70:
                                         Xf = np.vstack([Xf, Xj])
                                         Sf.extend(self.S[sj:sj+Naj])
                                         Nmol += 1
@@ -517,7 +517,7 @@ class clustergenerator():
                     Xcf = np.sum(Xf, axis=0) / float(len(Sf))
                     Xf = Xf - Xcf
 
-                    E = np.empty(5, dtype=np.float64)
+                    E = np.empty(len(self.aens.ncl), dtype=np.float64)
                     for id,nc in enumerate(self.aens.ncl):
                         nc.setMolecule(coords=np.array(Xf,dtype=np.float32), types=Sf)
                         E[id] = nc.energy()[0]
