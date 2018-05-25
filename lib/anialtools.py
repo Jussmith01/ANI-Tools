@@ -688,15 +688,6 @@ class alaniensembletrainer():
                     else:
                         E = energy_unit*np.array(data[Ekey], order='C', dtype=np.float64)
 
-                    Esae = hdt.compute_sae(self.netdict['saefile'], S)
-
-                    hidx = np.where(np.abs(E - Esae) > 5.0)
-                    lidx = np.where(np.abs(E - Esae) <= 5.0)
-                    if hidx[0].size > 0:
-                        print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ', E[hidx])
-
-                    E = E[lidx]
-
                     S = S[0:data['coordinates'].shape[1]]
                     unique, counts = np.unique(S, return_counts=True)
                     x = np.zeros(Na, dtype=np.float64)
