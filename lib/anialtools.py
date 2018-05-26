@@ -767,7 +767,7 @@ class alaniensembletrainer():
 
                     if forces and not grad:
                         F = forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
-                    if forces and grad:
+                    elif forces and grad:
                         F = -forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
                     else:
                         F = 0.0*X
