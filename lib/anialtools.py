@@ -480,7 +480,7 @@ class anitrainerinputdesigner:
     def __get_value_string__(self,value):
 
         if type(value)==float:
-            string="{0:10.3e}".format(value)
+            string="{0:10.7e}".format(value)
         else:
             string=str(value)
 
@@ -767,10 +767,13 @@ class alaniensembletrainer():
 
                     if forces and not grad:
                         F = forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
-                    if forces and grad:
+                    elif forces and grad:
                         F = -forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
                     else:
                         F = 0.0*X
+
+                    print('Energy:',E)
+                    print('Force:',F)
 
                     if rmhighe:
                         Esae = hdt.compute_sae(self.netdict['saefile'], S)
