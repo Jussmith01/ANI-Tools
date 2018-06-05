@@ -995,7 +995,7 @@ class MD_Sampler:
 # --------------------------------------------------------------------
 
 class subproc_pDyn():
-	def __init__(self, n_points):
+	def __init__(self, n_points,  cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False):
 		self.n_points = n_points	      #No of points along IRC (forward+backward+1)
 		self.coor_train=[]                    #Where the coordinates of the molecules with high standard deviation will be saved
 		self.Na_train=[]                      #Where the number of atoms of the molecules with high standard deviation will be saved
@@ -1003,11 +1003,7 @@ class subproc_pDyn():
 		self.hstd=[]
 
 		#The path to the network
-		wkdir = '/data/kavi/networks/AL-new/ANI-1x-RXN-0000/ANI-1x-RXN-0000.0000'
-		cnstfilecv = '/data/kavi/networks/AL-new/ANI-1x-RXN-0000/ANI-1x-RXN-0000.0000/train0/' + 'rHCNO-4.6R_16-3.1A_a4-8.params'
-		saefilecv  = '/data/kavi/networks/AL-new/ANI-1x-RXN-0000/ANI-1x-RXN-0000.0000/train0/' + 'sae_linfit.dat'
-		nnfdircv   = wkdir + '/train'
-		self.net = ensemblemolecule(cnstfilecv, saefilecv, nnfdircv, 8)            #Load the network
+	        self.net = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)            #Load the network
 
 		# Define environment variables for pDynamo in py27
 		self.my_env = os.environ.copy()
