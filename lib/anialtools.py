@@ -490,7 +490,7 @@ class anitrainerinputdesigner:
     def __get_value_string__(self,value):
 
         if type(value)==float:
-            string="{0:10.3e}".format(value)
+            string="{0:10.7e}".format(value)
         else:
             string=str(value)
 
@@ -725,7 +725,7 @@ class alaniensembletrainer():
 
         print('Linear fitting complete.')
 
-    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False):
+    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False, rmhighe=True):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
 
@@ -777,21 +777,25 @@ class alaniensembletrainer():
 
                     if forces and not grad:
                         F = forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
-                    if forces and grad:
+                    elif forces and grad:
                         F = -forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
                     else:
                         F = 0.0*X
 
-                    Esae = hdt.compute_sae(self.netdict['saefile'], S)
+                    print('Energy:',E)
+                    print('Force:',F)
 
-                    hidx = np.where(np.abs(E - Esae) > 10.0)
-                    lidx = np.where(np.abs(E - Esae) <= 10.0)
-                    if hidx[0].size > 0:
-                        print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ', E[hidx])
+                    if rmhighe:
+                        Esae = hdt.compute_sae(self.netdict['saefile'], S)
 
-                    X = X[lidx]
-                    E = E[lidx]
-                    F = F[lidx]
+                        hidx = np.where(np.abs(E - Esae) > 5.0)
+                        lidx = np.where(np.abs(E - Esae) <= 5.0)
+                        if hidx[0].size > 0:
+                            print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ', E[hidx])
+
+                        X = X[lidx]
+                        E = E[lidx]
+                        F = F[lidx]
 
                     # Build random split index
                     ridx = np.random.randint(0,Nblocks,size=E.size)

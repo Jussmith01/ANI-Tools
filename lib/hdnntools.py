@@ -220,6 +220,37 @@ def readxyz2 (file):
 
     return xyz,typ[0:Na],Na, ct
 
+def readxyz3 (file):           #XYZ file reader for RXN
+	xyz = []
+	typ = []
+	Na  = []
+	ct = []
+	fd = open(file, 'r').read()
+	rb = re.compile('(\d+?)\n(.*?)\n((?:[A-Z][a-z]?.+?(?:\n|$))+)')
+	ra = re.compile('([A-Z][a-z]?)\s+?([-+]?\d+?\.\S+?)\s+?([-+]?\d+?\.\S+?)\s+?([-+]?\d+?\.\S+?)\s*?(?:\n|$)')
+	s = rb.findall(fd)
+	Nc = len(s)
+	if Nc == 0:
+       		raise ValueError('No coordinates found in file. Check formatting of '+file+'.')
+	for i in s:
+		X=[]
+		T=[]
+		ct.append(i[1])
+		c = ra.findall(i[2])
+		Na.append(len(c))
+		for j in c:
+			T.append(j[0])
+			X.append(j[1])
+			X.append(j[2])
+			X.append(j[3])
+		X=np.array(X, dtype=np.float32)
+		X=X.reshape(len(T),3)
+		xyz.append(X)
+		typ.append(T)
+
+	return xyz,typ,Na,ct
+
+
 def readrcdbstruct (file):
     xyz = []
     typ = []
