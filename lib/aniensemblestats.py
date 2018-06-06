@@ -191,7 +191,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                             else:
                                 Fdft = data['forces'][midx]
                         else:
-                            Fdft = 0.0*data['coordinates']
+                            Fdft = 0.0*data['coordinates'][midx]
 
                         #Eestd = np.std(Eani, axis=0)/np.sqrt(len(data['species']))
                         Eeani = np.mean(Eani, axis=0).reshape(1,-1)

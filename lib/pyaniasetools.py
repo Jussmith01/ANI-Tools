@@ -165,7 +165,7 @@ class anicrossvalidationconformer(object):
     def compute_energy_conformations(self,X,S):
         Na = X.shape[0] * len(S)
 
-        X_split = np.array_split(X, math.ceil(Na/20000))
+        X_split = np.array_split(X, math.ceil(Na/10000))
 
         energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
         forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
@@ -185,7 +185,7 @@ class anicrossvalidationconformer(object):
     def compute_energyandforce_conformations(self,X,S,ensemble=True):
         Na = X.shape[0] * len(S)
 
-        X_split = np.array_split(X, math.ceil(Na/20000))
+        X_split = np.array_split(X, math.ceil(Na/10000))
 
         energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
         forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
@@ -652,7 +652,11 @@ class ani_tortion_scanner():
         atm.set_constraint(c)
 
         dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorith
-        dyn.run(fmax=self.fmax, steps=1000)         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
+
+        try:
+            dyn.run(fmax=self.fmax, steps=1000)         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
+        except ValueError:
+            print("Opt failed: continuing")
         e=atm.get_potential_energy()*hdt.evtokcal
         s=atm.calc.stddev*hdt.evtokcal
         
@@ -771,12 +775,13 @@ class ani_tortion_scanner():
             return np.empty((0,len(S),2),dtype=np.float32), S, np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64)
 
 class aniTortionSampler:
-    def __init__(self, netdict, storedir, smilefile, Nmol, Nsamp, sigma, rng, seed=np.random.randint(0,100000,1), gpuid=0):
+    def __init__(self, netdict, storedir, smilefile, Nmol, Nsamp, sigma, rng, atsym=['H', 'C', 'N', 'O'], seed=np.random.randint(0,100000,1), gpuid=0):
         self.storedir = storedir
         self.Nmol = Nmol
         self.Nsamp = Nsamp
         self.sigma = sigma
         self.rng = rng
+        self.atsym = atsym
 
         smiles = [sm for sm in np.loadtxt(smilefile, dtype=np.str,comments=None)]
         np.random.seed(seed)
@@ -806,7 +811,7 @@ class aniTortionSampler:
         return mols
 
     def get_index_set(self, smiles, Nmol, MaxNa, considerH=False):
-        mols = self.get_mol_set(smiles, MaxNa=MaxNa)[0:Nmol]
+        mols = self.get_mol_set(smiles, atsym=self.atsym, MaxNa=MaxNa)[0:Nmol]
         dihedrals = []
         for i, mol in enumerate(mols):
             bonds = [[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds() if
@@ -859,6 +864,7 @@ class aniTortionSampler:
     def generate_dhl_samples(self,MaxNa=25,fmax=0.005,fpref='dhl_scan-', freqname="vib."):
         ts = ani_tortion_scanner(self.ens, fmax)
         dhls = self.get_index_set(self.smiles, self.Nmol, MaxNa=MaxNa)
+        print('Runnning ',len(dhls),'torsions.',freqname)
         for i, dhl in enumerate(dhls):
             mol = dhl[0]
             X, S, p, e, s = ts.tortional_sampler(mol, self.Nsamp, dhl[1], 10.0, 36, sigma=self.sigma, rng=self.rng, freqname=freqname)

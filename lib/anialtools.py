@@ -135,7 +135,7 @@ class alconformationalsampler():
                                                 self.netdict['saefile'],
                                                 self.netdict['nnfprefix'],
                                                 self.netdict['num_nets'],
-                                                gpuid, False)
+                                                [gpuid], False)
 
         dc = aat.diverseconformers(self.netdict['cnstfile'],
                                    self.netdict['saefile'],
@@ -248,6 +248,7 @@ class alconformationalsampler():
         sig = dparam['sig']
         Nm = dparam['Nm']
         Ni = dparam['Ni']
+        Ns = dparam['Ns']
         
         mols = []
         difo = open(self.ldtdir + self.datdir + '/info_data_mddimer-'+str(tid)+'.nfo', 'w')
@@ -277,16 +278,24 @@ class alconformationalsampler():
         for i in range(Nr):
             dgen.init_dynamics(Nm, V, L, dt, T)
  
-            fname = self.cdir + 'dimer-'+str(tid).zfill(2)+str(i).zfill(2)+'_'
-       
-            dgen.run_dynamics(Ni)
-            dgen.__fragmentbox__(fname,sig)
+            for j in range(Ns):
+                if j != 0:
+                    dgen.run_dynamics(Ni)
+
+                fname = self.cdir + 'dimer-'+str(tid).zfill(2)+str(i).zfill(2)+'-'+str(j).zfill(2)+'_'
+                max_sig = dgen.__fragmentbox__(fname,sig)
+                print('MaxSig:',max_sig)
+                #difo.write('Step ('+str(i)+',',+str(j)+') ['+ str(dgen.Nd)+ '/'+ str(dgen.Nt)+']\n')
+                difo.write('Step ('+str(i)+','+str(j)+') ['+ str(dgen.Nd)+ '/'+ str(dgen.Nt)+'] max sigma: ' + "{:.2f}".format(max_sig) + ' generated '+str(len(dgen.frag_list))+' dimers...\n')
+
+                Nt += dgen.Nt
+                Nd += dgen.Nd
         
-            Nt += dgen.Nt
-            Nd += dgen.Nd
-        
-            #print('Step (',tid,',',i,') [', str(dgen.Nd), '/', str(dgen.Nt),'] generated ',len(dgen.frag_list), 'dimers...')
-            difo.write('Step ('+str(i)+') ['+ str(dgen.Nd)+ '/'+ str(dgen.Nt)+'] generated '+str(len(dgen.frag_list))+'dimers...\n')
+                #print('Step (',tid,',',i,') [', str(dgen.Nd), '/', str(dgen.Nt),'] generated ',len(dgen.frag_list), 'dimers...')
+                #difo.write('Step ('+str(i)+') ['+ str(dgen.Nd)+ '/'+ str(dgen.Nt)+'] generated '+str(len(dgen.frag_list))+'dimers...\n')
+                if max_sig > 3.0*sig:
+                    difo.write('Terminating dynamics -- max sigma: '+"{:.2f}".format(max_sig)+' Ran for: '+"{:.2f}".format(j*Ni*dt)+'fs\n')
+                    break
 
         difo.write('Generated '+str(Nd)+' of '+str(Nt)+' tested dimers. Percent: ' + "{:.2f}".format(100.0*Nd/float(Nt)))
         difo.close()
@@ -394,7 +403,7 @@ class alconformationalsampler():
 
         proc = []
         for i,g in enumerate(gpus):
-            proc.append(Process(target=self.DHL_sampling, args=(i, dhlparams, g, seeds[i])))
+            proc.append(Process(target=self.DHL_sampling, args=(i, dhlparams, self.fpatoms, g, seeds[i])))
 
         print('Running DHL Sampling...')
         for p in proc:
@@ -406,7 +415,7 @@ class alconformationalsampler():
         print('Finished sampling.')
 
 
-    def DHL_sampling(self, i, dhlparams, gpuid, seed):
+    def DHL_sampling(self, i, dhlparams, fpatoms, gpuid, seed):
         activ = aat.aniTortionSampler(self.netdict,
                                       self.cdir,
                                       dhlparams['smilefile'],
@@ -414,6 +423,7 @@ class alconformationalsampler():
                                       dhlparams['Nsamp'],
                                       dhlparams['sig'],
                                       dhlparams['rng'],
+                                      fpatoms,
                                       seed,
                                       gpuid)
 
@@ -586,8 +596,8 @@ class alaniensembletrainer():
 
                 Esae = hdt.compute_sae(self.netdict['saefile'],S)
 
-                hidx = np.where(np.abs(E-Esae) > 5.0)
-                lidx = np.where(np.abs(E-Esae) <= 5.0)
+                hidx = np.where(np.abs(E-Esae) > 10.0)
+                lidx = np.where(np.abs(E-Esae) <= 10.0)
                 if hidx[0].size > 0:
                     print('  -('+str(c).zfill(3)+')High energies detected:\n    ',E[hidx])
 
@@ -774,8 +784,8 @@ class alaniensembletrainer():
 
                     Esae = hdt.compute_sae(self.netdict['saefile'], S)
 
-                    hidx = np.where(np.abs(E - Esae) > 5.0)
-                    lidx = np.where(np.abs(E - Esae) <= 5.0)
+                    hidx = np.where(np.abs(E - Esae) > 10.0)
+                    lidx = np.where(np.abs(E - Esae) <= 10.0)
                     if hidx[0].size > 0:
                         print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ', E[hidx])
 

@@ -383,10 +383,10 @@ class alQMserversubmission():
     def disconnect(self):
         self.server.close()
 
-def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae, jtime, password=''):
+def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae, jtime, password='', max_jobs = 40):
     # Declare server submission class and connect to ssh
     print('Connecting...')
-    alserv = alQMserversubmission(hostname, username, swkdir, ldtdir, datdir, jtime, password=password)
+    alserv = alQMserversubmission(hostname, username, swkdir, ldtdir, datdir, jtime, password=password, max_jobs=max_jobs)
 
     # Set optional server information
     alserv.set_optional_submission_command(mae)

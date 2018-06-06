@@ -179,7 +179,7 @@ class dimergenerator():
                                 dij = np.linalg.norm(xi-xj)
                                 if dij < minv:
                                     minv = dij
-                        if minv < 1.5:
+                        if minv < 1.4:
                             fail = True
                             attempts += 1
 
@@ -268,6 +268,8 @@ class dimergenerator():
         self.Nd = 0
         self.Nt = 0
 
+        max_sig = 0.0
+
         for i in range(len(self.Na)):
             si = self.ctd[i][2]
             di = self.ctd[i][1]
@@ -296,7 +298,7 @@ class dimergenerator():
                                     if v < min:
                                         min = v
 
-                            if min < 5.2 and min > 1.1:
+                            if min < 4.8 and min > 1.1:
                                 Xf = np.vstack([Xi, Xj])
                                 Sf = self.S[si:si+Nai]
                                 Sf.extend(self.S[sj:sj+Naj])
@@ -313,10 +315,13 @@ class dimergenerator():
 
                                 self.Nt += 1
                                 if sig > sig_cut:
+                                    if sig > max_sig:
+                                        max_sig = sig
                                     self.Nd += 1
                                     hdn.writexyzfile(file+str(i).zfill(4)+'-'+str(j).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
                                     self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
                                     #print(dc, Sf, sig)
+        return max_sig
 
 '''Cluster generator'''
 class clustergenerator():
@@ -485,7 +490,7 @@ class clustergenerator():
                     Xf = Xi
                     Sf = self.S[si:si + Nai]
 
-                    Nmax = np.random.randint(4, 7)
+                    Nmax = np.random.randint(2, 10)
                     Nmol = 0
                     for j in range(len(self.Na)):
                         if i != j:
