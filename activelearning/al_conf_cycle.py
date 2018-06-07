@@ -147,7 +147,6 @@ pdynparams = {'logfile_OPT': "/data/kavi/my_notebooks/OPT.txt",   #logfile for F
              'IRCdir': '/home/kavi/pDynamo-1.9.0/book/data/xyz/autoTS/ANI-IRC/', #path to get pDynamo saved IRC points
              'indir' : '/data/kavi/my_notebooks/AL-test/',         #path to save XYZ files of IRC points to check stddev
              'XYZfile' : '/data/kavi/my_notebooks/NM.xyz',         #XYZ file with high standard deviations structures
-             'NMSfile' : '/data/kavi/my_notebooks/nms-test.xyz',   #XYZ file with NMS random_structure
              'l_val' : 0.0,                                        #Ri --> randomly perturb in the interval [+x,-x]
              'h_val' : 1.0,
              'n_points' : 101                                      #Number of points along IRC (forward+backward+1 for TS)

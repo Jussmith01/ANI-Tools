@@ -479,7 +479,6 @@ class alconformationalsampler():
         XYZfile=pdynparams['XYZfile']                           #XYZ file with high standard deviations structures
         l_val=pdynparams['l_val']                               #Ri --> randomly perturb in the interval [+x,-x]
         h_val=pdynparams['h_val']                               
-        NMSfile=pdynparams['NMSfile']                           #XYZ file with NMS random_structure 
         n_points=pdynparams['n_points']                         #Number of points along IRC (forward+backward+1 for TS)
 
         # --------------------------------- Run pDynamo ---------------------------
@@ -521,7 +520,7 @@ class alconformationalsampler():
                 for k in range(N):
                     gen_crd[k] = gen.get_random_structure()
 
-                hdt.writexyzfile(NMSfile, gen_crd, spc[i])
+                hdt.writexyzfile(self.cdir + 'nms_TS.xyz', gen_crd, spc[i])
                 
         del activ
 
