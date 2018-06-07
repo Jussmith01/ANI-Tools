@@ -429,6 +429,87 @@ class alconformationalsampler():
 
         activ.generate_dhl_samples(MaxNa=dhlparams['MaxNa'], fpref='dhl_scan-'+str(i).zfill(2), freqname='vib'+str(i)+'.')
 
+    def run_sampling_pDynTS(self, pdynparams, gpus=[0]):
+
+        gpus2 = gpus
+        proc = []
+        for g in enumerate(gpus2):
+            proc.append(Process(target=self.pDyn_QMsampling, args=(pdynparams, g)))
+        print('Running pDynamo Sampling...')
+        for p in proc:
+            p.start()
+
+        for p in proc:
+            p.join()
+
+        print('Finished pDynamo sampling.')
+
+
+    def pDyn_QMsampling(self, pdynparams, gpuid):       
+                                                                  #Call subproc_pDyn class in pyaniasetools as activ
+        activ = subproc_pDyn(self.netdict['cnstfile'],            #netdict parameters
+                             self.netdict['saefile'],
+                             self.netdict['nnfprefix'],
+                             self.netdict['num_nets'],
+                             gpuid)
+       
+        logfile_OPT=pdynparams['logfile_OPT']                   #logfile for FIRE OPT output
+        logfile_TS=pdynparams['logfile_TS']                     #logfile for ANI TS output
+        logfile_IRC=pdynparams['logfile_IRC']                   #logfile for ANI IRC output
+        sbproc_cmdOPT=pdynparams['sbproc_cmdOPT']               #Subprocess commands to run pDyanmo
+        sbproc_cmdTS=pdynparams['sbproc_cmdTS']
+        sbproc_cmdIRC=pdynparams['sbproc_cmdIRC']
+        IRCdir=pdynparams['IRCdir']                             #path to get pDynamo saved IRC points
+        indir=pdynparams['indir']                               #path to save XYZ files of IRC points to check stddev
+        XYZfile=pdynparams['XYZfile']                           #XYZ file with high standard deviations structures
+        l_val=pdynparams['l_val']                               #Ri --> randomly perturb in the interval [+x,-x]
+        h_val=pdynparams['h_val']                               
+        NMSfile=pdynparams['NMSfile']                           #XYZ file with NMS random_structure 
+        n_points=pdynparams['n_points']                         #Number of points along IRC (forward+backward+1 for TS)
+
+        # --------------------------------- Run pDynamo ---------------------------
+        # auto-TS ---> FIRE constraint OPT of core C atoms ---> ANI TS ---> ANI IRC
+        chk_OPT = activ.subprocess_cmd(sbproc_cmdOPT, False, logfile_OPT)
+        if chk_OPT == 0:                                                                                  #Wait until previous subproc is done!!
+            chk_TS = activ.subprocess_cmd(sbproc_cmdTS, False, logfile_TS)
+            if chk_TS == 0:
+                chk_IRC = activ.subprocess_cmd(sbproc_cmdIRC, False, logfile_IRC)
+                
+        # ----------------------- Save points along ANI IRC ------------------------
+        IRCfils=os.listdir(IRCdir)6767
+        IRCfils.sort()
+
+        for f in IRCfils:
+            activ.getIRCpoints_toXYZ(IRCdir+f, f, indir)
+        
+        infils=os.listdir(indir)
+        infils.sort()
+        
+        # ------ Check for high standard deviation structures and get vib modes -----
+        for f in infils:
+            stdev = activ.check_stddev(indir+f)
+            if stdev > 0.34:                     # if stddev is high then get modes for that point
+                nmc = activ.get_nm(indir+f)      # save modes in memory for later use
+            
+            activ.write_nm_xyz(XYZfile)          #writes all the structures with high standard deviations to xyz file
+
+        # ----------------------------- Read XYZ for NM -----------------------------      
+        X, spc, Na, C = hdt.readxyz3(XYZfile)
+
+        # --------- NMS for XYZs with high stddev --------
+        for i in range(len(X)):
+            for j in range (len(nmc)):
+                gen = nmt.nmsgenerator_RXN(X[i],nmc[j],spc[i],l_val,h_val)      # xyz,nmo,fcc,spc,T,Ri_-x,Ri_+x,minfc = 1.0E-3
+
+                N = 10
+                gen_crd = np.zeros((N, len(spc[i]),3),dtype=np.float32)
+                for k in range(N):
+                    gen_crd[k] = gen.get_random_structure()
+
+                hdt.writexyzfile(NMSfile, gen_crd, spc[i])
+                
+        del activ
+
 
 def interval(v,S):
     ps = 0.0
