@@ -1001,101 +1001,101 @@ class MD_Sampler:
 # --------------------------------------------------------------------
 
 class subproc_pDyn():
-	def __init__(self, n_points,  cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False):
-		self.n_points = n_points	      #No of points along IRC (forward+backward+1)
-		self.coor_train=[]                    #Where the coordinates of the molecules with high standard deviation will be saved
-		self.Na_train=[]                      #Where the number of atoms of the molecules with high standard deviation will be saved
-		self.S_train=[]                       #Where the atomic species of the molecules with high standard deviation will be saved
-		self.hstd=[]
+    def __init__(self, n_points,  cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False):
+        self.n_points = n_points	      #No of points along IRC (forward+backward+1)
+        self.coor_train=[]                    #Where the coordinates of the molecules with high standard deviation will be saved
+        self.Na_train=[]                      #Where the number of atoms of the molecules with high standard deviation will be saved
+        self.S_train=[]                       #Where the atomic species of the molecules with high standard deviation will be saved
+        self.hstd=[]
 
-		#The path to the network
-	        self.net = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)            #Load the network
+        #The path to the network
+        self.net = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)            #Load the network
+        
+        # Define environment variables for pDynamo in py27
+        self.my_env = os.environ.copy()
+        # -------- pDynamo ---------------------------------------------------------------------------
+        self.my_env["PDYNAMO_ROOT"] = "/home/kavi/pDynamo-1.9.0"
+        self.my_env["PDYNAMO_PARAMETERS"] = "/home/kavi/pDynamo-1.9.0/parameters"
+        self.my_env["PDYNAMO_SCRATCH"] = "/data/kavi/pDynamo"
+        self.my_env["PDYNAMO_STYLE"] = "/home/kavi/pDynamo-1.9.0/parameters/cssStyleSheets/defaultStyle.css"
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pBabel-1.9.0:" + self.my_env["PYTHONPATH"]
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pCore-1.9.0:" + self.my_env["PYTHONPATH"]
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pMolecule-1.9.0:" + self.my_env["PYTHONPATH"]
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pMoleculeScripts-1.9.0:" + self.my_env["PYTHONPATH"]
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pGraph-0.1:" + self.my_env["PYTHONPATH"]
+        self.my_env["PDYNAMO_PMOLECULESCRIPTS"] = "/home/kavi/pDynamo-1.9.0/pMoleculeScripts-1.9.0"
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDyn_ANI:" + self.my_env["PYTHONPATH"]
+        
+        # -------- Boost -------------------------------------------------------------------------------
+        self.my_env["BOOST_ROOT"] = "/home/kavi/boost_1_63_0"
+        self.my_env["CPLUS_INCLUDE_PATH"] = "/home/kavi/boost_1_63_0/boost:" + self.my_env["CPLUS_INCLUDE_PATH"]
+        self.my_env["LD_LIBRARY_PATH"] = "/home/kavi/boost_1_63_0/lib:" + self.my_env["LD_LIBRARY_PATH"]
+        
+        # -------- NeuroChem ---------------------------------------------------------------------------
+        self.my_env["NC_ROOT"] = "/home/kavi/NeuroChem/build"
+        self.my_env["PATH"] = "/home/kavi/NeuroChem/build/bin:" + self.my_env["PATH"]
+        self.my_env["LD_LIBRARY_PATH"] = "/home/kavi/NeuroChem/build/lib:" + self.my_env["LD_LIBRARY_PATH"]
+        self.my_env["PYTHONPATH"] = "/home/kavi/NeuroChem/build/lib:" + self.my_env["PYTHONPATH"]
+        
+    def subprocess_cmd(self, python3_command, shl, logfile):
+        with open(logfile,"wb") as out, open("stderr.txt","wb") as err:
+            process = subprocess.Popen(python3_command.split(), env=self.my_env, shell=shl, stdout=out, stderr=err, universal_newlines=True)
+            process.wait()
+            chk = process.poll()
+            return chk
 
-		# Define environment variables for pDynamo in py27
-		self.my_env = os.environ.copy()
-		# -------- pDynamo ---------------------------------------------------------------------------
-		self.my_env["PDYNAMO_ROOT"] = "/home/kavi/pDynamo-1.9.0"
-		self.my_env["PDYNAMO_PARAMETERS"] = "/home/kavi/pDynamo-1.9.0/parameters"
-		self.my_env["PDYNAMO_SCRATCH"] = "/data/kavi/pDynamo"
-		self.my_env["PDYNAMO_STYLE"] = "/home/kavi/pDynamo-1.9.0/parameters/cssStyleSheets/defaultStyle.css"
-		self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pBabel-1.9.0:" + self.my_env["PYTHONPATH"]
-		self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pCore-1.9.0:" + self.my_env["PYTHONPATH"]
-		self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pMolecule-1.9.0:" + self.my_env["PYTHONPATH"]
-		self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pMoleculeScripts-1.9.0:" + self.my_env["PYTHONPATH"]
-		self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pGraph-0.1:" + self.my_env["PYTHONPATH"]
-		self.my_env["PDYNAMO_PMOLECULESCRIPTS"] = "/home/kavi/pDynamo-1.9.0/pMoleculeScripts-1.9.0"
-		self.my_env["PYTHONPATH"] = "/home/kavi/pDyn_ANI:" + self.my_env["PYTHONPATH"]
+    def getIRCpoints_toXYZ(self, inpf, filename, f_path):
+        re1 = re.compile('\d+?\n.*?\n(?:[A-Z][a-z]?.+?(?:\n|$))+')
+        gfile = open(inpf,'r').read()
+        blocks = re1.findall(gfile)  
+        for i in range(self.n_points):
+            f = open(f_path + filename[:-4] + '-%03i.xyz' %(i+1), 'w') 
+            f.write(blocks[i])
+            f.close()
 
-		# -------- Boost -------------------------------------------------------------------------------
-		self.my_env["BOOST_ROOT"] = "/home/kavi/boost_1_63_0"
-		self.my_env["CPLUS_INCLUDE_PATH"] = "/home/kavi/boost_1_63_0/boost:" + self.my_env["CPLUS_INCLUDE_PATH"]
-		self.my_env["LD_LIBRARY_PATH"] = "/home/kavi/boost_1_63_0/lib:" + self.my_env["LD_LIBRARY_PATH"]
+    def check_stddev(self,f):
+        mol=read(f)                                          #Read the molecule for the file
+        mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
+        evkcal=hdt.evtokcal
 
-		# -------- NeuroChem ---------------------------------------------------------------------------
-		self.my_env["NC_ROOT"] = "/home/kavi/NeuroChem/build"
-		self.my_env["PATH"] = "/home/kavi/NeuroChem/build/bin:" + self.my_env["PATH"]
-		self.my_env["LD_LIBRARY_PATH"] = "/home/kavi/NeuroChem/build/lib:" + self.my_env["LD_LIBRARY_PATH"]
-		self.my_env["PYTHONPATH"] = "/home/kavi/NeuroChem/build/lib:" + self.my_env["PYTHONPATH"]
+        e=mol.get_potential_energy()                        #Calculate the energy of the molecule. Must be done to get the standard deviation
+        s=mol.calc.stddev
+        stddev =  s*evkcal
 
-	def subprocess_cmd(self, python3_command, shl, logfile):
-   		with open(logfile,"wb") as out, open("stderr.txt","wb") as err:
-        		process = subprocess.Popen(python3_command.split(), env=self.my_env, shell=shl, stdout=out, stderr=err, universal_newlines=True)
-        		process.wait()
-        		chk = process.poll()
-        		return chk
+        if stddev > 0.34:
+            self.hstd.append(stddev)                            #Check the standard deviation
+            c = mol.get_positions(wrap=False)
+            s = mol.get_chemical_symbols()
+            Na=mol.get_number_of_atoms()
+            self.Na_train.append(Na)
+            self.coor_train.append(c)
+            self.S_train.append(s)
+            return stddev
+    
+        else:                                           #if the standard deviation is low
+            return stddev
+        
+    def get_nm(self, f):
+        nmc_list = []
+        mol=read(f)                                          #Read the molecule for the file
+        mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
+        vib = Vibrations(mol, nfree=2)
+        vib.run()
+        ANI_freq = vib.get_frequencies()
+        for i in range(len(ANI_freq)):
+            nm = vib.get_mode(i)
+            nmc_list.append(nm)
+        vib.clean()
+        return nmc_list
 
-	def getIRCpoints_toXYZ(self, inpf, filename, f_path):
-		re1 = re.compile('\d+?\n.*?\n(?:[A-Z][a-z]?.+?(?:\n|$))+')
-		gfile = open(inpf,'r').read()
-		blocks = re1.findall(gfile)
-		for i in range(self.n_points):
-    			f = open(f_path + filename[:-4] + '-%03i.xyz' %(i+1), 'w') 
-    			f.write(blocks[i])
-    			f.close()
-
-	def check_stddev(self,f):
-		mol=read(f)                                          #Read the molecule for the file
-		mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
-		evkcal=hdt.evtokcal
-
-		e=mol.get_potential_energy()                        #Calculate the energy of the molecule. Must be done to get the standard deviation
-		s=mol.calc.stddev
-		stddev =  s*evkcal
-
-		if stddev > 0.34:
-			self.hstd.append(stddev)                            #Check the standard deviation
-			c = mol.get_positions(wrap=False)
-			s = mol.get_chemical_symbols()
-			Na=mol.get_number_of_atoms()
-			self.Na_train.append(Na)
-			self.coor_train.append(c)
-			self.S_train.append(s)
-			return stddev
-
-		else:                                           #if the standard deviation is low
-			return stddev
-
-	def get_nm(self, f):
-		nmc_list = []
-		mol=read(f)                                          #Read the molecule for the file
-		mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
-		vib = Vibrations(mol, nfree=2)
-		vib.run()
-		ANI_freq = vib.get_frequencies()
-		for i in range(len(ANI_freq)):
-			nm = vib.get_mode(i)
-			nmc_list.append(nm)
-		vib.clean()
-		return nmc_list
-
-	def write_nm_xyz(self, fname):                                #Calling this function wirtes all the structures with high standard deviations to and xyz file
-		alt=open('%s' %fname, 'w')
-		for i in range(len(self.Na_train)):
-			cm = 'comment'
-			alt.write('%s\n%s\n' %(str(self.Na_train[i]), cm))
-			for j in range(len(self.S_train[i])):
-				alt.write('%s %f %f %f \n' %(self.S_train[i][j], self.coor_train[i][j][0], self.coor_train[i][j][1], self.coor_train[i][j][2]))
-		alt.close()
+    def write_nm_xyz(self, fname):                                #Calling this function wirtes all the structures with high standard deviations to and xyz file
+        alt=open('%s' %fname, 'w')
+        for i in range(len(self.Na_train)):
+            cm = 'comment'
+            alt.write('%s\n%s\n' %(str(self.Na_train[i]), cm))
+            for j in range(len(self.S_train[i])):
+                alt.write('%s %f %f %f \n' %(self.S_train[i][j], self.coor_train[i][j][0], self.coor_train[i][j][1], self.coor_train[i][j][2]))
+            alt.close()
 
 
 

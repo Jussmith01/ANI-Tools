@@ -108,7 +108,7 @@ def plot_corr_dist(Xa, Xp, inset=True, xlabel='$F_{dft}$' + r' $(kcal \times mol
     #cmap = mpl.cm.brg
 
     # Plot 2d Histogram
-    bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), range= [[Fmn, Fmx], [Fmn, Fmx]], cmap=cmap)
+    bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), range= [[Xa.min(), Xa.max()], [Xp.min(), Xp.max()]], cmap=cmap)
 
     # Build color bar
     #cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
@@ -165,6 +165,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
 
             cdata = dict({'Eani': [],
                           'Edft': [],
+                          'Erel': [],
                           'Fani': [],
                           'Fdft': [],
                           'dEani': [],
@@ -184,6 +185,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
 
                         Eani = Eani[:,midx]
                         Edft = data['energies'][midx]
+                        Erel = (data['energies'] - data['energies'].min())[midx]
                         Fani = Fani[:,midx,:,:]
                         if forces:
                             if grad:
@@ -209,6 +211,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
 
                         cdata['Eani'].append(Eani)
                         cdata['Edft'].append(Edft)
+                        cdata['Erel'].append(Erel)
 
                         cdata['Fani'].append(Fani)
                         cdata['Fdft'].append(Fdft)
@@ -224,7 +227,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                         #cdata['Erani'].append(Eani-Eani.min())
                         #cdata['Erdft'].append(Edft-Edft.min())
 
-            for k in ['Na', 'Na2', 'Edft', 'Fdft', 'dEdft']:
+            for k in ['Na', 'Na2', 'Edft', 'Fdft', 'dEdft', 'Erel']:
                 cdata[k] = np.concatenate(cdata[k])
 
             for k in ['Eani', 'Fani', 'dEani']:
