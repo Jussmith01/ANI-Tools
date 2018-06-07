@@ -22,21 +22,28 @@ from multiprocessing import Process
 import shutil
 
 class alconformationalsampler():
+
+    # Constructor
     def __init__(self, ldtdir, datdir, optlfile, fpatoms, netdict):
-        self.ldtdir = ldtdir
-        self.datdir = datdir
-        self.cdir = ldtdir+datdir+'/confs/'
+        self.ldtdir = ldtdir # local working dir
+        self.datdir = datdir # working data dir
+        self.cdir = ldtdir+datdir+'/confs/' # confs store dir (the data gen code looks here for conformations to run QM on)
 
-        self.fpatoms = fpatoms
+        self.fpatoms = fpatoms # atomic species being sampled
 
-        self.optlfile = optlfile
-        self.idir = [f for f in open(optlfile).read().split('\n') if f != '']
+        self.optlfile = optlfile # Optimized molecules store path file
 
+        self.idir = [f for f in open(optlfile).read().split('\n') if f != ''] # read and store the paths to the opt files
+
+        # create cdir if it does not exist
         if not os.path.exists(self.cdir):
             os.mkdir(self.cdir)
 
+        # store network parameters dictionary
         self.netdict = netdict
 
+
+    # Runs NMS sampling (single GPU only currently)
     def run_sampling_nms(self, nmsparams, gpus=[0]):
         print('Running NMS sampling...')
         p = Process(target=self.normal_mode_sampling, args=(nmsparams['T'],
@@ -47,6 +54,7 @@ class alconformationalsampler():
         p.start()
         p.join()
 
+    # Run MD sampling on N GPUs. This code will automatically run 2 mds per GPU for better utilization
     def run_sampling_md(self, mdparams, perc=1.0, gpus=[0]):
         md_work = []
         for di, id in enumerate(self.idir):
@@ -84,6 +92,7 @@ class alconformationalsampler():
             p.join()
         print('Finished sampling.')
 
+    # Run the dimer sampling code on N gpus
     def run_sampling_dimer(self, dmparams, gpus=[0]):
 
         proc = []
@@ -99,6 +108,7 @@ class alconformationalsampler():
             p.join()
         print('Finished sampling.')
 
+    # Run cluster sampling on N gpus
     def run_sampling_cluster(self, gcmddict, gpus=[0]):
 
         Nmols = np.random.randint(low=gcmddict['MolLow'],
@@ -126,6 +136,7 @@ class alconformationalsampler():
             p.join()
         print('Finished sampling.')
 
+    # Normal mode sampler function
     def normal_mode_sampling(self, T, Ngen, Nkep, sig, gpuid):
         of = open(self.ldtdir + self.datdir + '/info_data_nms.nfo', 'w')
 
@@ -199,6 +210,7 @@ class alconformationalsampler():
         #print('\nGrand Total:', Nkt, 'of', Ntt,'percent:',"{:.2f}".format(100.0*Nkt/Ntt), 'Kept',Nkp)
         of.close()
 
+    # MD Sampling function
     def mol_dyn_sampling(self,md_work, i, N, T1, T2, dt, Nc, Ns, sig, gpuid):
         activ = aat.moldynactivelearning(self.netdict['cnstfile'],
                                          self.netdict['saefile'],
@@ -238,6 +250,7 @@ class alconformationalsampler():
         del activ
         difo.close()
 
+    # Dimer sampling function
     def dimer_sampling(self, tid, Nr, dparam, gpuid):
         mds_select = dparam['mdselect']
         N = dparam['N']
@@ -300,6 +313,7 @@ class alconformationalsampler():
         difo.write('Generated '+str(Nd)+' of '+str(Nt)+' tested dimers. Percent: ' + "{:.2f}".format(100.0*Nd/float(Nt)))
         difo.close()
 
+    # Cluster sampling function
     def cluster_sampling(self, tid, Nr, mol_sizes, seed, gcmddict, gpuid):
         dictc = gcmddict.copy()
         solv_file = dictc['solv_file']
@@ -327,7 +341,7 @@ class alconformationalsampler():
         dgen.generate_clusters(dictc, mol_sizes, tid)
 
 
-
+    # Run the TS sampler
     def run_sampling_TS(self, tsparams, gpus=[0], perc=1.0):
         TS_infiles = []
         for di, id in enumerate(tsparams['tsfiles']):
@@ -354,7 +368,7 @@ class alconformationalsampler():
 
         print('Finished sampling.')
 
-
+    # TS sampler function
     def TS_sampling(self, tid, TS_infiles, tsparams, gpuid):
         activ = aat.MD_Sampler(TS_infiles,
                                self.netdict['cnstfile'],
@@ -396,6 +410,7 @@ class alconformationalsampler():
         del activ
         difo.close()
 
+    # Run the dihedral sampler
     def run_sampling_dhl(self, dhlparams, gpus):
         dhlparams['Nmol'] = int(np.ceil(dhlparams['Nmol']/len(gpus)))
 
@@ -414,7 +429,7 @@ class alconformationalsampler():
 
         print('Finished sampling.')
 
-
+    # Dihedral sampling function
     def DHL_sampling(self, i, dhlparams, fpatoms, gpuid, seed):
         activ = aat.aniTortionSampler(self.netdict,
                                       self.cdir,
@@ -464,7 +479,6 @@ class alconformationalsampler():
         XYZfile=pdynparams['XYZfile']                           #XYZ file with high standard deviations structures
         l_val=pdynparams['l_val']                               #Ri --> randomly perturb in the interval [+x,-x]
         h_val=pdynparams['h_val']                               
-        NMSfile=pdynparams['NMSfile']                           #XYZ file with NMS random_structure 
         n_points=pdynparams['n_points']                         #Number of points along IRC (forward+backward+1 for TS)
 
         # --------------------------------- Run pDynamo ---------------------------
@@ -506,7 +520,7 @@ class alconformationalsampler():
                 for k in range(N):
                     gen_crd[k] = gen.get_random_structure()
 
-                hdt.writexyzfile(NMSfile, gen_crd, spc[i])
+                hdt.writexyzfile(self.cdir + 'nms_TS.xyz', gen_crd, spc[i])
                 
         del activ
 
