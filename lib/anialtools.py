@@ -476,7 +476,7 @@ class alconformationalsampler():
                 chk_IRC = activ.subprocess_cmd(sbproc_cmdIRC, False, logfile_IRC)
                 
         # ----------------------- Save points along ANI IRC ------------------------
-        IRCfils=os.listdir(IRCdir)6767
+        IRCfils=os.listdir(IRCdir)
         IRCfils.sort()
 
         for f in IRCfils:
