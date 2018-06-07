@@ -838,6 +838,29 @@ class alaniensembletrainer():
         if build_test:
             testh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/testset' + str(r) + '.h5') for r in range(N)]
 
+        if rmhighe:
+            dE = []
+            for f in self.h5file:
+                adl = pyt.anidataloader(h5d+f)
+                for data in adl:
+                    S = data['species']
+                    E = data['energies']
+                    X = data['coordinates']
+    
+                    Esae = hdt.compute_sae(self.netdict['saefile'], S)
+    
+                    dE.append((E-Esae)/np.sqrt(len(S)))
+    
+            dE = np.concatenate(dE)
+            cidx = np.where(np.abs(dE) < 15.0)
+            std = np.abs(dE[cidx]).std()
+            men = np.mean(dE[cidx])
+
+            print(men,std,men+std)
+            idx = np.intersect1d(np.where(dE>=-np.abs(15*std+men))[0],np.where(dE<=np.abs(11*std+men))[0])
+            cnt = idx.size
+            print('DATADIST: ',dE.size,cnt,(dE.size-cnt),100.0*((dE.size-cnt)/dE.size))
+
         E = []
         data_count = np.zeros((N,3),dtype=np.int32)
         for f in self.h5file:
@@ -863,16 +886,16 @@ class alaniensembletrainer():
                     else:
                         F = 0.0*X
 
-                    print('Energy:',E)
-                    print('Force:',F)
-
                     if rmhighe:
                         Esae = hdt.compute_sae(self.netdict['saefile'], S)
 
-                        hidx = np.where(np.abs(E - Esae) > 5.0)
-                        lidx = np.where(np.abs(E - Esae) <= 5.0)
-                        if hidx[0].size > 0:
-                            print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ', E[hidx])
+                        ind_dE = (E - Esae)/np.sqrt(len(S))
+
+                        hidx = np.union1d(np.where(ind_dE<-(15.0*std+men))[0],np.where(ind_dE>(11.0*std+men))[0])
+                        lidx = np.intersect1d(np.where(ind_dE>=-(15.0*std+men))[0],np.where(ind_dE<=(11.0*std+men))[0])
+
+                        if hidx.size > 0:
+                            print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ', (E[hidx]-Esae)/np.sqrt(len(S)))
 
                         X = X[lidx]
                         E = E[lidx]
