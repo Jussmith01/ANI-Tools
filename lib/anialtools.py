@@ -444,7 +444,7 @@ class alconformationalsampler():
 
         activ.generate_dhl_samples(MaxNa=dhlparams['MaxNa'], fpref='dhl_scan-'+str(i).zfill(2), freqname='vib'+str(i)+'.')
 
-    def run_sampling_pDynTS(self, pdynparams, gpus=[0]):
+    def run_sampling_pDynTS(self, pdynparams, gpus=0):
 
         gpus2 = gpus
         proc = []
@@ -462,11 +462,11 @@ class alconformationalsampler():
 
     def pDyn_QMsampling(self, pdynparams, gpuid):       
                                                                   #Call subproc_pDyn class in pyaniasetools as activ
-        activ = subproc_pDyn(self.netdict['cnstfile'],            #netdict parameters
-                             self.netdict['saefile'],
-                             self.netdict['nnfprefix'],
-                             self.netdict['num_nets'],
-                             gpuid)
+        activ = aat.subproc_pDyn(self.netdict['cnstfile'],
+                                         self.netdict['saefile'],
+                                         self.netdict['nnfprefix'],
+                                         self.netdict['num_nets'],
+                                         gpuid)
        
         logfile_OPT=pdynparams['logfile_OPT']                   #logfile for FIRE OPT output
         logfile_TS=pdynparams['logfile_TS']                     #logfile for ANI TS output
@@ -480,6 +480,8 @@ class alconformationalsampler():
         l_val=pdynparams['l_val']                               #Ri --> randomly perturb in the interval [+x,-x]
         h_val=pdynparams['h_val']                               
         n_points=pdynparams['n_points']                         #Number of points along IRC (forward+backward+1 for TS)
+        sig=pdynparams['sig']
+        N=pdynparams['N']
 
         # --------------------------------- Run pDynamo ---------------------------
         # auto-TS ---> FIRE constraint OPT of core C atoms ---> ANI TS ---> ANI IRC
@@ -494,16 +496,15 @@ class alconformationalsampler():
         IRCfils.sort()
 
         for f in IRCfils:
-            activ.getIRCpoints_toXYZ(IRCdir+f, f, indir)
-        
+            activ.getIRCpoints_toXYZ(n_points, IRCdir+f, f, indir)
         infils=os.listdir(indir)
         infils.sort()
         
         # ------ Check for high standard deviation structures and get vib modes -----
         for f in infils:
-            stdev = activ.check_stddev(indir+f)
-            if stdev > 0.34:                     # if stddev is high then get modes for that point
-                nmc = activ.get_nm(indir+f)      # save modes in memory for later use
+            stdev = activ.check_stddev(indir+f, sig)
+            if stdev > sig:                      #if stddev is high then get modes for that point
+                nmc = activ.get_nm(indir+f)      #save modes in memory for later use
             
             activ.write_nm_xyz(XYZfile)          #writes all the structures with high standard deviations to xyz file
 
@@ -520,7 +521,7 @@ class alconformationalsampler():
                 for k in range(N):
                     gen_crd[k] = gen.get_random_structure()
 
-                hdt.writexyzfile(self.cdir + 'nms_TS.xyz', gen_crd, spc[i])
+                hdt.writexyzfile(self.cdir + 'nms_TS%i.xyz' %N, gen_crd, spc[i])
                 
         del activ
 
