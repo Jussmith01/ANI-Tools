@@ -22,21 +22,28 @@ from multiprocessing import Process
 import shutil
 
 class alconformationalsampler():
+
+    # Constructor
     def __init__(self, ldtdir, datdir, optlfile, fpatoms, netdict):
-        self.ldtdir = ldtdir
-        self.datdir = datdir
-        self.cdir = ldtdir+datdir+'/confs/'
+        self.ldtdir = ldtdir # local working dir
+        self.datdir = datdir # working data dir
+        self.cdir = ldtdir+datdir+'/confs/' # confs store dir (the data gen code looks here for conformations to run QM on)
 
-        self.fpatoms = fpatoms
+        self.fpatoms = fpatoms # atomic species being sampled
 
-        self.optlfile = optlfile
-        self.idir = [f for f in open(optlfile).read().split('\n') if f != '']
+        self.optlfile = optlfile # Optimized molecules store path file
 
+        self.idir = [f for f in open(optlfile).read().split('\n') if f != ''] # read and store the paths to the opt files
+
+        # create cdir if it does not exist
         if not os.path.exists(self.cdir):
             os.mkdir(self.cdir)
 
+        # store network parameters dictionary
         self.netdict = netdict
 
+
+    # Runs NMS sampling (single GPU only currently)
     def run_sampling_nms(self, nmsparams, gpus=[0]):
         print('Running NMS sampling...')
         p = Process(target=self.normal_mode_sampling, args=(nmsparams['T'],
@@ -47,6 +54,7 @@ class alconformationalsampler():
         p.start()
         p.join()
 
+    # Run MD sampling on N GPUs. This code will automatically run 2 mds per GPU for better utilization
     def run_sampling_md(self, mdparams, perc=1.0, gpus=[0]):
         md_work = []
         for di, id in enumerate(self.idir):
@@ -84,6 +92,7 @@ class alconformationalsampler():
             p.join()
         print('Finished sampling.')
 
+    # Run the dimer sampling code on N gpus
     def run_sampling_dimer(self, dmparams, gpus=[0]):
 
         proc = []
@@ -99,6 +108,7 @@ class alconformationalsampler():
             p.join()
         print('Finished sampling.')
 
+    # Run cluster sampling on N gpus
     def run_sampling_cluster(self, gcmddict, gpus=[0]):
 
         Nmols = np.random.randint(low=gcmddict['MolLow'],
@@ -107,12 +117,15 @@ class alconformationalsampler():
 
         print(Nmols)
 
-        mol_sizes = np.split(Nmols, len(gpus))
+        seeds = np.random.randint(0,1000000,len(gpus))
+
+        mol_sizes = np.array_split(Nmols, len(gpus))
 
         proc = []
         for i,g in enumerate(gpus):
             proc.append(Process(target=self.cluster_sampling, args=(i, int(gcmddict['Nr']/len(gpus)),
                                                                     mol_sizes[i],
+                                                                    seeds[i],
                                                                     gcmddict,
                                                                     g)))
         print('Running Cluster-MD Sampling...')
@@ -123,6 +136,7 @@ class alconformationalsampler():
             p.join()
         print('Finished sampling.')
 
+    # Normal mode sampler function
     def normal_mode_sampling(self, T, Ngen, Nkep, sig, gpuid):
         of = open(self.ldtdir + self.datdir + '/info_data_nms.nfo', 'w')
 
@@ -132,7 +146,7 @@ class alconformationalsampler():
                                                 self.netdict['saefile'],
                                                 self.netdict['nnfprefix'],
                                                 self.netdict['num_nets'],
-                                                gpuid, False)
+                                                [gpuid], False)
 
         dc = aat.diverseconformers(self.netdict['cnstfile'],
                                    self.netdict['saefile'],
@@ -196,6 +210,7 @@ class alconformationalsampler():
         #print('\nGrand Total:', Nkt, 'of', Ntt,'percent:',"{:.2f}".format(100.0*Nkt/Ntt), 'Kept',Nkp)
         of.close()
 
+    # MD Sampling function
     def mol_dyn_sampling(self,md_work, i, N, T1, T2, dt, Nc, Ns, sig, gpuid):
         activ = aat.moldynactivelearning(self.netdict['cnstfile'],
                                          self.netdict['saefile'],
@@ -235,6 +250,7 @@ class alconformationalsampler():
         del activ
         difo.close()
 
+    # Dimer sampling function
     def dimer_sampling(self, tid, Nr, dparam, gpuid):
         mds_select = dparam['mdselect']
         N = dparam['N']
@@ -245,6 +261,7 @@ class alconformationalsampler():
         sig = dparam['sig']
         Nm = dparam['Nm']
         Ni = dparam['Ni']
+        Ns = dparam['Ns']
         
         mols = []
         difo = open(self.ldtdir + self.datdir + '/info_data_mddimer-'+str(tid)+'.nfo', 'w')
@@ -274,24 +291,35 @@ class alconformationalsampler():
         for i in range(Nr):
             dgen.init_dynamics(Nm, V, L, dt, T)
  
-            fname = self.cdir + 'dimer-'+str(tid).zfill(2)+str(i).zfill(2)+'_'
-       
-            dgen.run_dynamics(Ni)
-            dgen.__fragmentbox__(fname,sig)
+            for j in range(Ns):
+                if j != 0:
+                    dgen.run_dynamics(Ni)
+
+                fname = self.cdir + 'dimer-'+str(tid).zfill(2)+str(i).zfill(2)+'-'+str(j).zfill(2)+'_'
+                max_sig = dgen.__fragmentbox__(fname,sig)
+                print('MaxSig:',max_sig)
+                #difo.write('Step ('+str(i)+',',+str(j)+') ['+ str(dgen.Nd)+ '/'+ str(dgen.Nt)+']\n')
+                difo.write('Step ('+str(i)+','+str(j)+') ['+ str(dgen.Nd)+ '/'+ str(dgen.Nt)+'] max sigma: ' + "{:.2f}".format(max_sig) + ' generated '+str(len(dgen.frag_list))+' dimers...\n')
+
+                Nt += dgen.Nt
+                Nd += dgen.Nd
         
-            Nt += dgen.Nt
-            Nd += dgen.Nd
-        
-            #print('Step (',tid,',',i,') [', str(dgen.Nd), '/', str(dgen.Nt),'] generated ',len(dgen.frag_list), 'dimers...')
-            difo.write('Step ('+str(i)+') ['+ str(dgen.Nd)+ '/'+ str(dgen.Nt)+'] generated '+str(len(dgen.frag_list))+'dimers...\n')
+                #print('Step (',tid,',',i,') [', str(dgen.Nd), '/', str(dgen.Nt),'] generated ',len(dgen.frag_list), 'dimers...')
+                #difo.write('Step ('+str(i)+') ['+ str(dgen.Nd)+ '/'+ str(dgen.Nt)+'] generated '+str(len(dgen.frag_list))+'dimers...\n')
+                if max_sig > 3.0*sig:
+                    difo.write('Terminating dynamics -- max sigma: '+"{:.2f}".format(max_sig)+' Ran for: '+"{:.2f}".format(j*Ni*dt)+'fs\n')
+                    break
 
         difo.write('Generated '+str(Nd)+' of '+str(Nt)+' tested dimers. Percent: ' + "{:.2f}".format(100.0*Nd/float(Nt)))
         difo.close()
 
-    def cluster_sampling(self, tid, Nr, mol_sizes, gcmddict, gpuid):
+    # Cluster sampling function
+    def cluster_sampling(self, tid, Nr, mol_sizes, seed, gcmddict, gpuid):
         dictc = gcmddict.copy()
         solv_file = dictc['solv_file']
         solu_dirs = dictc['solu_dirs']
+
+        np.random.seed(seed)
 
         dictc['Nr'] = Nr
         dictc['molfile'] = self.cdir + 'clst'
@@ -313,7 +341,7 @@ class alconformationalsampler():
         dgen.generate_clusters(dictc, mol_sizes, tid)
 
 
-
+    # Run the TS sampler
     def run_sampling_TS(self, tsparams, gpus=[0], perc=1.0):
         TS_infiles = []
         for di, id in enumerate(tsparams['tsfiles']):
@@ -340,7 +368,7 @@ class alconformationalsampler():
 
         print('Finished sampling.')
 
-
+    # TS sampler function
     def TS_sampling(self, tid, TS_infiles, tsparams, gpuid):
         activ = aat.MD_Sampler(TS_infiles,
                                self.netdict['cnstfile'],
@@ -363,7 +391,8 @@ class alconformationalsampler():
             fail_count=0
             sumsig = 0.0
             for i in range(Ns):
-                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, nmfile=f.rsplit(".",1)[0]+'.log', displacement=displacement, min_steps=min_steps, sig=sig, nm=nm)
+                #x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, nmfile=f.rsplit(".",1)[0]+'.log', displacement=displacement, min_steps=min_steps, sig=sig, nm=nm)
+                x, S, t, stddev, fail, temp = activ.run_md(f, T, steps, n_steps, min_steps=min_steps, sig=sig, nm=nm)
                 sumsig += stddev
                 if fail:
                     #print('Job '+str(i)+' failed in '+"{:.2f}".format(t)+' Sigma: ' + "{:.2f}".format(stddev)+' SetTemp: '+"{:.2f}".format(temp))
@@ -381,6 +410,7 @@ class alconformationalsampler():
         del activ
         difo.close()
 
+    # Run the dihedral sampler
     def run_sampling_dhl(self, dhlparams, gpus):
         dhlparams['Nmol'] = int(np.ceil(dhlparams['Nmol']/len(gpus)))
 
@@ -388,7 +418,7 @@ class alconformationalsampler():
 
         proc = []
         for i,g in enumerate(gpus):
-            proc.append(Process(target=self.DHL_sampling, args=(i, dhlparams, g, seeds[i])))
+            proc.append(Process(target=self.DHL_sampling, args=(i, dhlparams, self.fpatoms, g, seeds[i])))
 
         print('Running DHL Sampling...')
         for p in proc:
@@ -399,8 +429,8 @@ class alconformationalsampler():
 
         print('Finished sampling.')
 
-
-    def DHL_sampling(self, i, dhlparams, gpuid, seed):
+    # Dihedral sampling function
+    def DHL_sampling(self, i, dhlparams, fpatoms, gpuid, seed):
         activ = aat.aniTortionSampler(self.netdict,
                                       self.cdir,
                                       dhlparams['smilefile'],
@@ -408,10 +438,92 @@ class alconformationalsampler():
                                       dhlparams['Nsamp'],
                                       dhlparams['sig'],
                                       dhlparams['rng'],
+                                      fpatoms,
                                       seed,
                                       gpuid)
 
         activ.generate_dhl_samples(MaxNa=dhlparams['MaxNa'], fpref='dhl_scan-'+str(i).zfill(2), freqname='vib'+str(i)+'.')
+
+    def run_sampling_pDynTS(self, pdynparams, gpus=0):
+
+        gpus2 = gpus
+        proc = []
+        for g in enumerate(gpus2):
+            proc.append(Process(target=self.pDyn_QMsampling, args=(pdynparams, g)))
+        print('Running pDynamo Sampling...')
+        for p in proc:
+            p.start()
+
+        for p in proc:
+            p.join()
+
+        print('Finished pDynamo sampling.')
+
+
+    def pDyn_QMsampling(self, pdynparams, gpuid):       
+                                                                  #Call subproc_pDyn class in pyaniasetools as activ
+        activ = aat.subproc_pDyn(self.netdict['cnstfile'],
+                                         self.netdict['saefile'],
+                                         self.netdict['nnfprefix'],
+                                         self.netdict['num_nets'],
+                                         gpuid)
+       
+        logfile_OPT=pdynparams['logfile_OPT']                   #logfile for FIRE OPT output
+        logfile_TS=pdynparams['logfile_TS']                     #logfile for ANI TS output
+        logfile_IRC=pdynparams['logfile_IRC']                   #logfile for ANI IRC output
+        sbproc_cmdOPT=pdynparams['sbproc_cmdOPT']               #Subprocess commands to run pDyanmo
+        sbproc_cmdTS=pdynparams['sbproc_cmdTS']
+        sbproc_cmdIRC=pdynparams['sbproc_cmdIRC']
+        IRCdir=pdynparams['IRCdir']                             #path to get pDynamo saved IRC points
+        indir=pdynparams['indir']                               #path to save XYZ files of IRC points to check stddev
+        XYZfile=pdynparams['XYZfile']                           #XYZ file with high standard deviations structures
+        l_val=pdynparams['l_val']                               #Ri --> randomly perturb in the interval [+x,-x]
+        h_val=pdynparams['h_val']                               
+        n_points=pdynparams['n_points']                         #Number of points along IRC (forward+backward+1 for TS)
+        sig=pdynparams['sig']
+        N=pdynparams['N']
+
+        # --------------------------------- Run pDynamo ---------------------------
+        # auto-TS ---> FIRE constraint OPT of core C atoms ---> ANI TS ---> ANI IRC
+        chk_OPT = activ.subprocess_cmd(sbproc_cmdOPT, False, logfile_OPT)
+        if chk_OPT == 0:                                                                                  #Wait until previous subproc is done!!
+            chk_TS = activ.subprocess_cmd(sbproc_cmdTS, False, logfile_TS)
+            if chk_TS == 0:
+                chk_IRC = activ.subprocess_cmd(sbproc_cmdIRC, False, logfile_IRC)
+                
+        # ----------------------- Save points along ANI IRC ------------------------
+        IRCfils=os.listdir(IRCdir)
+        IRCfils.sort()
+
+        for f in IRCfils:
+            activ.getIRCpoints_toXYZ(n_points, IRCdir+f, f, indir)
+        infils=os.listdir(indir)
+        infils.sort()
+        
+        # ------ Check for high standard deviation structures and get vib modes -----
+        for f in infils:
+            stdev = activ.check_stddev(indir+f, sig)
+            if stdev > sig:                      #if stddev is high then get modes for that point
+                nmc = activ.get_nm(indir+f)      #save modes in memory for later use
+            
+            activ.write_nm_xyz(XYZfile)          #writes all the structures with high standard deviations to xyz file
+
+        # ----------------------------- Read XYZ for NM -----------------------------      
+        X, spc, Na, C = hdt.readxyz3(XYZfile)
+
+        # --------- NMS for XYZs with high stddev --------
+        for i in range(len(X)):
+            for j in range (len(nmc)):
+                gen = nmt.nmsgenerator_RXN(X[i],nmc[j],spc[i],l_val,h_val)      # xyz,nmo,fcc,spc,T,Ri_-x,Ri_+x,minfc = 1.0E-3
+
+                N = 10
+                gen_crd = np.zeros((N, len(spc[i]),3),dtype=np.float32)
+                for k in range(N):
+                    gen_crd[k] = gen.get_random_structure()
+
+                hdt.writexyzfile(self.cdir + 'nms_TS%i.xyz' %N, gen_crd, spc[i])
+                
+        del activ
 
 
 def interval(v,S):
@@ -474,7 +586,7 @@ class anitrainerinputdesigner:
     def __get_value_string__(self,value):
 
         if type(value)==float:
-            string="{0:10.3e}".format(value)
+            string="{0:10.7e}".format(value)
         else:
             string=str(value)
 
@@ -580,8 +692,8 @@ class alaniensembletrainer():
 
                 Esae = hdt.compute_sae(self.netdict['saefile'],S)
 
-                hidx = np.where(np.abs(E-Esae) > 5.0)
-                lidx = np.where(np.abs(E-Esae) <= 5.0)
+                hidx = np.where(np.abs(E-Esae) > 10.0)
+                lidx = np.where(np.abs(E-Esae) <= 10.0)
                 if hidx[0].size > 0:
                     print('  -('+str(c).zfill(3)+')High energies detected:\n    ',E[hidx])
 
@@ -709,7 +821,7 @@ class alaniensembletrainer():
 
         print('Linear fitting complete.')
 
-    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False):
+    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False, rmhighe=True):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
 
@@ -741,6 +853,29 @@ class alaniensembletrainer():
         if build_test:
             testh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/testset' + str(r) + '.h5') for r in range(N)]
 
+        if rmhighe:
+            dE = []
+            for f in self.h5file:
+                adl = pyt.anidataloader(h5d+f)
+                for data in adl:
+                    S = data['species']
+                    E = data['energies']
+                    X = data['coordinates']
+    
+                    Esae = hdt.compute_sae(self.netdict['saefile'], S)
+    
+                    dE.append((E-Esae)/np.sqrt(len(S)))
+    
+            dE = np.concatenate(dE)
+            cidx = np.where(np.abs(dE) < 15.0)
+            std = np.abs(dE[cidx]).std()
+            men = np.mean(dE[cidx])
+
+            print(men,std,men+std)
+            idx = np.intersect1d(np.where(dE>=-np.abs(15*std+men))[0],np.where(dE<=np.abs(11*std+men))[0])
+            cnt = idx.size
+            print('DATADIST: ',dE.size,cnt,(dE.size-cnt),100.0*((dE.size-cnt)/dE.size))
+
         E = []
         data_count = np.zeros((N,3),dtype=np.int32)
         for f in self.h5file:
@@ -761,10 +896,25 @@ class alaniensembletrainer():
 
                     if forces and not grad:
                         F = forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
-                    if forces and grad:
+                    elif forces and grad:
                         F = -forces_unit*np.array(data[Fkey], order='C', dtype=np.float32)
                     else:
                         F = 0.0*X
+
+                    if rmhighe:
+                        Esae = hdt.compute_sae(self.netdict['saefile'], S)
+
+                        ind_dE = (E - Esae)/np.sqrt(len(S))
+
+                        hidx = np.union1d(np.where(ind_dE<-(15.0*std+men))[0],np.where(ind_dE>(11.0*std+men))[0])
+                        lidx = np.intersect1d(np.where(ind_dE>=-(15.0*std+men))[0],np.where(ind_dE<=(11.0*std+men))[0])
+
+                        if hidx.size > 0:
+                            print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ', (E[hidx]-Esae)/np.sqrt(len(S)))
+
+                        X = X[lidx]
+                        E = E[lidx]
+                        F = F[lidx]
 
                     # Build random split index
                     ridx = np.random.randint(0,Nblocks,size=E.size)

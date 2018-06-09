@@ -10,7 +10,6 @@ import linecache
 import pandas as pd
 
 hatokcal = 627.509469
-#evtokcal = 27.21138505
 evtokcal = 23.06054195
 AtoBohr = 1.88973
 
@@ -220,6 +219,37 @@ def readxyz2 (file):
     xyz = xyz.reshape((Nc,Na,3))
 
     return xyz,typ[0:Na],Na, ct
+
+def readxyz3 (file):           #XYZ file reader for RXN
+	xyz = []
+	typ = []
+	Na  = []
+	ct = []
+	fd = open(file, 'r').read()
+	rb = re.compile('(\d+?)\n(.*?)\n((?:[A-Z][a-z]?.+?(?:\n|$))+)')
+	ra = re.compile('([A-Z][a-z]?)\s+?([-+]?\d+?\.\S+?)\s+?([-+]?\d+?\.\S+?)\s+?([-+]?\d+?\.\S+?)\s*?(?:\n|$)')
+	s = rb.findall(fd)
+	Nc = len(s)
+	if Nc == 0:
+       		raise ValueError('No coordinates found in file. Check formatting of '+file+'.')
+	for i in s:
+		X=[]
+		T=[]
+		ct.append(i[1])
+		c = ra.findall(i[2])
+		Na.append(len(c))
+		for j in c:
+			T.append(j[0])
+			X.append(j[1])
+			X.append(j[2])
+			X.append(j[3])
+		X=np.array(X, dtype=np.float32)
+		X=X.reshape(len(T),3)
+		xyz.append(X)
+		typ.append(T)
+
+	return xyz,typ,Na,ct
+
 
 def readrcdbstruct (file):
     xyz = []
@@ -722,6 +752,20 @@ def calculateKdmat(K, data):
 
     return d
 
+def calculateKdmat_sm(K, data, sigma):
+    N = data.shape[1]
+    d = np.empty((K, nsum(N)))
+    s = np.empty((K, nsum(N)))
+
+    for k in range(K):
+        for i in range(N):
+            for j in range(i+1,N):
+                idx = index_triangle(i,j,N)
+                d[k,idx] = data[k,i] - data[k,j]
+                s[k,idx] = np.max([sigma[k,i],sigma[k,j]])
+
+    return d,s
+
 # -----------------------
 
 # ----------------------------
@@ -835,7 +879,7 @@ def read_rcdb_coordsandnm(file):
 
     return output
 
-def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,TSS,LOT,Temp,rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1',fill=1,comment=""):
+def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,LOT,TSS=10,Temp='300.0',rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1',fill=1,comment=""):
 
     f = open(wkdir + 'inputs/' + fpf + '-' + str(Nc).zfill(fill) + '.ipt', 'w')
 

@@ -43,7 +43,7 @@ fpatoms = ['C', 'N', 'O']
 jtime = "0-6:00"
 
 #---- Training Parameters ----
-GPU = [2,3] # GPU IDs
+GPU = [0, 7] # GPU IDs
 
 M   = 0.35 # Max error per atom in kcal/mol
 Nnets = 8 # networks in ensemble
@@ -138,8 +138,22 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
             'solu_dirs' : solu_dirs,
             }
 
+pdynparams = {'logfile_OPT': "/data/kavi/my_notebooks/OPT.txt",   #logfile for FIRE OPT output
+             'logfile_TS': "/data/kavi/my_notebooks/TS.txt",      #logfile for ANI TS output
+             'logfile_IRC': "/data/kavi/my_notebooks/IRC.txt",    #logfile for ANI IRC output
+             'sbproc_cmdOPT': "/home/kavi/anaconda2/bin/python2.7 /home/kavi/pDynamo-1.9.0/book/examples/ANI-AL-testset/OPT.py",
+             'sbproc_cmdTS': "/home/kavi/anaconda2/bin/python2.7 /home/kavi/pDynamo-1.9.0/book/examples/ANI-AL-testset/TS.py",
+             'sbproc_cmdIRC': "/home/kavi/anaconda2/bin/python2.7 /home/kavi/pDynamo-1.9.0/book/examples/ANI-AL-testset/IRC.py",
+             'IRCdir': '/home/kavi/pDynamo-1.9.0/book/data/xyz/autoTS/ANI-IRC/', #path to get pDynamo saved IRC points
+             'indir' : '/data/kavi/my_notebooks/AL-test/',         #path to save XYZ files of IRC points to check stddev
+             'XYZfile' : '/data/kavi/my_notebooks/NM.xyz',         #XYZ file with high standard deviations structures
+             'l_val' : 0.0,                                        #Ri --> randomly perturb in the interval [+x,-x]
+             'h_val' : 1.0,
+             'n_points' : 101                                      #Number of points along IRC (forward+backward+1 for TS)
+              }
+
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
-N = [15,16,17]
+N = [20]
 #N = [0]
 
 for i in N:
@@ -161,10 +175,11 @@ for i in N:
                }
 
     ## Train the ensemble ##
-    if i > 15:
-        aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
-        aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
-        aet.train_ensemble(GPU)
+    aet = alt.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
+    aet.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
+    aet.train_ensemble(GPU)
+
+    exit(0)
 
     ldtdir = root_dir  # local data directories
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
@@ -179,6 +194,7 @@ for i in N:
     #acs.run_sampling_TS(tsparams, gpus=[2])
     acs.run_sampling_dhl(dhparams, gpus=GPU+GPU)
     #acs.run_sampling_TS(tsparams, gpus=GPU)
+    #acs.run_sampling_pDynTS(pdynparams, gpus)
     #exit(0)
 
     ## Submit jobs, return and pack data

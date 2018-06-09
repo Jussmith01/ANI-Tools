@@ -4,7 +4,7 @@ import random
 from random import randint
 import os
 import re
-
+import subprocess
 # Numpy
 import numpy as np
 
@@ -146,26 +146,26 @@ class anicrossvalidationconformer(object):
         deltas = deltas
         return deltas,energies
 
-    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
-    def compute_energyandforce_conformations(self,X,S,ensemble=True):
-        energy = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
-        forces = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
-        for i,nc in enumerate(self.ncl):
-            nc.setConformers(confs=np.array(X,dtype=np.float32),types=list(S))
-            energy[i] = nc.energy().copy()
-            forces[i] = nc.force().copy()
-
-        sigmap = hdt.hatokcal * np.std(energy,axis=0) / np.sqrt(X.shape[1])
-        if ensemble:
-            return hdt.hatokcal*np.mean(energy,axis=0), hdt.hatokcal*np.mean(forces,axis=0), sigmap#, charges
-        else:
-            return hdt.hatokcal*energy, hdt.hatokcal*forces, sigmap
+#    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
+#    def compute_energyandforce_conformations(self,X,S,ensemble=True):
+#        energy = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
+#        forces = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
+#        for i,nc in enumerate(self.ncl):
+#            nc.setConformers(confs=np.array(X,dtype=np.float32),types=list(S))
+#            energy[i] = nc.energy().copy()
+#            forces[i] = nc.force().copy()
+#
+#        sigmap = hdt.hatokcal * np.std(energy,axis=0) / np.sqrt(X.shape[1])
+#        if ensemble:
+#            return hdt.hatokcal*np.mean(energy,axis=0), hdt.hatokcal*np.mean(forces,axis=0), sigmap#, charges
+#        else:
+#            return hdt.hatokcal*energy, hdt.hatokcal*forces, sigmap
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_energy_conformations(self,X,S):
         Na = X.shape[0] * len(S)
 
-        X_split = np.array_split(X, math.ceil(Na/20000))
+        X_split = np.array_split(X, math.ceil(Na/10000))
 
         energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
         forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
@@ -180,6 +180,31 @@ class anicrossvalidationconformer(object):
 
         sigma = hdt.hatokcal * np.std(energies,axis=0) / np.sqrt(float(len(S)))
         return hdt.hatokcal*np.mean(energies,axis=0),sigma#, charges
+
+    ''' Compute the energy and mean force of a set of conformers for the CV networks '''
+    def compute_energyandforce_conformations(self,X,S,ensemble=True):
+        Na = X.shape[0] * len(S)
+
+        X_split = np.array_split(X, math.ceil(Na/10000))
+
+        energies = np.zeros((self.Nn, X.shape[0]), dtype=np.float64)
+        forces   = np.zeros((self.Nn, X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
+        shift = 0
+        for j,x in enumerate(X_split):
+            for i, nc in enumerate(self.ncl):
+                nc.setConformers(confs=x,types=list(S))
+                E = nc.energy().copy()
+                F = nc.force().copy()
+                #print(E.shape,x.shape,energies.shape,shift)
+                energies[i,shift:shift+E.shape[0]] = E
+                forces[i,shift:shift+E.shape[0]] = F
+            shift += x.shape[0]
+
+        sigma = hdt.hatokcal * np.std(energies,axis=0) / np.sqrt(float(len(S)))
+        if ensemble:
+            return hdt.hatokcal*np.mean(energies,axis=0), hdt.hatokcal*np.mean(forces,axis=0), sigma#, charges
+        else:
+            return hdt.hatokcal*energies, hdt.hatokcal*forces, sigma
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_energy_conformations_net(self,X,S,netid):
@@ -627,7 +652,11 @@ class ani_tortion_scanner():
         atm.set_constraint(c)
 
         dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorith
-        dyn.run(fmax=self.fmax, steps=1000)         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
+
+        try:
+            dyn.run(fmax=self.fmax, steps=1000)         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
+        except ValueError:
+            print("Opt failed: continuing")
         e=atm.get_potential_energy()*hdt.evtokcal
         s=atm.calc.stddev*hdt.evtokcal
         
@@ -723,7 +752,7 @@ class ani_tortion_scanner():
         X = []
         for i in range(stps):
             n_dir = -1.0 if np.random.uniform(-1.0,1.0,1) < 0.0 else 1.0 
-            phi, e, s, atm = self.rot(mol_copy, atid, init + n_dir*i*inc)
+            phi, e, s, atm = self.rot(mol_copy, [atid], [init + n_dir*i*inc])
 
             x = atm.get_positions()
             conf = mol_copy.GetConformer(-1)
@@ -746,19 +775,21 @@ class ani_tortion_scanner():
             return np.empty((0,len(S),2),dtype=np.float32), S, np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64)
 
 class aniTortionSampler:
-    def __init__(self, netdict, storedir, smilefile, Nmol, Nsamp, sigma, rng, seed, gpuid=0):
+    def __init__(self, netdict, storedir, smilefile, Nmol, Nsamp, sigma, rng, atsym=['H', 'C', 'N', 'O'], seed=np.random.randint(0,100000,1), gpuid=0):
         self.storedir = storedir
         self.Nmol = Nmol
         self.Nsamp = Nsamp
         self.sigma = sigma
         self.rng = rng
+        self.atsym = atsym
 
         smiles = [sm for sm in np.loadtxt(smilefile, dtype=np.str,comments=None)]
         np.random.seed(seed)
         np.random.shuffle(smiles)
         self.smiles = smiles[0:Nmol*20]
 
-        self.ens = ensemblemolecule(netdict['cnstfile'], netdict['saefile'], netdict['nnfprefix'], netdict['num_nets'], gpuid)
+        if len(netdict) > 0:
+            self.ens = ensemblemolecule(netdict['cnstfile'], netdict['saefile'], netdict['nnfprefix'], netdict['num_nets'], gpuid)
 
     def get_mol_set(self, smiles, atsym=['H', 'C', 'N', 'O'], MaxNa=20):
         mols = []
@@ -780,7 +811,7 @@ class aniTortionSampler:
         return mols
 
     def get_index_set(self, smiles, Nmol, MaxNa, considerH=False):
-        mols = self.get_mol_set(smiles, MaxNa=MaxNa)[0:Nmol]
+        mols = self.get_mol_set(smiles, atsym=self.atsym, MaxNa=MaxNa)[0:Nmol]
         dihedrals = []
         for i, mol in enumerate(mols):
             bonds = [[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds() if
@@ -833,6 +864,7 @@ class aniTortionSampler:
     def generate_dhl_samples(self,MaxNa=25,fmax=0.005,fpref='dhl_scan-', freqname="vib."):
         ts = ani_tortion_scanner(self.ens, fmax)
         dhls = self.get_index_set(self.smiles, self.Nmol, MaxNa=MaxNa)
+        print('Runnning ',len(dhls),'torsions.',freqname)
         for i, dhl in enumerate(dhls):
             mol = dhl[0]
             X, S, p, e, s = ts.tortional_sampler(mol, self.Nsamp, dhl[1], 10.0, 36, sigma=self.sigma, rng=self.rng, freqname=freqname)
@@ -960,4 +992,107 @@ class MD_Sampler:
             T = random.randrange(0, 20, 1)                       # random T (random velocities) from 0K to 20K
             f=random.choice(self.files)
             self.run_md(f, T)
+
+# --------------------------------------------------------------------
+##### ----------Class Subprocess py27 for pDynamo-------- #####
+# --------------------------------------------------------------------
+
+class subproc_pDyn():
+    def __init__(self, n_points,  cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False):
+        self.n_points = n_points	      #No of points along IRC (forward+backward+1)
+        self.coor_train=[]                    #Where the coordinates of the molecules with high standard deviation will be saved
+        self.Na_train=[]                      #Where the number of atoms of the molecules with high standard deviation will be saved
+        self.S_train=[]                       #Where the atomic species of the molecules with high standard deviation will be saved
+        self.hstd=[]
+
+        #The path to the network
+        self.net = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)            #Load the network
+        
+        # Define environment variables for pDynamo in py27
+        self.my_env = os.environ.copy()
+        # -------- pDynamo ---------------------------------------------------------------------------
+        self.my_env["PDYNAMO_ROOT"] = "/home/kavi/pDynamo-1.9.0"
+        self.my_env["PDYNAMO_PARAMETERS"] = "/home/kavi/pDynamo-1.9.0/parameters"
+        self.my_env["PDYNAMO_SCRATCH"] = "/data/kavi/pDynamo"
+        self.my_env["PDYNAMO_STYLE"] = "/home/kavi/pDynamo-1.9.0/parameters/cssStyleSheets/defaultStyle.css"
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pBabel-1.9.0:" + self.my_env["PYTHONPATH"]
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pCore-1.9.0:" + self.my_env["PYTHONPATH"]
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pMolecule-1.9.0:" + self.my_env["PYTHONPATH"]
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pMoleculeScripts-1.9.0:" + self.my_env["PYTHONPATH"]
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDynamo-1.9.0/pGraph-0.1:" + self.my_env["PYTHONPATH"]
+        self.my_env["PDYNAMO_PMOLECULESCRIPTS"] = "/home/kavi/pDynamo-1.9.0/pMoleculeScripts-1.9.0"
+        self.my_env["PYTHONPATH"] = "/home/kavi/pDyn_ANI:" + self.my_env["PYTHONPATH"]
+        
+        # -------- Boost -------------------------------------------------------------------------------
+        self.my_env["BOOST_ROOT"] = "/home/kavi/boost_1_63_0"
+        self.my_env["CPLUS_INCLUDE_PATH"] = "/home/kavi/boost_1_63_0/boost:" + self.my_env["CPLUS_INCLUDE_PATH"]
+        self.my_env["LD_LIBRARY_PATH"] = "/home/kavi/boost_1_63_0/lib:" + self.my_env["LD_LIBRARY_PATH"]
+        
+        # -------- NeuroChem ---------------------------------------------------------------------------
+        self.my_env["NC_ROOT"] = "/home/kavi/NeuroChem/build"
+        self.my_env["PATH"] = "/home/kavi/NeuroChem/build/bin:" + self.my_env["PATH"]
+        self.my_env["LD_LIBRARY_PATH"] = "/home/kavi/NeuroChem/build/lib:" + self.my_env["LD_LIBRARY_PATH"]
+        self.my_env["PYTHONPATH"] = "/home/kavi/NeuroChem/build/lib:" + self.my_env["PYTHONPATH"]
+        
+    def subprocess_cmd(self, python3_command, shl, logfile):
+        with open(logfile,"wb") as out, open("stderr.txt","wb") as err:
+            process = subprocess.Popen(python3_command.split(), env=self.my_env, shell=shl, stdout=out, stderr=err, universal_newlines=True)
+            process.wait()
+            chk = process.poll()
+            return chk
+
+    def getIRCpoints_toXYZ(self, inpf, filename, f_path):
+        re1 = re.compile('\d+?\n.*?\n(?:[A-Z][a-z]?.+?(?:\n|$))+')
+        gfile = open(inpf,'r').read()
+        blocks = re1.findall(gfile)  
+        for i in range(self.n_points):
+            f = open(f_path + filename[:-4] + '-%03i.xyz' %(i+1), 'w') 
+            f.write(blocks[i])
+            f.close()
+
+    def check_stddev(self,f):
+        mol=read(f)                                          #Read the molecule for the file
+        mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
+        evkcal=hdt.evtokcal
+
+        e=mol.get_potential_energy()                        #Calculate the energy of the molecule. Must be done to get the standard deviation
+        s=mol.calc.stddev
+        stddev =  s*evkcal
+
+        if stddev > 0.34:
+            self.hstd.append(stddev)                            #Check the standard deviation
+            c = mol.get_positions(wrap=False)
+            s = mol.get_chemical_symbols()
+            Na=mol.get_number_of_atoms()
+            self.Na_train.append(Na)
+            self.coor_train.append(c)
+            self.S_train.append(s)
+            return stddev
+    
+        else:                                           #if the standard deviation is low
+            return stddev
+        
+    def get_nm(self, f):
+        nmc_list = []
+        mol=read(f)                                          #Read the molecule for the file
+        mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
+        vib = Vibrations(mol, nfree=2)
+        vib.run()
+        ANI_freq = vib.get_frequencies()
+        for i in range(len(ANI_freq)):
+            nm = vib.get_mode(i)
+            nmc_list.append(nm)
+        vib.clean()
+        return nmc_list
+
+    def write_nm_xyz(self, fname):                                #Calling this function wirtes all the structures with high standard deviations to and xyz file
+        alt=open('%s' %fname, 'w')
+        for i in range(len(self.Na_train)):
+            cm = 'comment'
+            alt.write('%s\n%s\n' %(str(self.Na_train[i]), cm))
+            for j in range(len(self.S_train[i])):
+                alt.write('%s %f %f %f \n' %(self.S_train[i][j], self.coor_train[i][j][0], self.coor_train[i][j][1], self.coor_train[i][j][2]))
+            alt.close()
+
+
 

@@ -25,7 +25,7 @@ pd.options.display.float_format = '{:.2f}'.format
 # ----------------------------------
 # Plot force histogram
 # ----------------------------------
-def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0):
+def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0, inset=True):
     Fmx = Xa.max()
     Fmn = Xa.min()
 
@@ -54,22 +54,24 @@ def plot_corr_dist_axes(ax, Xp, Xa, cmap, labelx, labely, plabel, vmin=0, vmax=0
     ax.text(0.6*((Fmx-Fmn))+Fmn, 0.2*((Fmx-Fmn))+Fmn, 'MAE='+"{:.3f}".format(PMAE)+'\nRMSE='+"{:.3f}".format(PRMS), fontsize=30,
             bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
 
-    axins = zoomed_inset_axes(ax, 2., loc=2)  # zoom = 6
+    if inset:
+        axins = zoomed_inset_axes(ax, 2., loc=2)  # zoom = 6
 
-    sz = 0.1*(Fmx-Fmn)
-    axins.hist2d(Xp, Xa, bins=50, range=[[Xa.mean() - sz, Xa.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz]], norm=LogNorm(), cmap=cmap)
-    axins.plot([Xp.mean() - sz, Xp.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz], '--', c='r', linewidth=3)
+        sz = 0.1*(Fmx-Fmn)
+        axins.hist2d(Xp, Xa, bins=50, range=[[Xa.mean() - sz, Xa.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz]], norm=LogNorm(), cmap=cmap)
+        axins.plot([Xp.mean() - sz, Xp.mean() + sz], [Xp.mean() - sz, Xp.mean() + sz], '--', c='r', linewidth=3)
 
-    # sub region of the original image
-    x1, x2, y1, y2 = Xa.mean() - sz, Xa.mean() + sz, Xp.mean() - sz, Xp.mean() + sz
-    axins.set_xlim(x1, x2)
-    axins.set_ylim(y1, y2)
-    axins.yaxis.tick_right()
+        # sub region of the original image
+        x1, x2, y1, y2 = Xa.mean() - sz, Xa.mean() + sz, Xp.mean() - sz, Xp.mean() + sz
+        axins.set_xlim(x1, x2)
+        axins.set_ylim(y1, y2)
+        axins.yaxis.tick_right()
+
+        mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="1.5")
 
     plt.xticks(visible=True)
     plt.yticks(visible=True)
 
-    mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="1.5")
     return bins
 
 def add_inset_histogram(Xa, Xp, pos, ylim, xlim):
@@ -106,7 +108,7 @@ def plot_corr_dist(Xa, Xp, inset=True, xlabel='$F_{dft}$' + r' $(kcal \times mol
     #cmap = mpl.cm.brg
 
     # Plot 2d Histogram
-    bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), range= [[Fmn, Fmx], [Fmn, Fmx]], cmap=cmap)
+    bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), range= [[Xa.min(), Xa.max()], [Xp.min(), Xp.max()]], cmap=cmap)
 
     # Build color bar
     #cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
@@ -163,6 +165,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
 
             cdata = dict({'Eani': [],
                           'Edft': [],
+                          'Erel': [],
                           'Fani': [],
                           'Fdft': [],
                           'dEani': [],
@@ -176,12 +179,13 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                     #if i > 5:
                     #    break
                     if data['coordinates'].shape[0] != 0:
-                        Eani, Fani, sig = self.compute_energyandforce_conformations(data['coordinates'], data['species'], ensemble=False)
+                        Eani, Fani, sig = self.compute_energyandforce_conformations(np.array(data['coordinates'],dtype=np.float32), data['species'], ensemble=False)
 
                         midx = np.where( data['energies'] - data['energies'].min() < maxe/hdt.hatokcal )[0]
 
                         Eani = Eani[:,midx]
                         Edft = data['energies'][midx]
+                        Erel = (data['energies'] - data['energies'].min())[midx]
                         Fani = Fani[:,midx,:,:]
                         if forces:
                             if grad:
@@ -189,7 +193,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                             else:
                                 Fdft = data['forces'][midx]
                         else:
-                            Fdft = 0.0*data['coordinates']
+                            Fdft = 0.0*data['coordinates'][midx]
 
                         #Eestd = np.std(Eani, axis=0)/np.sqrt(len(data['species']))
                         Eeani = np.mean(Eani, axis=0).reshape(1,-1)
@@ -207,6 +211,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
 
                         cdata['Eani'].append(Eani)
                         cdata['Edft'].append(Edft)
+                        cdata['Erel'].append(Erel)
 
                         cdata['Fani'].append(Fani)
                         cdata['Fdft'].append(Fdft)
@@ -222,7 +227,7 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                         #cdata['Erani'].append(Eani-Eani.min())
                         #cdata['Erdft'].append(Edft-Edft.min())
 
-            for k in ['Na', 'Na2', 'Edft', 'Fdft', 'dEdft']:
+            for k in ['Na', 'Na2', 'Edft', 'Fdft', 'dEdft', 'Erel']:
                 cdata[k] = np.concatenate(cdata[k])
 
             for k in ['Eani', 'Fani', 'dEani']:
