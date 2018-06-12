@@ -467,7 +467,8 @@ class alconformationalsampler():
                                          self.netdict['nnfprefix'],
                                          self.netdict['num_nets'],
                                          gpuid)
-       
+        pDyn_dir=pdynparams['pDyn_dir']                         #Folder to write pDynamo input file
+        num_rxn=pdynparams['num_rxn']                           #Number of input rxn
         logfile_OPT=pdynparams['logfile_OPT']                   #logfile for FIRE OPT output
         logfile_TS=pdynparams['logfile_TS']                     #logfile for ANI TS output
         logfile_IRC=pdynparams['logfile_IRC']                   #logfile for ANI IRC output
@@ -482,9 +483,18 @@ class alconformationalsampler():
         n_points=pdynparams['n_points']                         #Number of points along IRC (forward+backward+1 for TS)
         sig=pdynparams['sig']
         N=pdynparams['N']
+        wkdir=pdynparams['wkdir']
+        cnstfilecv=pdynparams['cnstfilecv']
+        saefilecv=pdynparams['saefilecv']
+        Nnet=pdynparams['Nnet']
 
         # --------------------------------- Run pDynamo ---------------------------
         # auto-TS ---> FIRE constraint OPT of core C atoms ---> ANI TS ---> ANI IRC
+
+        write_pDynOPT(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnet)                              #Write pDynamo input file in pDyndir
+        write_pDynTS(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnet)
+        write_pDynIRC(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnet)
+
         chk_OPT = activ.subprocess_cmd(sbproc_cmdOPT, False, logfile_OPT)
         if chk_OPT == 0:                                                                                  #Wait until previous subproc is done!!
             chk_TS = activ.subprocess_cmd(sbproc_cmdTS, False, logfile_TS)
@@ -516,7 +526,7 @@ class alconformationalsampler():
             for j in range (len(nmc)):
                 gen = nmt.nmsgenerator_RXN(X[i],nmc[j],spc[i],l_val,h_val)      # xyz,nmo,fcc,spc,T,Ri_-x,Ri_+x,minfc = 1.0E-3
 
-                N = 10
+                N = 500
                 gen_crd = np.zeros((N, len(spc[i]),3),dtype=np.float32)
                 for k in range(N):
                     gen_crd[k] = gen.get_random_structure()
