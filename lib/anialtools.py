@@ -486,14 +486,14 @@ class alconformationalsampler():
         wkdir=pdynparams['wkdir']
         cnstfilecv=pdynparams['cnstfilecv']
         saefilecv=pdynparams['saefilecv']
-        Nnet=pdynparams['Nnet']
+        Nnt=pdynparams['Nnt']
 
         # --------------------------------- Run pDynamo ---------------------------
         # auto-TS ---> FIRE constraint OPT of core C atoms ---> ANI TS ---> ANI IRC
 
-        write_pDynOPT(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnet)                              #Write pDynamo input file in pDyndir
-        write_pDynTS(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnet)
-        write_pDynIRC(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnet)
+        activ.write_pDynOPT(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnt)                              #Write pDynamo input file in pDyndir
+        activ.write_pDynTS(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnt)
+        activ.write_pDynIRC(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnt)
 
         chk_OPT = activ.subprocess_cmd(sbproc_cmdOPT, False, logfile_OPT)
         if chk_OPT == 0:                                                                                  #Wait until previous subproc is done!!

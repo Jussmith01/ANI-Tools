@@ -1036,7 +1036,7 @@ class subproc_pDyn():
         self.my_env["LD_LIBRARY_PATH"] = "/home/kavi/NeuroChem/build/lib:" + self.my_env["LD_LIBRARY_PATH"]
         self.my_env["PYTHONPATH"] = "/home/kavi/NeuroChem/build/lib:" + self.my_env["PYTHONPATH"]
         
-    def write_pDynOPT(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnet):
+    def write_pDynOPT(self, num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnt):
     	fname = pDyn_dir + 'OPT.py'
     	sf = open(fname, 'w')
     	sf.write('import numpy as np'+ '\n')
@@ -1047,7 +1047,7 @@ class subproc_pDyn():
     	sf.write('wkdir = ' + '"'+ '%s' %wkdir + '"'+ '\n')
     	sf.write('cnstfilecv  = ' + '"'+ '%s' %cnstfilecv  + '"'+ '\n')
     	sf.write('saefilecv = ' + '"'+ '%s' %saefilecv + '"'+ '\n')
-    	sf.write('Nnet = ' + '%s' %Nnet + '\n')
+    	sf.write('Nnet = ' + '%s' %Nnt + '\n')
     	sf.write(''+ '\n')
     	sf.write('qcModel = QCModelANI (wkdir, cnstfilecv, saefilecv, Nnet)' + '\n')
     	sf.write(''+ '\n')
@@ -1072,8 +1072,9 @@ class subproc_pDyn():
     	sf.write('    if os.path.isfile(os.path.join (F_OPT, "OPT_TS%02i.xyz" % (i+1) )):'+ '\n')
     	sf.write('        os.remove(os.path.join (F_OPT, "OPT_TS%02i.xyz" % (i+1) ))'+ '\n')
     	sf.write('    XYZFile_FromSystem ( os.path.join (F_OPT, "OPT_TS%02i.xyz" % (i+1) ), molecule )'+ '\n')
+    	print ("OPT.py file written!")
 
-    def write_pDynTS(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnet):
+    def write_pDynTS(self, num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnt):
     	fname = pDyn_dir + 'TS.py'
     	sf = open(fname, 'w')
     	sf.write('import numpy as np'+ '\n')
@@ -1084,7 +1085,7 @@ class subproc_pDyn():
     	sf.write('wkdir = ' + '"'+ '%s' %wkdir + '"'+ '\n')
     	sf.write('cnstfilecv  = ' + '"'+ '%s' %cnstfilecv  + '"'+ '\n')
     	sf.write('saefilecv = ' + '"'+ '%s' %saefilecv + '"'+ '\n')
-    	sf.write('Nnet = ' + '%s' %Nnet + '\n')
+    	sf.write('Nnet = ' + '%s' %Nnt + '\n')
     	sf.write('img_freq = np.arange(100, dtype=float)'+ '\n')
     	sf.write('qcModel = QCModelANI (wkdir, cnstfilecv, saefilecv, Nnet)' + '\n')
     	sf.write(''+ '\n')
@@ -1112,8 +1113,9 @@ class subproc_pDyn():
     	sf.write(''+ '\n')
     	sf.write('for i in range(%i):' %num_rxn+ '\n')
     	sf.write('    print "{:5.0f}".format(i+1) , "{:30.5f}".format(img_freq[i])'+ '\n')
+    	print ("TS.py file written!")
 
-    def write_pDynIRC(num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnet):
+    def write_pDynIRC(self, num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnt):
     	fname = pDyn_dir + 'IRC.py'
     	sf = open(fname, 'w')
     	sf.write('import numpy as np'+ '\n')
@@ -1125,7 +1127,7 @@ class subproc_pDyn():
     	sf.write('wkdir = ' + '"'+ '%s' %wkdir + '"'+ '\n')
     	sf.write('cnstfilecv  = ' + '"'+ '%s' %cnstfilecv  + '"'+ '\n')
     	sf.write('saefilecv = ' + '"'+ '%s' %saefilecv + '"'+ '\n')
-    	sf.write('Nnet = ' + '%s' %Nnet + '\n')
+    	sf.write('Nnet = ' + '%s' %Nnt + '\n')
     	sf.write('qcModel = QCModelANI (wkdir, cnstfilecv, saefilecv, Nnet)' + '\n')
     	sf.write(''+ '\n')
     	sf.write('# Define the molecule'+ '\n')
@@ -1151,7 +1153,8 @@ class subproc_pDyn():
     	sf.write('                                  pathStep          = 0.025,      '+ '\n')
     	sf.write('                                  saveFrequency     = 10,        '+ '\n') 
     	sf.write('                                  trajectory        = trajectory, '+ '\n')
-    	sf.write('                                  useMassWeighting  = True        )'+ '\n')     
+    	sf.write('                                  useMassWeighting  = True        )'+ '\n') 
+    	print ("IRC.py file written!")
        
     def subprocess_cmd(self, python3_command, shl, logfile):
         with open(logfile,"wb") as out, open("stderr.txt","wb") as err:
@@ -1215,7 +1218,7 @@ class subproc_pDyn():
             for j in range(len(self.S_train[i])):
                 alt.write('%s %f %f %f \n' %(self.S_train[i][j], self.coor_train[i][j][0], self.coor_train[i][j][1], self.coor_train[i][j][2]))
         alt.close()
-        print ("XYZ file generated!")
+        print ("XYZ file with high stdev struc. generated!")
 
 
 
