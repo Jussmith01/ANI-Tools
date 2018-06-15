@@ -913,9 +913,6 @@ class MD_Sampler:
         return mod[mn]
 
 
-
-
-
     def run_md(self, f, Tmax, steps, n_steps, nmfile=None, displacement=0, min_steps=0, sig=0.34, t=0.1, nm=0, record=False):
         X, S, Na, cm = hdt.readxyz2(f)
         
@@ -1001,15 +998,17 @@ class MD_Sampler:
 # --------------------------------------------------------------------
 
 class subproc_pDyn():
-    def __init__(self, n_points,  cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False):
-        self.n_points = n_points	      #No of points along IRC (forward+backward+1)
+    def __init__(self, cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False):
         self.coor_train=[]                    #Where the coordinates of the molecules with high standard deviation will be saved
         self.Na_train=[]                      #Where the number of atoms of the molecules with high standard deviation will be saved
         self.S_train=[]                       #Where the atomic species of the molecules with high standard deviation will be saved
         self.hstd=[]
 
         #The path to the network
+
         self.net = ensemblemolecule(cnstfile, saefile, nnfprefix, Nnet, gpuid)            #Load the network
+        print ("Network LOADED")
+        self.count = 0
         
         # Define environment variables for pDynamo in py27
         self.my_env = os.environ.copy()
@@ -1037,6 +1036,126 @@ class subproc_pDyn():
         self.my_env["LD_LIBRARY_PATH"] = "/home/kavi/NeuroChem/build/lib:" + self.my_env["LD_LIBRARY_PATH"]
         self.my_env["PYTHONPATH"] = "/home/kavi/NeuroChem/build/lib:" + self.my_env["PYTHONPATH"]
         
+    def write_pDynOPT(self, num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnt):
+    	fname = pDyn_dir + 'OPT.py'
+    	sf = open(fname, 'w')
+    	sf.write('import numpy as np'+ '\n')
+    	sf.write('from Definitions import *'+ '\n')
+    	sf.write('from QCModelANI import QCModelANI'+ '\n')
+    	sf.write(''+ '\n')
+    	sf.write('# Define the QC model using ORCA'+ '\n')
+    	sf.write('wkdir = ' + '"'+ '%s' %wkdir + '"'+ '\n')
+    	sf.write('cnstfilecv  = ' + '"'+ '%s' %cnstfilecv  + '"'+ '\n')
+    	sf.write('saefilecv = ' + '"'+ '%s' %saefilecv + '"'+ '\n')
+    	sf.write('Nnet = ' + '%s' %Nnt + '\n')
+    	sf.write(''+ '\n')
+    	sf.write('qcModel = QCModelANI (wkdir, cnstfilecv, saefilecv, Nnet)' + '\n')
+    	sf.write(''+ '\n')
+    	sf.write('# Define the molecule'+ '\n')
+    	sf.write('for i in range(%i):' %num_rxn+ '\n')
+    	sf.write('    molecule = XYZFile_ToSystem ( os.path.join ( xyzPath, "DA%02i.xyz" % (i+1) ) )'+ '\n')
+    	sf.write('    fixedAtoms = Selection.FromIterable([0,1,2,3,4,5])'+ '\n')
+    	sf.write('    molecule.DefineFixedAtoms(fixedAtoms)'+ '\n')
+    	sf.write('    # Define the energy model.'+ '\n')
+    	sf.write('    molecule.DefineQCModel ( qcModel )'+ '\n')
+    	sf.write('    molecule.Summary ( )'+ '\n')
+    	sf.write('    # Save a copy of the starting coordinates.'+ '\n')
+    	sf.write('    coordinates3 = Clone ( molecule.coordinates3 )'+ '\n')
+    	sf.write(''+ '\n')
+    	sf.write('    # Optimization'+ '\n')
+    	sf.write('    FIREMinimize_SystemGeometry ( molecule              ,    '+ '\n')
+    	sf.write('                                  logFrequency         =  100   ,'+ '\n')
+    	sf.write('                                  maximumIterations    = 10000  ,'+ '\n')
+    	sf.write('                                  rmsGradientTolerance =  0.01 )'+ '\n')    
+    	sf.write('    # Save the coordinates.'+ '\n')
+    	sf.write('    molecule.label = "FIRE optimized."'+ '\n')
+    	sf.write('    if os.path.isfile(os.path.join (F_OPT, "OPT_TS%02i.xyz" % (i+1) )):'+ '\n')
+    	sf.write('        os.remove(os.path.join (F_OPT, "OPT_TS%02i.xyz" % (i+1) ))'+ '\n')
+    	sf.write('    XYZFile_FromSystem ( os.path.join (F_OPT, "OPT_TS%02i.xyz" % (i+1) ), molecule )'+ '\n')
+    	print ("OPT.py file written!")
+
+    def write_pDynTS(self, num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnt):
+    	fname = pDyn_dir + 'TS.py'
+    	sf = open(fname, 'w')
+    	sf.write('import numpy as np'+ '\n')
+    	sf.write('from Definitions import *'+ '\n')
+    	sf.write('from QCModelANI import QCModelANI'+ '\n')
+    	sf.write(''+ '\n')
+    	sf.write('# Define the QC model using ORCA'+ '\n')
+    	sf.write('wkdir = ' + '"'+ '%s' %wkdir + '"'+ '\n')
+    	sf.write('cnstfilecv  = ' + '"'+ '%s' %cnstfilecv  + '"'+ '\n')
+    	sf.write('saefilecv = ' + '"'+ '%s' %saefilecv + '"'+ '\n')
+    	sf.write('Nnet = ' + '%s' %Nnt + '\n')
+    	sf.write('img_freq = np.arange(100, dtype=float)'+ '\n')
+    	sf.write('qcModel = QCModelANI (wkdir, cnstfilecv, saefilecv, Nnet)' + '\n')
+    	sf.write(''+ '\n')
+    	sf.write('# Define the molecule'+ '\n')
+    	sf.write('for i in range(%i):' %num_rxn+ '\n')
+    	sf.write('    molecule = XYZFile_ToSystem ( os.path.join (F_OPT, "OPT_TS%02i.xyz" % (i+1) ) )'+ '\n')
+    	sf.write('    molecule.DefineQCModel ( qcModel )'+ '\n')
+    	sf.write('    molecule.Summary ( )'+ '\n')
+    	sf.write(''+ '\n')
+    	sf.write('    # Optimization'+ '\n')
+    	sf.write('    BakerSaddleOptimize_SystemGeometry ( molecule,'+ '\n')
+    	sf.write('                                  logFrequency         =  1   ,'+ '\n')
+    	sf.write('                                  maximumIterations    = 1000  ,'+ '\n')
+    	sf.write('                                  rmsGradientTolerance =  1.0e-3 )'+ '\n')    
+    	sf.write('    # Save the coordinates.'+ '\n')
+    	sf.write('    if os.path.isfile(os.path.join (ANI_TS, "ANI_TS-%02i.xyz" % (i+1) )):'+ '\n')
+    	sf.write('        os.remove(os.path.join (ANI_TS, "ANI_TS-%02i.xyz" % (i+1) ))'+ '\n')
+    	sf.write('    molecule.label = "DA- TS ANI optimized."'+ '\n')
+    	sf.write('    XYZFile_FromSystem ( os.path.join (ANI_TS, "ANI_TS-%02i.xyz" % (i+1) ), molecule )'+ '\n')
+    	sf.write(''+ '\n')
+    	sf.write('    # Calculate the normal modes.'+ '\n')
+    	sf.write('    neg_freq_OPT = NormalModes_SystemGeometry ( molecule, modify = "project" )'+ '\n')
+    	sf.write('    freq_OPT = getattr( neg_freq_OPT, "frequencies", None)'+ '\n')
+    	sf.write('    img_freq[i] = freq_OPT[0]'+ '\n')
+    	sf.write(''+ '\n')
+    	sf.write('for i in range(%i):' %num_rxn+ '\n')
+    	sf.write('    print "{:5.0f}".format(i+1) , "{:30.5f}".format(img_freq[i])'+ '\n')
+    	print ("TS.py file written!")
+
+    def write_pDynIRC(self, num_rxn, pDyn_dir, wkdir, cnstfilecv, saefilecv, Nnt):
+    	fname = pDyn_dir + 'IRC.py'
+    	sf = open(fname, 'w')
+    	sf.write('import numpy as np'+ '\n')
+    	sf.write('from Definitions import *'+ '\n')
+    	sf.write('from QCModelANI import QCModelANI'+ '\n')
+    	sf.write('from pBabel import XYZTrajectoryFileWriter'+ '\n')
+    	sf.write(''+ '\n')
+    	sf.write('# Define the QC model using ORCA'+ '\n')
+    	sf.write('wkdir = ' + '"'+ '%s' %wkdir + '"'+ '\n')
+    	sf.write('cnstfilecv  = ' + '"'+ '%s' %cnstfilecv  + '"'+ '\n')
+    	sf.write('saefilecv = ' + '"'+ '%s' %saefilecv + '"'+ '\n')
+    	sf.write('Nnet = ' + '%s' %Nnt + '\n')
+    	sf.write('qcModel = QCModelANI (wkdir, cnstfilecv, saefilecv, Nnet)' + '\n')
+    	sf.write(''+ '\n')
+    	sf.write('# Define the molecule'+ '\n')
+    	sf.write('for i in range(%i):' %num_rxn+ '\n')
+    	sf.write('    molecule = XYZFile_ToSystem ( os.path.join ( xyzPath, "DA%02i.xyz" % (i+1) ) )'+ '\n')
+    	sf.write('    molecule.coordinates3 = XYZFile_ToCoordinates3 ( os.path.join (ANI_TS, "ANI_TS-%02i.xyz" % (i+1) ) )'+ '\n')
+    	sf.write('    molecule.DefineQCModel ( qcModel )'+ '\n')
+    	sf.write('    molecule.Summary ( )'+ '\n')
+    	sf.write(''+ '\n')
+    	sf.write('    # Calculate an energy.'+ '\n')
+    	sf.write('    molecule.Energy ( )'+ '\n')
+    	sf.write(''+ '\n')
+    	sf.write('    # . Create an output trajectory.'+ '\n')
+    	sf.write('    if os.path.isfile(os.path.join ( ANI_IRC, "ANI_IRC-%02i.xyz" % (i+1) )):'+ '\n')
+    	sf.write('        os.remove(os.path.join ( ANI_IRC, "ANI_IRC-%02i.xyz" % (i+1) ))'+ '\n')
+    	sf.write('    trajectory = XYZTrajectoryFileWriter ( os.path.join ( ANI_IRC, "ANI_IRC-%02i.xyz" % (i+1) ), molecule )'+ '\n')
+    	sf.write(''+ '\n')
+    	sf.write('    # Optimization'+ '\n')
+    	sf.write('    SteepestDescentPath_SystemGeometry ( molecule,                       '+ '\n')
+    	sf.write('                                  functionStep      = 2.0,        '+ '\n')
+    	sf.write('                                  logFrequency      = 10,        '+ '\n')
+    	sf.write('                                  maximumIterations    = 1000  ,'+ '\n')
+    	sf.write('                                  pathStep          = 0.025,      '+ '\n')
+    	sf.write('                                  saveFrequency     = 10,        '+ '\n') 
+    	sf.write('                                  trajectory        = trajectory, '+ '\n')
+    	sf.write('                                  useMassWeighting  = True        )'+ '\n') 
+    	print ("IRC.py file written!")
+       
     def subprocess_cmd(self, python3_command, shl, logfile):
         with open(logfile,"wb") as out, open("stderr.txt","wb") as err:
             process = subprocess.Popen(python3_command.split(), env=self.my_env, shell=shl, stdout=out, stderr=err, universal_newlines=True)
@@ -1044,16 +1163,18 @@ class subproc_pDyn():
             chk = process.poll()
             return chk
 
-    def getIRCpoints_toXYZ(self, inpf, filename, f_path):
+    def getIRCpoints_toXYZ(self, n_points, inpf, filename, f_path):
         re1 = re.compile('\d+?\n.*?\n(?:[A-Z][a-z]?.+?(?:\n|$))+')
         gfile = open(inpf,'r').read()
         blocks = re1.findall(gfile)  
-        for i in range(self.n_points):
+        for i in range(n_points):
             f = open(f_path + filename[:-4] + '-%03i.xyz' %(i+1), 'w') 
             f.write(blocks[i])
             f.close()
+        print ("Individual IRC points obtained!")
 
-    def check_stddev(self,f):
+
+    def check_stddev(self, f, sig):
         mol=read(f)                                          #Read the molecule for the file
         mol.set_calculator(ANIENS(self.net,sdmx=20000000.0))
         evkcal=hdt.evtokcal
@@ -1062,7 +1183,7 @@ class subproc_pDyn():
         s=mol.calc.stddev
         stddev =  s*evkcal
 
-        if stddev > 0.34:
+        if stddev > sig:        
             self.hstd.append(stddev)                            #Check the standard deviation
             c = mol.get_positions(wrap=False)
             s = mol.get_chemical_symbols()
@@ -1087,6 +1208,7 @@ class subproc_pDyn():
             nmc_list.append(nm)
         vib.clean()
         return nmc_list
+        print ("Modes are generated!")
 
     def write_nm_xyz(self, fname):                                #Calling this function wirtes all the structures with high standard deviations to and xyz file
         alt=open('%s' %fname, 'w')
@@ -1095,7 +1217,9 @@ class subproc_pDyn():
             alt.write('%s\n%s\n' %(str(self.Na_train[i]), cm))
             for j in range(len(self.S_train[i])):
                 alt.write('%s %f %f %f \n' %(self.S_train[i][j], self.coor_train[i][j][0], self.coor_train[i][j][1], self.coor_train[i][j][2]))
-            alt.close()
+        alt.close()
+        print ("XYZ file with high stdev struc. generated!")
+
 
 
 
