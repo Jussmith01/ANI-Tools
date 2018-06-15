@@ -66,7 +66,7 @@ class alconformationalsampler():
                     else:
                         print('Incorrect extension:',id+f)
 
-        gpus2 = gpus+gpus
+        gpus2 = gpus
 
         md_work = np.array(md_work)
         np.random.shuffle(md_work)
@@ -253,10 +253,11 @@ class alconformationalsampler():
     # Dimer sampling function
     def dimer_sampling(self, tid, Nr, dparam, gpuid):
         mds_select = dparam['mdselect']
-        N = dparam['N']
+        #N = dparam['N']
         T = dparam['T']
         L = dparam['L']
         V = dparam['V']
+        maxNa = dparam['maxNa']
         dt = dparam['dt']
         sig = dparam['sig']
         Nm = dparam['Nm']
@@ -276,7 +277,8 @@ class alconformationalsampler():
             for i in range(id[0]):
                 for n,m in enumerate(files):
                         data = hdt.read_rcdb_coordsandnm(self.idir[id[1]]+m)
-                        mols.append(data)
+                        if len(data['species']) < maxNa:
+                            mols.append(data)
 
         dgen = pmf.dimergenerator(self.netdict['cnstfile'], 
                                   self.netdict['saefile'], 
@@ -878,6 +880,7 @@ class alaniensembletrainer():
         E = []
         data_count = np.zeros((N,3),dtype=np.int32)
         for f in self.h5file:
+            print('Reading data file:',h5d+f)
             adl = pyt.anidataloader(h5d+f)
             for data in adl:
                 #print(data['path'],data['energies'].size)

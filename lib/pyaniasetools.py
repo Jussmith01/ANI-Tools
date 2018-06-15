@@ -210,7 +210,7 @@ class anicrossvalidationconformer(object):
     def compute_energy_conformations_net(self,X,S,netid):
         Na = X.shape[0] * len(S)
 
-        X_split = np.array_split(X, math.ceil(Na/20000))
+        X_split = np.array_split(X, math.ceil(Na/10000))
 
         energies = np.zeros((X.shape[0]), dtype=np.float64)
         forces   = np.zeros((X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
@@ -218,7 +218,7 @@ class anicrossvalidationconformer(object):
         for j,x in enumerate(X_split):
             self.ncl[netid].setConformers(confs=x,types=list(S))
             E = self.ncl[netid].energy().copy()
-            energies[j+shift:j+shift+E.shape[0]] = E
+            energies[shift:shift+E.shape[0]] = E
             shift += x.shape[0]
 
         return hdt.hatokcal*energies#, charges
