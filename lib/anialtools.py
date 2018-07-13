@@ -49,6 +49,7 @@ class alconformationalsampler():
         p = Process(target=self.normal_mode_sampling, args=(nmsparams['T'],
                                                             nmsparams['Ngen'],
                                                             nmsparams['Nkep'],
+                                                            nmsparams['maxd'],
                                                             nmsparams['sig'],
                                                             gpus[0]))
         p.start()
@@ -137,7 +138,7 @@ class alconformationalsampler():
         print('Finished sampling.')
 
     # Normal mode sampler function
-    def normal_mode_sampling(self, T, Ngen, Nkep, sig, gpuid):
+    def normal_mode_sampling(self, T, Ngen, Nkep, maxd, sig, gpuid):
         of = open(self.ldtdir + self.datdir + '/info_data_nms.nfo', 'w')
 
         aevsize = self.netdict['aevsize']
@@ -175,7 +176,7 @@ class alconformationalsampler():
                 nmc = data["nmdisplacements"]
                 frc = data["forceconstant"]
 
-                nms = nmt.nmsgenerator(xyz,nmc,frc,spc,T,minfc=5.0E-2)
+                nms = nmt.nmsgenerator(xyz,nmc,frc,spc,T,minfc=5.0E-2,maxd=maxd)
                 conformers = nms.get_Nrandom_structures(Ngen)
 
                 ids = dc.get_divconfs_ids(conformers, spc, Ngen, Nkep, [])
