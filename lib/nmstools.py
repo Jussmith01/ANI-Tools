@@ -113,7 +113,6 @@ class nmsgenerator_RXN():
         self.l_val = l_val
         self.h_val = h_val
         self.Na = xyz.shape[0]
-        self.Nf = nmo.shape[0]
 
     # returns atomic charge
     def __getCharge__(self,type):
@@ -149,23 +148,10 @@ class nmsgenerator_RXN():
 
     # Generate a structure
     def __genrandomstruct__(self):
-        rdt = np.random.random(self.Nf+1)
-        rdt[0] = 0.0
-        norm = np.random.random(1)[0]
-        rdt = norm*np.sort(rdt)
-        rdt[self.Nf] = norm
-
+        ("generating randomstruct")
         oxyz = self.xyz.copy()
-
-        for i in range(self.Nf):
-            if self.fcc is None:
-                Ri = np.random.uniform(low=self.l_val, high=self.h_val, size=None)
-            else:
-                Ki = mDynetoMet * self.fcc[i]
-                Ri = Sn * MtoA * np.sqrt((3.0 * ci * Kb * float(self.Nf) * self.T)/(Ki))                
-            ci = rdt[i+1]-rdt[i]
-            Sn = -1.0 if np.random.binomial(1,0.5,1) else 1.0
-            oxyz = oxyz + Ri * self.nmo[i]
+        Ri = np.random.uniform(low=self.l_val, high=self.h_val, size=None)             
+        oxyz = oxyz + Ri * self.nmo
         return oxyz
 
     # Call this to return a random structure
