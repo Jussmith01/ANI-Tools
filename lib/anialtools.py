@@ -903,6 +903,8 @@ class alaniensembletrainer():
 
                     X = np.array(data['coordinates'], order='C',dtype=np.float32)
 
+                    #print(np.array(data[Ekey].shape),np.sum(np.array(data[Ekey], order='C', dtype=np.float64),axis=1).shape,data[Fkey].shape)
+
                     if Eax0sum:
                         E = energy_unit*np.sum(np.array(data[Ekey], order='C', dtype=np.float64),axis=1)
                     else:
