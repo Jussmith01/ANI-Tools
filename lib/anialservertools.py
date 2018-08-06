@@ -147,10 +147,11 @@ class alQMserversubmission():
         sf.write('export OMP_STACKSIZE=64m\n')
         sf.write('export OMP_NUM_THREADS='+ str(cores) +'\n')
 
-        g09scr = self.ldtdir+self.datdir+'/working/' + f + '_scratch'
-        if not os.path.exists(g09scr):
-            os.makedirs(g09scr)
-        sf.write('export GAUSS_SCRDIR=' + self.swkdir+self.datdir+'/working/' +  f + '_scratch/\n\n')
+        #g09scr = self.ldtdir+self.datdir+'/working/' + f + '_scratch'
+        #if not os.path.exists(g09scr):
+        #    os.makedirs(g09scr)
+        #sf.write('mkdir /scratch/$USER/$SLURM_JOBID/')
+        sf.write('export GAUSS_SCRDIR=/scratch/$USER/$SLURM_JOBID/\n\n')
 
         sf.write('gcdata -i ' + self.swkdir+self.datdir+'/confs_iso/'+f+'.xyz' + ' -o ' + self.swkdir+self.datdir+'/data/' + f.split(".")[0] + '.dat -l ' + lot + ' -m ' + str(
             Nmemr) + ' -s -p -f > ' + self.swkdir+self.datdir+'/output/' + f.split(".")[0] + '.opt')

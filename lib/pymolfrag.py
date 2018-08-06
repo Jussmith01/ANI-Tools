@@ -484,13 +484,13 @@ class clustergenerator():
             Xci = np.sum(self.X[si:si+Nai,:], axis=0)/ Nai
             Xi = self.X[si:si + Nai, :]
 
-            if np.all( Xci > 4.5 ) and np.all( Xci <= self.L-4.5 ):
+            if np.all( Xci > 6.0 ) and np.all( Xci <= self.L-6.0 ):
 
                 if np.all(Xci > di) and np.all(Xci < self.L-di):
                     Xf = Xi
                     Sf = self.S[si:si + Nai]
 
-                    Nmax = np.random.randint(2, 10)
+                    Nmax = np.random.randint(10, 14)
                     Nmol = 0
                     for j in range(len(self.Na)):
                         if i != j:

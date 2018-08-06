@@ -597,6 +597,51 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
         #ax.set_ylim([-1,20])
         plt.show()
 
+    def generate_violin_distribution_byts(self, ntkey, maxstd=0.34):
+        import seaborn as sns
+        
+        dsset = []
+        huset = []
+        vlset = []
+
+        for k in self.fdata[ntkey].keys():
+            print(k)
+            Nn  = self.fdata[ntkey][k]['Eani'].shape[0]-1
+            p1p = self.fdata[ntkey][k]['Eani'][Nn,:]
+            p1a = self.fdata[ntkey][k]['Edft']
+
+            p2p = self.fdata[ntkey][k]['Fani'][Nn,:]
+            p2a = self.fdata[ntkey][k]['Fdft']
+
+            print(np.abs(p1p-p1a).max(),np.abs(p2p-p2a).max())
+
+            vlset.append(np.concatenate([np.abs(p1p-p1a), np.abs(p2p-p2a)]))
+            dsset.extend([k for s in range(vlset[-1].size)])
+
+            huset.extend(["Eani" for s in range(p1p.size)])
+            huset.extend(["Fani" for s in range(p2p.size)])
+
+        longform = {'Error': np.concatenate(vlset),
+                    'Benchmark': dsset,
+                    'Properties': huset,}
+
+        ddat = pd.DataFrame(longform)
+
+        print(ddat)
+
+        stddev = np.std(longform['Error'])
+
+        fig, ax = plt.subplots(figsize=(12.0, 8.0))
+        order = [k for k in self.fdata[ntkey].keys()]
+        order.sort()
+        print(order)
+        ax = sns.violinplot(ax=ax, x="Benchmark", y="Error", hue="Properties",
+                            data = ddat[ddat.Error < 1000.0 * stddev], split=True, scale="width", order=order, bw=.075)
+        for item in ax.get_xticklabels():
+                item.set_rotation(45)
+        ax.set(ylim=(0, 7))
+        #ax.set_ylim([-1,20])
+        plt.show()
 
     def get_size(self, ntkey, tskey):
         return self.fdata[ntkey][tskey]['Eani'].shape

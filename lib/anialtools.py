@@ -51,6 +51,7 @@ class alconformationalsampler():
         p = Process(target=self.normal_mode_sampling, args=(nmsparams['T'],
                                                             nmsparams['Ngen'],
                                                             nmsparams['Nkep'],
+                                                            nmsparams['maxd'],
                                                             nmsparams['sig'],
                                                             gpus[0]))
         p.start()
@@ -68,7 +69,7 @@ class alconformationalsampler():
                     else:
                         print('Incorrect extension:',id+f)
 
-        gpus2 = gpus+gpus
+        gpus2 = gpus
 
         md_work = np.array(md_work)
         np.random.shuffle(md_work)
@@ -139,7 +140,7 @@ class alconformationalsampler():
         print('Finished sampling.')
 
     # Normal mode sampler function
-    def normal_mode_sampling(self, T, Ngen, Nkep, sig, gpuid):
+    def normal_mode_sampling(self, T, Ngen, Nkep, maxd, sig, gpuid):
         of = open(self.ldtdir + self.datdir + '/info_data_nms.nfo', 'w')
 
         aevsize = self.netdict['aevsize']
@@ -177,7 +178,7 @@ class alconformationalsampler():
                 nmc = data["nmdisplacements"]
                 frc = data["forceconstant"]
 
-                nms = nmt.nmsgenerator(xyz,nmc,frc,spc,T,minfc=5.0E-2)
+                nms = nmt.nmsgenerator(xyz,nmc,frc,spc,T,minfc=5.0E-2,maxd=maxd)
                 conformers = nms.get_Nrandom_structures(Ngen)
 
                 ids = dc.get_divconfs_ids(conformers, spc, Ngen, Nkep, [])
@@ -255,10 +256,11 @@ class alconformationalsampler():
     # Dimer sampling function
     def dimer_sampling(self, tid, Nr, dparam, gpuid):
         mds_select = dparam['mdselect']
-        N = dparam['N']
+        #N = dparam['N']
         T = dparam['T']
         L = dparam['L']
         V = dparam['V']
+        maxNa = dparam['maxNa']
         dt = dparam['dt']
         sig = dparam['sig']
         Nm = dparam['Nm']
@@ -278,7 +280,8 @@ class alconformationalsampler():
             for i in range(id[0]):
                 for n,m in enumerate(files):
                         data = hdt.read_rcdb_coordsandnm(self.idir[id[1]]+m)
-                        mols.append(data)
+                        if len(data['species']) < maxNa:
+                            mols.append(data)
 
         dgen = pmf.dimergenerator(self.netdict['cnstfile'], 
                                   self.netdict['saefile'], 
@@ -891,6 +894,7 @@ class alaniensembletrainer():
         E = []
         data_count = np.zeros((N,3),dtype=np.int32)
         for f in self.h5file:
+            print('Reading data file:',h5d+f)
             adl = pyt.anidataloader(h5d+f)
             for data in adl:
                 #print(data['path'],data['energies'].size)
@@ -900,6 +904,8 @@ class alaniensembletrainer():
                 if data[Ekey].size > 0 and (set(S).issubset(self.netdict['atomtyp'])):
 
                     X = np.array(data['coordinates'], order='C',dtype=np.float32)
+
+                    #print(np.array(data[Ekey].shape),np.sum(np.array(data[Ekey], order='C', dtype=np.float64),axis=1).shape,data[Fkey].shape)
 
                     if Eax0sum:
                         E = energy_unit*np.sum(np.array(data[Ekey], order='C', dtype=np.float64),axis=1)

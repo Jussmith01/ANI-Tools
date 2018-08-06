@@ -210,7 +210,7 @@ class anicrossvalidationconformer(object):
     def compute_energy_conformations_net(self,X,S,netid):
         Na = X.shape[0] * len(S)
 
-        X_split = np.array_split(X, math.ceil(Na/20000))
+        X_split = np.array_split(X, math.ceil(Na/10000))
 
         energies = np.zeros((X.shape[0]), dtype=np.float64)
         forces   = np.zeros((X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
@@ -218,7 +218,7 @@ class anicrossvalidationconformer(object):
         for j,x in enumerate(X_split):
             self.ncl[netid].setConformers(confs=x,types=list(S))
             E = self.ncl[netid].energy().copy()
-            energies[j+shift:j+shift+E.shape[0]] = E
+            energies[shift:shift+E.shape[0]] = E
             shift += x.shape[0]
 
         return hdt.hatokcal*energies#, charges
@@ -451,6 +451,11 @@ class anienscomputetool(object):
             V.append(v)
         return np.array(E),np.array(V)
 
+    def energy_molecule(self,X,S):
+        self.ens.set_molecule(X=X, S=list(S))
+        e,v = self.ens.compute_mean_energies()
+        return hdt.hatokcal*e,v
+
     def __in_list_within_eps__(self,val,ilist,eps):
         for i in ilist:
             if abs(i-val) < eps:
@@ -654,7 +659,7 @@ class ani_tortion_scanner():
         dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorith
 
         try:
-            dyn.run(fmax=self.fmax, steps=1000)         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
+            dyn.run(fmax=self.fmax, steps=5000)         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
         except ValueError:
             print("Opt failed: continuing")
         e=atm.get_potential_energy()*hdt.evtokcal
@@ -665,7 +670,7 @@ class ani_tortion_scanner():
             phi_value.append(atm.get_dihedral(d)*180./np.pi)
         #X = mol.get_positions()
         if self.printer: 
-            print('Phi value (degrees), energy (kcal/mol), sigma= ', phi_value, "{0:.2f}".format(e), "{0:.2f}".format(s))
+            print('Angle (degrees), energy (kcal/mol), sigma= ', ["{0:.1f}".format(an) for an in  phi_value], "{0:.2f}".format(e), "{0:.2f}".format(s))
         return phi_value, e, s, atm
 
     def rot(self, mol, dhls, phi):
