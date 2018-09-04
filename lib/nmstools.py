@@ -10,7 +10,7 @@ class nmsgenerator():
     # fcc = force constants
     # spc = atomic species list
     # T   = temperature of displacement
-    def __init__(self,xyz,nmo,fcc,spc,T,minfc = 1.0E-3):
+    def __init__(self,xyz,nmo,fcc,spc,T,minfc = 1.0E-3,maxd=2.0):
         self.xyz = xyz
         self.nmo = nmo
         self.fcc = np.array([i if i > minfc else minfc for i in fcc])
@@ -18,6 +18,7 @@ class nmsgenerator():
         self.T = T
         self.Na = xyz.shape[0]
         self.Nf = nmo.shape[0]
+        self.maxd = maxd
 
     # returns atomic charge
     def __getCharge__(self,type):
@@ -74,6 +75,7 @@ class nmsgenerator():
             ci = rdt[i+1]-rdt[i]
             Sn = -1.0 if np.random.binomial(1,0.5,1) else 1.0
             Ri = Sn * MtoA * np.sqrt((3.0 * ci * Kb * float(self.Nf) * self.T)/(Ki))
+            Ri = min([Ri,self.maxd])
             oxyz = oxyz + Ri * self.nmo[i]
         return oxyz
 
