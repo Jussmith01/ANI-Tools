@@ -945,7 +945,6 @@ class alaniensembletrainer():
                             data_count[nid,0]+=set_idx.size
                             cache.insertdata(X[set_idx], F[set_idx], E[set_idx], list(S))
 
-                    print('test test',Ntrain)
                     # for nid,cache in enumerate(cachev):
                     #     set_idx = np.concatenate([Didx[((1+bid+nid*int(Nstride)) % Nblocks)] for bid in range(Ntrain)])
                     #     if set_idx.size != 0:
