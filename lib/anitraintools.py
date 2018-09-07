@@ -41,6 +41,8 @@ class anitrainerinputdesigner:
                        "nkde": 2,  # Energy delta regularization
                        "energy": 1,  # Enable/disable energy training
                        "force": 0,  # Enable/disable force training
+                       "dipole": 0,  # Enable/disable dipole training
+                       "charge": 0,  # Enable/disable charge training
                        "fmult": 1.0,  # Multiplier of force cost
                        "pbc": 0,  # Use PBC in training (Warning, this only works for data with a single rect. box size)
                        "cmult": 1.0,  # Charge cost multiplier (CHARGE TRAINING BROKEN IN CURRENT VERSION)
@@ -310,9 +312,11 @@ class alaniensembletrainer():
 
         print('Linear fitting complete.')
 
-    def build_strided_training_cache(self, Nblocks, Nvalid, Ntest, build_test=True, forces=True, grad=False,
-                                     Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0,
+    def build_strided_training_cache(self, Nblocks, Nvalid, Ntest, build_test=True,
+                                     Ekey='energies', energy_unit=1.0,
+                                     forces=True, grad=False, Fkey='forces', forces_unit=1.0,
                                      dipole=False, dipole_unit=1.0, Dkey='dipoles',
+                                     charge=False, charge_unit=1.0, Ckey='charges',
                                      Eax0sum=False, rmhighe=True):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
@@ -399,6 +403,12 @@ class alaniensembletrainer():
                     else:
                         D = 0.0 * D
 
+                    C = np.zeros((E.size,X.shape[1]),dtype=np.float32)
+                    if charge:
+                        C = charge_unit * np.array(data[Ckey], order='C', dtype=np.float32).reshape(E.size,len(S))
+                    else:
+                        C = 0.0 * C
+
                     if rmhighe:
                         Esae = hdt.compute_sae(self.netdict['saefile'], S)
 
@@ -417,6 +427,7 @@ class alaniensembletrainer():
                         E = E[lidx]
                         F = F[lidx]
                         D = D[lidx]
+                        C = C[lidx]
 
                     # Build random split index
                     ridx = np.random.randint(0, Nblocks, size=E.size)
@@ -430,7 +441,7 @@ class alaniensembletrainer():
                             data_count[nid, 0] += set_idx.size
                             #print("Py tDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py tDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            cache.insertdata(X[set_idx], F[set_idx], D[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
 
                     for nid, cache in enumerate(cachev):
                         set_idx = np.concatenate(
@@ -439,7 +450,7 @@ class alaniensembletrainer():
                             data_count[nid, 1] += set_idx.size
                             #print("Py vDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py vDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            cache.insertdata(X[set_idx], F[set_idx], D[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
 
                     if build_test:
                         for nid, th5 in enumerate(testh5):
@@ -447,7 +458,7 @@ class alaniensembletrainer():
                                 [Didx[(Ntrain + Nvalid + bid + nid * int(Nstride)) % Nblocks] for bid in range(Ntest)])
                             if set_idx.size != 0:
                                 data_count[nid, 2] += set_idx.size
-                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], dipoles=D[set_idx],
+                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx],
                                                energies=E[set_idx], species=list(S))
 
         # Save train and valid meta file and cleanup testh5
