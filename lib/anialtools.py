@@ -116,16 +116,23 @@ class alconformationalsampler():
                                   high=gcmddict['MolHigh'],
                                   size=gcmddict['Nr'])
 
-        print(Nmols)
+        Ntmps = np.random.randint(low=gcmddict['T']-200,
+                                  high=gcmddict['T']+200,
+                                  size=gcmddict['Nr'])
+
+        print('Box Sizes:',Nmols)
+        print('Sim Temps:',Ntmps)
 
         seeds = np.random.randint(0,1000000,len(gpus))
 
         mol_sizes = np.array_split(Nmols, len(gpus))
+        mol_temps = np.array_split(Ntmps, len(gpus))
 
         proc = []
         for i,g in enumerate(gpus):
             proc.append(Process(target=self.cluster_sampling, args=(i, int(gcmddict['Nr']/len(gpus)),
                                                                     mol_sizes[i],
+                                                                    mol_temps[i],
                                                                     seeds[i],
                                                                     gcmddict,
                                                                     g)))
@@ -317,7 +324,7 @@ class alconformationalsampler():
         difo.close()
 
     # Cluster sampling function
-    def cluster_sampling(self, tid, Nr, mol_sizes, seed, gcmddict, gpuid):
+    def cluster_sampling(self, tid, Nr, mol_sizes, mol_temps, seed, gcmddict, gpuid):
         dictc = gcmddict.copy()
         solv_file = dictc['solv_file']
         solu_dirs = dictc['solu_dirs']
@@ -341,7 +348,7 @@ class alconformationalsampler():
                                     self.netdict['num_nets'],
                                     solv, solu, gpuid)
 
-        dgen.generate_clusters(dictc, mol_sizes, tid)
+        dgen.generate_clusters(dictc, mol_sizes, mol_temps, tid)
 
 
     # Run the TS sampler
@@ -834,7 +841,7 @@ class alaniensembletrainer():
 
         print('Linear fitting complete.')
 
-    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False, rmhighe=True):
+    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, build_valid=False, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False, rmhighe=True):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
 
@@ -865,6 +872,9 @@ class alaniensembletrainer():
 
         if build_test:
             testh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/testset' + str(r) + '.h5') for r in range(N)]
+
+        if build_valid:
+            valdh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/valdset' + str(r) + '.h5') for r in range(N)]
 
         if rmhighe:
             dE = []
@@ -948,6 +958,9 @@ class alaniensembletrainer():
                         if set_idx.size != 0:
                             data_count[nid, 1] += set_idx.size
                             cache.insertdata(X[set_idx], F[set_idx], E[set_idx], list(S))
+                            if build_valid:
+                                valdh5[nid].store_data(f+data['path'], coordinates=X[set_idx], forces=F[set_idx], energies=E[set_idx], species=list(S))
+
 
                     if build_test:
                         for nid,th5 in enumerate(testh5):
@@ -964,6 +977,10 @@ class alaniensembletrainer():
         if build_test:
             for th in testh5:
                 th.cleanup()
+
+        if build_valid:
+            for vh in valdh5:
+                vh.cleanup()
 
         print(' Train ',' Valid ',' Test ')
         print(data_count)

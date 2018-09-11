@@ -388,7 +388,7 @@ class clustergenerator():
                 for cid,c in enumerate(self.ctd):
                     if np.linalg.norm(c[0] - ctr) < maxd + c[1] + 10.0:
                         # search for atoms within r angstroms
-                        minv = 1000.0
+                        minv = 10000.0
                         for xi in self.X[c[2]:c[2]+self.Na[cid],:]:
                             for xj in x + ctr:
                                 dij = np.linalg.norm(xi-xj)
@@ -407,6 +407,7 @@ class clustergenerator():
                     pos += len(s)
                     #print('Placement Complete...',plc,'-',Nf)
                     self.S.extend(s)
+        print('Mols filled:',plc,'/',Nm,'Density:',(plc/np.power(L,3))*29.8896980969,'Temp:',T)
 
     def init_dynamics(self, Nm, Nembed, V, L, dt, T):
         self.L = L
@@ -433,11 +434,11 @@ class clustergenerator():
         # Open MD output
         #self.traj = open(trjfile, 'w')
 
-        # Set the velocities corresponding to a boltzmann dist @ T/4.0
-        MaxwellBoltzmannDistribution(self.mol, 300.0 * units.kB)
+        # Set the velocities corresponding to a boltzmann dist @ T/5.0
+        MaxwellBoltzmannDistribution(self.mol, T/5.0 * units.kB)
 
         # Declare Dyn
-        self.dyn = Langevin(self.mol, dt * units.fs, T * units.kB, 0.1)
+        self.dyn = Langevin(self.mol, dt * units.fs, T * units.kB, 0.01)
 
         # Define the printer
         #def printenergy(a=self.mol, d=self.dyn, b=self.mdcrd, t=self.traj):  # store a reference to atoms in the definition.
@@ -490,9 +491,11 @@ class clustergenerator():
                     Xf = Xi
                     Sf = self.S[si:si + Nai]
 
-                    Nmax = np.random.randint(10, 14)
+                    Nmax = np.random.randint(50, 51)
                     Nmol = 0
-                    for j in range(len(self.Na)):
+                    ridx = np.arange(len(self.Na))
+                    np.random.shuffle(ridx)
+                    for j in ridx:
                         if i != j:
                             sj = self.ctd[j][2]
                             dj = self.ctd[j][1]
@@ -502,17 +505,19 @@ class clustergenerator():
 
                             if np.all(Xcj > dj) and np.all(Xcj < self.L - dj):
                                 dc = np.linalg.norm(Xci - Xcj)
-                                if dc < di + dj + 5.0:
-                                    min = 10.0
+                                if dc < di + dj + 6.0:
+                                    minl = 10.0
                                     for ii in range(Nai):
                                         Xiii = Xi[ii]
                                         for jj in range(Naj):
                                             Xjjj = Xj[jj]
                                             v = np.linalg.norm(Xiii-Xjjj)
-                                            if v < min:
-                                                min = v
+                                            if v < minl:
+                                                minl = v
 
-                                    if min < 6.0 and min > 0.70:
+                                    inc = np.random.uniform(0.0, 3.0)
+                                    if minl < 3.0+inc and minl > 2.0+inc:
+                                    #if min < 6.0 and min > 0.7:
                                         Xf = np.vstack([Xf, Xj])
                                         Sf.extend(self.S[sj:sj+Naj])
                                         Nmol += 1
@@ -535,11 +540,11 @@ class clustergenerator():
                         if sig > self.maxsig:
                             self.maxsig = sig
                         self.Nd += 1
-                        hdn.writexyzfile(file+str(i).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
+                        hdn.writexyzfilewc(file+str(i).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf, cmt=['sigma:'+str(sig)])
                         self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
                         #print(dc, Sf, sig)
 
-    def generate_clusters(self, gcmddict, mol_sizes, id):
+    def generate_clusters(self, gcmddict, mol_sizes, mol_temps, id):
 
         self.edgepad = gcmddict['edgepad']
         self.mindist = gcmddict['mindist']
@@ -552,12 +557,13 @@ class clustergenerator():
         Nt = 0
         Nd = 0
         for i in range(gcmddict['Nr']):
+            difo.write(str(i)+') Density='+"{:.2f}".format(29.8896980969*(mol_sizes[i]/np.power(30.0,3)))+' Set Temp: ' + "{:.2f}".format(mol_temps[i]) + '\n')
             self.init_dynamics(mol_sizes[i],
                                gcmddict['Nembed'],
                                gcmddict['V'],
                                gcmddict['L'],
                                gcmddict['dt'],
-                               gcmddict['T'],
+                               mol_temps[i],
                                )
 
             for j in range(gcmddict['Ns']):
@@ -572,7 +578,7 @@ class clustergenerator():
                 Nt += self.Nt
                 Nd += self.Nd
                 if self.maxsig > gcmddict['maxsig']:
-                    difo.write("Terminated after: " + "{:.2f}".format(Ni*gcmddict['Ns']*gcmddict['dt']) + 'fs for maxsig\n')
+                    difo.write("Terminated after: " + "{:.2f}".format(Ni*j*gcmddict['dt']) + 'fs for maxsig\n')
                     break
                 difo.flush()
 
