@@ -225,7 +225,7 @@ pf = '/home/jsmith48/scratch/roman_tz_train/train/rHCNOSFCl-4.8R_16-3.1A_a4-8.pa
 #pf = '/home/jsmith48/scratch/auto_dim_al/modeldim/rHCNO-5.2R_16-4.0A_a4-8.params' # Output filename
 #pf = '/nh/nest/u/jsmith/Research/gutzwiller_research/train_test/rX-5.0A_16-3.2A_a4-8.params'
 #pf = '/nh/nest/u/jsmith/Research/datasets/iso17/train/mol0/rHCO-5.0A_16-3.4A_a4-8.params'
-#pf = '/nh/nest/u/jsmith/scratch/Research/gutzwiller_research/gutz_new_data/ML-GQMD-data-NEW/case1/params/rX-2.5R_32-2.0A_a8-8.params'
+#pf = '/nh/nest/u/jsmith/Research/gutzwiller_research/training-data/model_training/params/rX-2.8R_32-2.0A_a8-8.params'
 #pf = '/nh/nest/u/jsmith/Research/train_qm7/train/rHCNOS-5.0R_16-3.4A_a8-8.params'
 #pf = '/home/jsmith48/scratch/CCSD_Water_train/models_58R32_35A4-8/rHO-5.8R_32-3.5A_a4-8.params'
 
