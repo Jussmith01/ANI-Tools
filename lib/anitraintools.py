@@ -10,7 +10,6 @@ import subprocess
 import random
 import re
 import os
-import itertools
 
 from multiprocessing import Process
 import shutil
@@ -22,69 +21,6 @@ def interval(v, S):
         if v > ps and v <= ps + ds:
             return s
         ps = ps + ds
-
-
-
-class anitrainerparamdesigner():
-    def __init__(self, NsR=16, NsaR=4, NsZ=8, Zeta=3.2, EtaA=8.0, EtaR=16, Rcr=5.2, Rca=3.5, TM=1, Atyp=['H','C','N','O']):
-        self.params = {"NsR":NsR,
-                       "NsaR":NsaR,
-                       "NsZ":NsZ,
-                       "Zeta":Zeta,
-                       "EtaA":EtaA,
-                       "EtaR":EtaR,
-                       "Rcr":Rcr,
-                       "Rca":Rca,
-                       "TM":TM,
-                       "Atyp":Atyp,
-                       "file_name":'r'+''.join(Atyp)+'-'+str(Rcr)+'R'+'_'+str(EtaR)+'-'+str(Rca)+'A_a'+str(NsaR)+'-'+str(NsZ)+'.params'
-                       }
-
-
-    def set_params(self, key, value):
-        self.params[key] = value
-
-    def _vecs_(self):
-        ShfR=[]
-        ShfZ=[]
-        ShfA=[]
-
-        for i in range(self.params["NsR"]):
-            t=9e-1+i*(self.params["Rcr"]-0.9)/self.params["NsR"]
-            ShfR.append(t)
-
-        for i in range(self.params["NsaR"]):
-            ShfZ.append(9e-1+i*(self.params["Rca"]-0.9)/self.params["NsaR"])
-
-
-        for  i in range(self.params["NsZ"]):
-            ShfA.append(np.pi/(2*self.params["NsZ"])+np.pi*(i/self.params["NsZ"]))
-
-        return ShfR, ShfA, ShfZ
-
-
-    def inp_size(self):
-        return self.params["NsR"]*len(self.params["Atyp"])+self.params["NsaR"]*self.params["NsZ"]*len(list(itertools.combinations_with_replacement(self.params["Atyp"], 2)))
-
-    def _sci_(self, l):
-        return "["+", ".join(["%.7e" % x for x in l])+"]"
-
-    def write_parameter_file(self, par_path='./'):
-        ShfR, ShfA, ShfZ = self._vecs_()
-        f = open(par_path + self.params["file_name"], 'w')
-        f.write('TM = %s\n' %str(self.params["TM"]))
-        f.write('Rcr =  %.4e\n' %self.params["Rcr"])
-        f.write('Rca =  %.4e\n' %self.params["Rca"])
-        f.write('EtaR =  [%.7e]\n' %self.params["EtaR"])
-        f.write('ShfR =  %s\n' %self._sci_(ShfR))
-        f.write('Zeta =  [%.7e]\n' %self.params["Zeta"])
-        f.write('ShfZ = %s\n' %self._sci_(ShfZ))
-        f.write('EtaA =  [%.7e]\n' %self.params["EtaA"])
-        f.write('ShfA =  %s\n' %self._sci_(ShfA))
-        f.write('Atyp = [')
-        f.write(','.join(self.params["Atyp"]))
-        f.write(']')
-        f.close()
 
 
 class anitrainerinputdesigner:
