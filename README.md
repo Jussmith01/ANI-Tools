@@ -1,5 +1,6 @@
 # ANI-Tools
 1.Obtain training binaries HDAtomNNP-Trainer
+
 	•Contact us for this file
 		i.Justin Smith: jsmith48@lanl.gov
 		ii.Christian Devereux: cdever01@ufl.edu
@@ -13,6 +14,7 @@
 
 
 2.Clone ANI-Tools repository
+
 	•git clone https://github.com/Jussmith01/ANI-Tools.git
 
 	•Change to the branch training
@@ -24,6 +26,7 @@
 
 
 3.Clone ASE_ANI repository
+
 	•git clone https://github.com/isayev/ASE_ANI.git
 		i.Be sure to check the requirements in the README page
 
@@ -38,6 +41,7 @@
 
 
 4.Set up the training script
+
 	•ANI-Tools/NeuroChem_training/ens_trainer.py  
 
 	•Change nwdir (line 6) to the path where you want the new ensemble to be located
@@ -60,6 +64,7 @@
 
 
 5.Execute the script
+
 	•python ens_trainer.py
 
 MSE vs. training epoch for sample network
