@@ -62,9 +62,5 @@
 5.Execute the script
 	•python ens_trainer.py
 
-MSE vs. training epoch for sample network
-![Alt text](NeuroChem_training/images/MSE.png?raw=true "MSE")
 
-
-RMSE vs. training epoch for sample network 
-![Alt text](NeuroChem_training/images/RMSE.png?raw=true "RMSE")
+![Alt text](images/RMSE.png?raw=true "RMSE")

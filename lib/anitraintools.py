@@ -13,6 +13,7 @@ import os
 
 from multiprocessing import Process
 import shutil
+import itertools
 
 def interval(v, S):
     ps = 0.0
@@ -55,7 +56,7 @@ class anitrainerparamdesigner():
         return ShfR, ShfA, ShfZ
 
     def inp_size(self):
-        return self.params["NsR"]*len(self.params["Atyp"])+self.params["NsaR"]*self.params["NsZ"]*len(list(itertools.combinations_with_replacment(self.params["Atyp"], 2)))
+        return self.params["NsR"]*len(self.params["Atyp"])+self.params["NsaR"]*self.params["NsZ"]*len(list(itertools.combinations_with_replacement(self.params["Atyp"], 2)))
 
     def _sci_(self, l):
         return "["+", ".join(["%.7e" % x for x in l])+"]"

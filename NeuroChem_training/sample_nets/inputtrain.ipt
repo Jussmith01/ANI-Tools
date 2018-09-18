@@ -1,0 +1,127 @@
+sflparamsfile=rHCNO-5.2R_16-3.5A_a4-8.params
+ntwkStoreDir=networks/
+atomEnergyFile=sae.dat
+nmax=0
+tolr=40
+emult=5.0000000e-01
+eta=1.0000000e-03
+tcrit=1.0000000e-05
+tmax=0
+tbtchsz=15
+vbtchsz=15
+gpuid=0
+ntwshr=0
+nkde=0
+energy=1
+force=1
+dipole=0
+charge=0
+fmult=1.0000000e+01
+pbc=0
+cmult=1.0000000e+00
+runtype=ANNP_CREATE_HDNN_AND_TRAIN
+adptlrn=OFF
+decrate=9.0000000e-01
+moment=ADAM
+mu=9.9000000e-01
+feps=1.0000000e-03
+eunits=default
+factor=1.0000000e+00
+boxx=6.0000000e+00
+boxy=6.0000000e+00
+boxz=6.0000000e+00
+network_setup {
+    inputsize=384;
+    atom_net H $
+        layer [
+            nodes=48;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-05;
+            type=0;
+        ]
+        layer [
+            nodes=32;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-06;
+            type=0;
+        ]
+        layer [
+            nodes=1;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-06;
+            type=0;
+        ]
+    $
+    atom_net C $
+        layer [
+            nodes=48;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-05;
+            type=0;
+        ]
+        layer [
+            nodes=32;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-06;
+            type=0;
+        ]
+        layer [
+            nodes=1;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-06;
+            type=0;
+        ]
+    $
+    atom_net N $
+        layer [
+            nodes=48;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-05;
+            type=0;
+        ]
+        layer [
+            nodes=32;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-06;
+            type=0;
+        ]
+        layer [
+            nodes=1;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-06;
+            type=0;
+        ]
+    $
+    atom_net O $
+        layer [
+            nodes=48;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-05;
+            type=0;
+        ]
+        layer [
+            nodes=32;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-06;
+            type=0;
+        ]
+        layer [
+            nodes=1;
+            activation=9;
+            l2norm=0;
+            l2valu=1.0000000e-06;
+            type=0;
+        ]
+    $
+}
