@@ -394,7 +394,7 @@ def generateQMdata(hostname, username, swkdir, ldtdir, datdir, h5stor, mae, jtim
 
     # Prepare the working directories and submission files
     alserv.prepare_data_dir()
-
+    exit(0)
     # Load all prepared files to the server
     print('Loading to server...')
     alserv.load_to_server()
