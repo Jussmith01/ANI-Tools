@@ -338,7 +338,9 @@ def readncdatall(file,N = 0):
             
             data = l.split(",")[0:-1]
             #if True:
-            if len(data) == 3*3*nat+1+3*nat+3+3:
+            if len(data) == 3*3*nat+1+3*nat+3+3 or len(data) == 3*3*nat+1+3*nat+3+3+2:
+               if len(data) == 3*3*nat+1+3*nat+3+3+2:
+                  data = data[0:-2]
                #print(i,np.array(data).shape,3*3*nat+1+3*nat+3+3,l.count(","))
                Xi.append(np.array(data[0:nat * 3], dtype=np.float32).reshape(nat,3))
                Ei.append(data[nat*3])
@@ -347,6 +349,7 @@ def readncdatall(file,N = 0):
                C2.append(np.array(data[nat*3+nat*3+(nat+1)+1:nat*3+nat*3+2*(nat+1)+1],dtype=np.float32))
                SD.append(np.array(data[nat*3+nat*3+2*(nat+1)+1:nat*3+nat*3+3*(nat+1)+1],dtype=np.float32))
                DP.append(np.array(data[nat*3+nat*3+3*(nat+1)+1:nat*3+nat*3+4*(nat+1)+(nat+1)*3+1],dtype=np.float32).reshape(nat+1,3))
+               #DP.append(np.array(data[nat*3+nat*3+3*(nat+1)+1:nat*3+nat*3+4*(nat+1)+(nat+1)*3+1],dtype=np.float32).reshape(nat+1,3))
             else:
                print(i,np.array(data).shape,3*3*nat+1+3*nat+3+3,l.count(","))
                print('Line size does not match expected!')
@@ -927,4 +930,3 @@ def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,LOT,TSS=10,Temp='300.0',rdm='uniform'
     f.write('  NONE\n')
     f.write('&\n\n')
 
-    f.close()
