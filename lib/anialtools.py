@@ -177,6 +177,7 @@ class alconformationalsampler():
             Nk = 0
             Nt = 0
             for fi,f in enumerate(files):
+                print(f)
                 data = hdt.read_rcdb_coordsandnm(id+f)
 
                 #print(id+f)
@@ -185,26 +186,32 @@ class alconformationalsampler():
                 nmc = data["nmdisplacements"]
                 frc = data["forceconstant"]
 
+                if "charge" in data and "multip" in data:
+                    chg = data["charge"]
+                    mlt = data["multip"]
+                else:
+                    chg = "0"
+                    mlt = "1"
+
                 nms = nmt.nmsgenerator(xyz,nmc,frc,spc,T,minfc=5.0E-2,maxd=maxd)
                 conformers = nms.get_Nrandom_structures(Ngen)
 
-                ids = dc.get_divconfs_ids(conformers, spc, Ngen, Nkep, [])
-                conformers = conformers[ids]
-                #print('    -',f,len(ids),conformers.shape)
+                if conformers.shape[0] > 0:
+                    if conformers.shape[0] > Nkep:
+                        ids = dc.get_divconfs_ids(conformers, spc, Ngen, Nkep, [])
+                        conformers = conformers[ids]
 
-                sigma = anicv.compute_stddev_conformations(conformers,spc)
-                #print(sigma)
-                sid = np.where( sigma >  sig )[0]
-                #print(sid)
-                #print('  -', fi, 'of', len(files), ') File:', f, 'keep:', sid.size,'percent:',"{:.2f}".format(100.0*sid.size/Ngen))
+                    sigma = anicv.compute_stddev_conformations(conformers,spc)
+                    sid = np.where( sigma >  sig )[0]
 
 
-                Nt += sigma.size
-                Nk += sid.size
-                if 100.0*sid.size/float(Ngen) > 0:
-                    Nkp += sid.size
-                    cfn = f.split('.')[0].split('-')[0]+'_'+str(idx).zfill(5)+'-'+f.split('.')[0].split('-')[1]+'_2.xyz'
-                    hdt.writexyzfile(self.cdir+cfn,conformers[sid],spc)
+                    Nt += sigma.size
+                    Nk += sid.size
+                    if 100.0*sid.size/float(Ngen) > 0:
+                        Nkp += sid.size
+                        cfn = f.split('.')[0].split('-')[0]+'_'+str(idx).zfill(5)+'-'+f.split('.')[0].split('-')[1]+'_2.xyz'
+                        cmts = [' '+chg+' '+mlt for c in range(Nk)]
+                        hdt.writexyzfilewc(self.cdir+cfn,conformers[sid],spc,cmts)
                 idx += 1
 
             Nkt += Nk
