@@ -399,10 +399,17 @@ class anienscomputetool(object):
         #self.nc = [pync.molecule(cnstfile, saefile, nnfdir+str(i)+'/', gpuid, sinet) for i in range(Nn)]
 
         self.ens = ensemblemolecule(cnstfile,saefile,nnfdir,Nn,gpuid,sinet)
-
+        self.charge_prep=False
+        self.pbc=False
     #def __init__(self, nc):
     #    # Construct pyNeuroChem class
     #    self.nc = nc
+
+    def set_pbc(self, cell, pbc):
+        self.cell = cell
+        self.celi = (np.linalg.inv(cell)).astype(np.float32)
+        self.ens.set_pbc(pbc[0],pbc[1],pbc[2])
+        self.pbc=True
 
     def optimize_rdkit_molecule(self, mrdk, cid, fmax=0.1, steps=10000, logger='opt.out'):
         mol = __convert_rdkitmol_to_aseatoms__(mrdk,cid)
@@ -453,8 +460,15 @@ class anienscomputetool(object):
 
     def energy_molecule(self,X,S):
         self.ens.set_molecule(X=X, S=list(S))
+        if self.pbc:
+            self.ens.set_cell((self.cell).astype(np.float32), self.celi)
+
         e,v = self.ens.compute_mean_energies()
         return hdt.hatokcal*e,v
+
+    def charge_molecule(self):
+        c,v = self.ens.compute_mean_charges()
+        return c,v
 
     def __in_list_within_eps__(self,val,ilist,eps):
         for i in ilist:

@@ -90,7 +90,12 @@ class anitrainerinputdesigner:
 
         for ak in self.layers.keys():
             network += "    atom_net " + ak + " $\n"
-            #self.layers[ak].append({"nodes": 1, "activation": 6, "type": 0})
+
+            if int(self.params["dipole"]) != 0 or int(self.params["charge"]) != 0:
+                self.layers[ak].append({"nodes": 2, "activation": 6, "type": 0})
+            else:
+                self.layers[ak].append({"nodes": 1, "activation": 6, "type": 0})
+
             for l in self.layers[ak]:
                 network += "        layer [\n"
                 for key in l.keys():
