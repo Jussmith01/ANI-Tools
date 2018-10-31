@@ -887,7 +887,7 @@ def read_rcdb_coordsandnm(file):
 
     return output
 
-def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,LOT,modes=None,mode_props=None,charge=0,multip=1,TSS=10,Temp='300.0',rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1',fill=1,comment=""):
+def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,LOT,modes=None,mode_props=None,charge='0',multip='1',TSS=10,Temp='300.0',rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1',fill=1,comment=""):
 
     f = open(wkdir + 'inputs/' + fpf + '-' + str(Nc).zfill(fill) + '.ipt', 'w')
 

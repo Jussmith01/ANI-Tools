@@ -9,12 +9,12 @@ import numpy as np
 
 import os
 
-fpf = 'gdbSFCl_chembl' #Filename prefix
-wdir = '/home/jujuman/Research/GDB-11-AL-wB97x631gd/elements_SFCl/ANI-AL-SFCl/ANI-AL-0808/ANI-AL-0808.0003/ANI-AL-0808.0003.0401/config_1/' #working directory
+fpf = 'gdb11_02' #Filename prefix
+wdir = '/home/jsmith48/scratch/gdb110charged/' #working directory
 #smfile = '/home/jujuman/Research/RawGDB11Database/SFCl/gdb11SFClsize08.smi' # Smiles file
-smfile = '/home/jujuman/Research/Drug_moles_raw/chembl_22_clean_1576904_sorted_std_final.smi'
-Nc = 2
-Pr = 0.5
+smfile = '/home/jsmith48/scratch/gdb110charged/smiles/gdb11charged_size02.smi'
+Nc = 1
+Pr = 1.0
 GPU = 0
 
 LOT='wb97x/6-31g*' # Level of theory
@@ -31,17 +31,19 @@ if not os.path.exists(wdir):
 if not os.path.exists(wdir+'inputs'):
     os.mkdir(wdir+'inputs')
 
-ani = aat.anicomputetool(cnstfile, saefile, nnfdir, gpuid=GPU)
+#ani = aat.anicomputetool(cnstfile, saefile, nnfdir, gpuid=GPU)
 
 wkdircv = '/home/jujuman/Research/DataReductionMethods/al_working_network/ANI-AL-0808.0303.0400/'
 cnstfilecv = wkdircv + 'train0/rHCNOSFCl-4.6A_16-3.1A_a4-8.params'
 saefilecv  = wkdircv + 'train0/sae_wb97x-631gd.dat'
 nnfprefix  = wkdircv + 'train'
 
-anicv = aat.anicrossvalidationconformer(cnstfilecv,saefilecv,nnfprefix,5,GPU,False)
+#anicv = aat.anicrossvalidationconformer(cnstfilecv,saefilecv,nnfprefix,5,GPU,False)
 
 gdb.formatsmilesfile(smfile)
 molecules = Chem.SmilesMolSupplier(smfile, nameColumn=0)
+
+print(molecules)
 
 Nd = 0
 Nt = 0
@@ -53,7 +55,7 @@ for n,m in enumerate(molecules):
     except Exception as ex:
         print('Error:',ex)
 
-if True:
+    if True:
     #if not any(x in s for x in ['Br', 'I', 'P']) and any(x in s for x in ['S', 'F', 'Cl', 's', 'f', 'cl']) and s != '':
         print(n,') Working on', s,'... Na: ',m.GetNumAtoms())
 
@@ -64,21 +66,21 @@ if True:
         for a in m.GetAtoms():
             chg += a.GetFormalCharge()
         print('    -Total Charge:',chg)
-        if chg == 0:
+        if True:
             # generate Nc conformers
             cids = AllChem.EmbedMultipleConfs(m, Nc, useRandomCoords=True)
 
             # Classical Optimization
             for cid in cids:
-                _ = AllChem.MMFFOptimizeMolecule(m, confId=cid, maxIters=1000)
+                _ = AllChem.UFFOptimizeMolecule(m, confId=cid, maxIters=1000)
 
             # ANI Optimization
-            for cid in cids:
-                ani.optimize_rdkit_molecule(m,cid,fmax=0.01)
+            #for cid in cids:
+            #    ani.optimize_rdkit_molecule(m,cid,fmax=0.01)
 
 
             # Detect unique conformers by energy (will fail to select degenerate energy molecules)
-            ani.detect_unique_rdkitconfs(m, cids)
+            #ani.detect_unique_rdkitconfs(m, cids)
 
             # Align all conformers
             Chem.rdMolAlign.AlignMolConformers(m)
@@ -87,18 +89,19 @@ if True:
             Nu = len(m.GetConformers())
 
             # Cross test network cross validation on the conformers
-            sigma = anicv.compute_stddev_rdkitconfs(m)
-            print('    -sigma:',sigma)
+            #sigma = anicv.compute_stddev_rdkitconfs(m)
+            #print('    -sigma:',sigma)
         
             # Get all conformers
             X = []
-            for s,c in zip(sigma,m.GetConformers()):
-                if s > 0.34:
-                    x =  np.empty((m.GetNumAtoms(),3),dtype=np.float32)
-                    for i in range(m.GetNumAtoms()):
-                        r = c.GetAtomPosition(i)
-                        x[i] = [r.x, r.y, r.z]
-                    X.append(x)
+            #for s,c in zip(sigma,m.GetConformers()):
+            #    if s > 0.34:
+            for c in m.GetConformers():
+                x =  np.empty((m.GetNumAtoms(),3),dtype=np.float32)
+                for i in range(m.GetNumAtoms()):
+                    r = c.GetAtomPosition(i)
+                    x[i] = [r.x, r.y, r.z]
+                X.append(x)
 
             #Nd += len(X)
             #Nt += Nu
@@ -119,7 +122,7 @@ if True:
                 #print('       -Keep:', p)
                 if p:
                     id = int(str(n)+str(i))
-                    hdn.write_rcdb_input(x,S,id,wdir,fpf,100,LOT,'500.0',fill=8,comment='smiles: '+Chem.MolToSmiles(m))
+                    hdn.write_rcdb_input(x,S,id,wdir,fpf,LOT,charge=str(chg),fill=8,comment='smiles: '+Chem.MolToSmiles(m))
                     hdn.writexyzfile(wdir+fpf+'-'+str(id).zfill(8)+'.xyz',x.reshape(1,x.shape[0],x.shape[1]),S)
                     #print(str(id).zfill(8))
 
