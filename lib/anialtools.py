@@ -334,6 +334,8 @@ class alconformationalsampler():
 
     # Cluster sampling function
     def cluster_sampling(self, tid, Nr, mol_sizes, mol_temps, seed, gcmddict, gpuid):
+        os.environ["OMP_NUM_THREADS"] = "2"
+
         dictc = gcmddict.copy()
         solv_file = dictc['solv_file']
         solu_dirs = dictc['solu_dirs']

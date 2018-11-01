@@ -174,7 +174,7 @@ class anicrossvalidationconformer(object):
             for i, nc in enumerate(self.ncl):
                 nc.setConformers(confs=x,types=list(S))
                 E = nc.energy().copy()
-                #print(E.shape,x.shape,energies.shape,shift)
+                #print(E,x)
                 energies[i,shift:shift+E.shape[0]] = E
             shift += x.shape[0]
 
@@ -265,7 +265,7 @@ class anicrossvalidationconformer(object):
         charges  = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
         for i,nc in enumerate(self.ncl):
             #nc.setConformers(confs=X,types=list(S))
-            charges[i] = nc.charge().copy()
+            charges[i] = nc.get_charges().copy()
         return charges
 
     ''' Compute the std. dev. of rdkit conformers '''
