@@ -46,8 +46,8 @@ class nmsgenerator():
             for j in range(i+1,self.Na):
                 Rij = np.linalg.norm(rxyz[i]-rxyz[j])
                 #print(0.006 * (self.chg[i] * self.chg[j]) + 0.65)
-                if Rij < 0.006 * (self.chg[i] * self.chg[j]) + 0.65:
-                    print('DIST:',self.chg[i],self.chg[j],0.006 * (self.chg[i] * self.chg[j]) + 0.65,Rij)
+                if Rij < 0.006 * (self.chg[i] * self.chg[j]) + 0.6:
+                    #print('DIST:',self.chg[i],self.chg[j],0.006 * (self.chg[i] * self.chg[j]) + 0.6,Rij)
                     return True
         return False
 
@@ -82,17 +82,24 @@ class nmsgenerator():
     # Call this to return a random structure
     def get_random_structure(self):
         gs = True
+        fnd = True
+        count = 0
         while gs:
             rxyz = self.__genrandomstruct__()
             gs = self.__check_atomic_distances__(rxyz) or self.__check_distance_from_eq__(rxyz)
-        return rxyz
+            if count > 100:
+                fnd=False
+                break
+            count += 1
+        return rxyz,fnd
 
     # Call this to return a random structure
     def get_Nrandom_structures(self, N):
         a_xyz = np.empty((N,self.Na,3),dtype=np.float32)
+        a_bool = np.empty((N),dtype=np.bool)
         for i in range(N):
-            a_xyz[i] = self.get_random_structure()
-        return a_xyz
+            a_xyz[i],a_bool[i] = self.get_random_structure()
+        return a_xyz[a_bool]
 
 class nmsgenerator_RXN():
     # xyz = initial min structure

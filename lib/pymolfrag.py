@@ -478,7 +478,7 @@ class clustergenerator():
 
         self.maxsig = 0
 
-        CUT = 6.0
+        CUT = 7.0
 
         for i in range(len(self.Na)):
             si = self.ctd[i][2]
