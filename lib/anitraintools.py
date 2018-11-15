@@ -92,7 +92,7 @@ class anitrainerinputdesigner:
             network += "    atom_net " + ak + " $\n"
 
             if int(self.params["dipole"]) != 0 or int(self.params["charge"]) != 0:
-                self.layers[ak].append({"nodes": 10, "activation": 6, "type": 0})
+                self.layers[ak].append({"nodes": 12, "activation": 6, "type": 0})
             else:
                 self.layers[ak].append({"nodes": 1, "activation": 6, "type": 0})
 
@@ -322,9 +322,12 @@ class alaniensembletrainer():
                                      forces=True, grad=False, Fkey='forces', forces_unit=1.0,
                                      dipole=False, dipole_unit=1.0, Dkey='dipoles',
                                      charge=False, charge_unit=1.0, Ckey='charges',
-                                     Eax0sum=False, rmhighe=True):
+                                     Eax0sum=False, rmhighe=True,random_seed=-1):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
+
+        if random_seed != -1:
+            np.random.seed(random_seed)
 
         h5d = self.h5dir
 
