@@ -227,7 +227,7 @@ def show2dcontradialgraph (ShfR,eta,Rc,func,title):
 #pf = '/nh/nest/u/jsmith/Research/datasets/iso17/train/mol0/rHCO-5.0A_16-3.4A_a4-8.params'
 #pf = '/nh/nest/u/jsmith/Research/gutzwiller_research/training-data/model_training/params/rX-2.8R_32-2.0A_a8-8.params'
 #pf = '/nh/nest/u/jsmith/Research/train_qm7/train/rHCNOS-5.0R_16-3.4A_a8-8.params'
-pf = '/home/jsmith48/scratch/dipole_training/test_ani-1x/rHO-4.5R_32-3.2A_a4-8.params'
+pf = '/scratch/Research/dipole_training/ani_large_mbe_clusters/model-45/rHO-4.5R_32-3.5A_a4-8.params'
 
 Nrr = 32 # Number of shifting radial functions
 Na = 2 # Number of atom types
@@ -236,14 +236,14 @@ Nzt = 8 # Number of angular shifting parameters
 
 TM = 1
 Rcr = 4.5 # radial cutoff
-Rca = 3.2 # Angular cutoff
+Rca = 3.5 # Angular cutoff
 
 xs = 0.5
 
 #Atyp = '[H,C,N,O,S,F,Cl]'
 Atyp = '[O, H]'
 EtaR = np.array([32.0]) # Radial eta parameters
-EtaA = np.array([4.0]) # Angular/Radial eta parameters
+EtaA = np.array([5.0]) # Angular/Radial eta parameters
 Zeta = np.array([32.0]) # Angular zeta parameters
 # ****************************************************
 cmap = mpl.cm.brg
