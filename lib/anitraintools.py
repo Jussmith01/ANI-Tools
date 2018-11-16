@@ -114,12 +114,17 @@ class anitrainerinputdesigner:
 
 
 class alaniensembletrainer():
-    def __init__(self, train_root, netdict, h5dir, Nn):
+    def __init__(self, train_root, netdict, input_builder, h5dir, Nn, random_seed=-1):
+        
+        if random_seed != -1:
+            np.random.seed(random_seed)
+
         self.train_root = train_root
         # self.train_pref = train_pref
         self.h5dir = h5dir
         self.Nn = Nn
         self.netdict = netdict
+        self.iptbuilder = input_builder
 
         self.h5file = [f for f in os.listdir(self.h5dir) if f.rsplit('.', 1)[1] == 'h5']
         # print(self.h5dir,self.h5file)
@@ -322,12 +327,9 @@ class alaniensembletrainer():
                                      forces=True, grad=False, Fkey='forces', forces_unit=1.0,
                                      dipole=False, dipole_unit=1.0, Dkey='dipoles',
                                      charge=False, charge_unit=1.0, Ckey='charges',
-                                     Eax0sum=False, rmhighe=True,random_seed=-1):
+                                     Eax0sum=False, rmhighe=True):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
-
-        if random_seed != -1:
-            np.random.seed(random_seed)
 
         h5d = self.h5dir
 
@@ -486,9 +488,9 @@ class alaniensembletrainer():
         print('Training Ensemble...')
         processes = []
         indicies = np.array_split(np.arange(self.Nn), len(GPUList))
-
-        for gpu, idc in enumerate(indicies):
-            processes.append(Process(target=self.train_network, args=(GPUList[gpu], idc, remove_existing)))
+        seeds = np.array_split(np.random.uniformint(low=0,high=2**32,size=self.Nn), len(GPUList))
+        for gpu, (idc,seedl) in enumerate(zip(indicies,seeds)):
+            processes.append(Process(target=self.train_network, args=(GPUList[gpu], idc, seedl, remove_existing)))
             processes[-1].start()
             # self.train_network(pyncdict, trdict, layers, id, i)
 
@@ -496,8 +498,8 @@ class alaniensembletrainer():
             p.join()
         print('Training Complete.')
 
-    def train_network(self, gpuid, indicies, remove_existing=False):
-        for index in indicies:
+    def train_network(self, gpuid, indicies, seeds, remove_existing=False):
+        for index,seed in zip(indicies,seed):
             pyncdict = dict()
             pyncdict['wkdir'] = self.train_root + 'train' + str(index) + '/'
             pyncdict['ntwkStoreDir'] = self.train_root + 'train' + str(index) + '/' + 'networks/'
@@ -515,14 +517,16 @@ class alaniensembletrainer():
 
             outputfile = pyncdict['wkdir'] + 'output.opt'
 
-            shutil.copy2(self.netdict['iptfile'], pyncdict['wkdir'])
+            self.iptbuilder.set_parameter('seed',str(seed))
+
+            nfile = pyncdict['wkdir']+'inputtrain.ipt'
+            self.iptbuilder.write_input_file(nfile)
+
             shutil.copy2(self.netdict['cnstfile'], pyncdict['wkdir'])
             shutil.copy2(self.netdict['saefile'], pyncdict['wkdir'])
 
-            if "/" in self.netdict['iptfile']:
-                nfile = self.netdict['iptfile'].rsplit("/", 1)[1]
-            else:
-                nfile = self.netdict['iptfile']
+            if "/" in nfile:
+                nfile = nfile.rsplit("/", 1)[1]
 
             command = "cd " + pyncdict['wkdir'] + " && HDAtomNNP-Trainer -i " + nfile + " -d " + pyncdict[
                 'datadir'] + " -p 1.0 -m -g " + pyncdict['gpuid'] + " > output.opt"
