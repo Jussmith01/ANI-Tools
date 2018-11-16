@@ -517,10 +517,11 @@ class alaniensembletrainer():
 
             outputfile = pyncdict['wkdir'] + 'output.opt'
 
-            self.iptbuilder.set_parameter('seed',str(seed))
+            ibuild = self.iptbuilder.copy()
+            ibuild.set_parameter('seed',str(seed))
 
             nfile = pyncdict['wkdir']+'inputtrain.ipt'
-            self.iptbuilder.write_input_file(nfile)
+            ibuild.write_input_file(nfile,iptsize=self.netdict["iptsize"])
 
             shutil.copy2(self.netdict['cnstfile'], pyncdict['wkdir'])
             shutil.copy2(self.netdict['saefile'], pyncdict['wkdir'])
