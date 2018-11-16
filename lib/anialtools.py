@@ -118,16 +118,23 @@ class alconformationalsampler():
                                   high=gcmddict['MolHigh'],
                                   size=gcmddict['Nr'])
 
-        print(Nmols)
+        Ntmps = np.random.randint(low=gcmddict['T']-200,
+                                  high=gcmddict['T']+200,
+                                  size=gcmddict['Nr'])
+
+        print('Box Sizes:',Nmols)
+        print('Sim Temps:',Ntmps)
 
         seeds = np.random.randint(0,1000000,len(gpus))
 
         mol_sizes = np.array_split(Nmols, len(gpus))
+        mol_temps = np.array_split(Ntmps, len(gpus))
 
         proc = []
         for i,g in enumerate(gpus):
             proc.append(Process(target=self.cluster_sampling, args=(i, int(gcmddict['Nr']/len(gpus)),
                                                                     mol_sizes[i],
+                                                                    mol_temps[i],
                                                                     seeds[i],
                                                                     gcmddict,
                                                                     g)))
@@ -170,6 +177,7 @@ class alconformationalsampler():
             Nk = 0
             Nt = 0
             for fi,f in enumerate(files):
+                print(f)
                 data = hdt.read_rcdb_coordsandnm(id+f)
 
                 #print(id+f)
@@ -178,26 +186,32 @@ class alconformationalsampler():
                 nmc = data["nmdisplacements"]
                 frc = data["forceconstant"]
 
+                if "charge" in data and "multip" in data:
+                    chg = data["charge"]
+                    mlt = data["multip"]
+                else:
+                    chg = "0"
+                    mlt = "1"
+
                 nms = nmt.nmsgenerator(xyz,nmc,frc,spc,T,minfc=5.0E-2,maxd=maxd)
                 conformers = nms.get_Nrandom_structures(Ngen)
 
-                ids = dc.get_divconfs_ids(conformers, spc, Ngen, Nkep, [])
-                conformers = conformers[ids]
-                #print('    -',f,len(ids),conformers.shape)
+                if conformers.shape[0] > 0:
+                    if conformers.shape[0] > Nkep:
+                        ids = dc.get_divconfs_ids(conformers, spc, Ngen, Nkep, [])
+                        conformers = conformers[ids]
 
-                sigma = anicv.compute_stddev_conformations(conformers,spc)
-                #print(sigma)
-                sid = np.where( sigma >  sig )[0]
-                #print(sid)
-                #print('  -', fi, 'of', len(files), ') File:', f, 'keep:', sid.size,'percent:',"{:.2f}".format(100.0*sid.size/Ngen))
+                    sigma = anicv.compute_stddev_conformations(conformers,spc)
+                    sid = np.where( sigma >  sig )[0]
 
 
-                Nt += sigma.size
-                Nk += sid.size
-                if 100.0*sid.size/float(Ngen) > 0:
-                    Nkp += sid.size
-                    cfn = f.split('.')[0].split('-')[0]+'_'+str(idx).zfill(5)+'-'+f.split('.')[0].split('-')[1]+'_2.xyz'
-                    hdt.writexyzfile(self.cdir+cfn,conformers[sid],spc)
+                    Nt += sigma.size
+                    Nk += sid.size
+                    if 100.0*sid.size/float(Ngen) > 0:
+                        Nkp += sid.size
+                        cfn = f.split('.')[0].split('-')[0]+'_'+str(idx).zfill(5)+'-'+f.split('.')[0].split('-')[1]+'_2.xyz'
+                        cmts = [' '+chg+' '+mlt for c in range(Nk)]
+                        hdt.writexyzfilewc(self.cdir+cfn,conformers[sid],spc,cmts)
                 idx += 1
 
             Nkt += Nk
@@ -319,7 +333,9 @@ class alconformationalsampler():
         difo.close()
 
     # Cluster sampling function
-    def cluster_sampling(self, tid, Nr, mol_sizes, seed, gcmddict, gpuid):
+    def cluster_sampling(self, tid, Nr, mol_sizes, mol_temps, seed, gcmddict, gpuid):
+        os.environ["OMP_NUM_THREADS"] = "2"
+
         dictc = gcmddict.copy()
         solv_file = dictc['solv_file']
         solu_dirs = dictc['solu_dirs']
@@ -343,7 +359,7 @@ class alconformationalsampler():
                                     self.netdict['num_nets'],
                                     solv, solu, gpuid)
 
-        dgen.generate_clusters(dictc, mol_sizes, tid)
+        dgen.generate_clusters(dictc, mol_sizes, mol_temps, tid)
 
 
     # Run the TS sampler
@@ -836,7 +852,7 @@ class alaniensembletrainer():
 
         print('Linear fitting complete.')
 
-    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False, rmhighe=True):
+    def build_strided_training_cache(self,Nblocks,Nvalid,Ntest,build_test=True, build_valid=False, forces=True, grad=False, Fkey='forces', forces_unit=1.0, Ekey='energies', energy_unit=1.0, Eax0sum=False, rmhighe=True):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
 
@@ -867,6 +883,9 @@ class alaniensembletrainer():
 
         if build_test:
             testh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/testset' + str(r) + '.h5') for r in range(N)]
+
+        if build_valid:
+            valdh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/valdset' + str(r) + '.h5') for r in range(N)]
 
         if rmhighe:
             dE = []
@@ -956,6 +975,9 @@ class alaniensembletrainer():
                         if set_idx.size != 0:
                             data_count[nid, 1] += set_idx.size
                             cache.insertdata(X[set_idx], F[set_idx], E[set_idx], list(S))
+                            if build_valid:
+                                valdh5[nid].store_data(f+data['path'], coordinates=X[set_idx], forces=F[set_idx], energies=E[set_idx], species=list(S))
+
 
                     if build_test:
                         for nid,th5 in enumerate(testh5):
@@ -972,6 +994,10 @@ class alaniensembletrainer():
         if build_test:
             for th in testh5:
                 th.cleanup()
+
+        if build_valid:
+            for vh in valdh5:
+                vh.cleanup()
 
         print(' Train ',' Valid ',' Test ')
         print(data_count)

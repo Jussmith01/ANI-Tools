@@ -300,7 +300,7 @@ def writexyzfilewc (fn,xyz,typ,cmt):
     N = len(typ)
     #print('N ATOMS: ',typ)
     for m,c in zip(xyz,cmt):
-        f.write(str(N)+'\n comment:' + c + '\n')
+        f.write(str(N)+'\n' + c + '\n')
         #print(m)
         for i in range(N):
             x = m[i,0]
@@ -338,7 +338,9 @@ def readncdatall(file,N = 0):
             
             data = l.split(",")[0:-1]
             #if True:
-            if len(data) == 3*3*nat+1+3*nat+3+3:
+            if len(data) == 3*3*nat+1+3*nat+3+3 or len(data) == 3*3*nat+1+3*nat+3+3+2:
+               if len(data) == 3*3*nat+1+3*nat+3+3+2:
+                  data = data[0:-2]
                #print(i,np.array(data).shape,3*3*nat+1+3*nat+3+3,l.count(","))
                Xi.append(np.array(data[0:nat * 3], dtype=np.float32).reshape(nat,3))
                Ei.append(data[nat*3])
@@ -347,6 +349,7 @@ def readncdatall(file,N = 0):
                C2.append(np.array(data[nat*3+nat*3+(nat+1)+1:nat*3+nat*3+2*(nat+1)+1],dtype=np.float32))
                SD.append(np.array(data[nat*3+nat*3+2*(nat+1)+1:nat*3+nat*3+3*(nat+1)+1],dtype=np.float32))
                DP.append(np.array(data[nat*3+nat*3+3*(nat+1)+1:nat*3+nat*3+4*(nat+1)+(nat+1)*3+1],dtype=np.float32).reshape(nat+1,3))
+               #DP.append(np.array(data[nat*3+nat*3+3*(nat+1)+1:nat*3+nat*3+4*(nat+1)+(nat+1)*3+1],dtype=np.float32).reshape(nat+1,3))
             else:
                print(i,np.array(data).shape,3*3*nat+1+3*nat+3+3,l.count(","))
                print('Line size does not match expected!')
@@ -850,9 +853,14 @@ def read_rcdb_coordsandnm(file):
     f = open(file,'r').read()
 
     rc = re.compile("(?:\$coordinates)\s*?\n([\s\S]+?)&")
+    prm = re.compile("(.+?)=(.+?)(?: |\n)")
+    
+    output = dict()
+    for p in prm.findall(f):
+        output[p[0]] = p[1]
+    
     S = rc.search(f)
 
-    output = dict()
     if S:
         elements = np.vstack([np.array(list(filter(None,i.split(" ")))) for i in S.group(1).split("\n")][0:-1])
         spc = [str(e) for e in elements[:, 0]]
@@ -879,7 +887,7 @@ def read_rcdb_coordsandnm(file):
 
     return output
 
-def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,LOT,TSS=10,Temp='300.0',rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1',fill=1,comment=""):
+def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,LOT,modes=None,mode_props=None,charge='0',multip='1',TSS=10,Temp='300.0',rdm='uniform',type='nmrandom',SCF='Tight',freq='1',opt='1',fill=1,comment=""):
 
     f = open(wkdir + 'inputs/' + fpf + '-' + str(Nc).zfill(fill) + '.ipt', 'w')
 
@@ -910,6 +918,8 @@ def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,LOT,TSS=10,Temp='300.0',rdm='uniform'
     f.write('edfname=' + edfname + ' \n')
     f.write('optimize='+ opt + ' \n')
     f.write('frequency='+ freq + ' \n')
+    f.write('charge='+ charge + ' \n')
+    f.write('multip='+ multip + ' \n')
 
     f.write('\n#'+comment+'\n')
 
@@ -924,7 +934,16 @@ def write_rcdb_input (xyz,typ,Nc,wkdir,fpf,LOT,TSS=10,Temp='300.0',rdm='uniform'
     f.write('&\n\n')
 
     f.write('$normalmodes\n')
-    f.write('  NONE\n')
+    if modes is None:
+        f.write('  NONE\n')
+    else:
+        for c,p in zip(modes,mode_props):
+            f.write('FREQUEN='+"{:.7E}".format(p[0]) + '\n')
+            f.write('REDMASS='+"{:.7E}".format(p[1]) + '\n')
+            f.write('FRCCNST='+"{:.7E}".format(p[2])+' {\n')
+            for x in c:
+                f.write(' '+"{:.7E}".format(x[0])+' '+"{:.7E}".format(x[1])+' '+"{:.7E}".format(x[2])+'\n')
+
+            f.write('}\n')
     f.write('&\n\n')
 
-    f.close()

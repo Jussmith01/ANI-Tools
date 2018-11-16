@@ -386,9 +386,9 @@ class clustergenerator():
                 ctr = np.random.uniform(2.0*maxd + self.edgepad, L - 2.0*maxd - self.edgepad, (3))
                 fail = False
                 for cid,c in enumerate(self.ctd):
-                    if np.linalg.norm(c[0] - ctr) < maxd + c[1] + 10.0:
+                    if np.linalg.norm(c[0] - ctr) < maxd + c[1] + 8.0:
                         # search for atoms within r angstroms
-                        minv = 1000.0
+                        minv = 10000.0
                         for xi in self.X[c[2]:c[2]+self.Na[cid],:]:
                             for xj in x + ctr:
                                 dij = np.linalg.norm(xi-xj)
@@ -407,6 +407,7 @@ class clustergenerator():
                     pos += len(s)
                     #print('Placement Complete...',plc,'-',Nf)
                     self.S.extend(s)
+        print('Mols filled:',plc,'/',Nm,'Density:',(plc/np.power(L,3))*29.8896980969,'Temp:',T)
 
     def init_dynamics(self, Nm, Nembed, V, L, dt, T):
         self.L = L
@@ -433,11 +434,11 @@ class clustergenerator():
         # Open MD output
         #self.traj = open(trjfile, 'w')
 
-        # Set the velocities corresponding to a boltzmann dist @ T/4.0
-        MaxwellBoltzmannDistribution(self.mol, 300.0 * units.kB)
+        # Set the velocities corresponding to a boltzmann dist @ T/5.0
+        MaxwellBoltzmannDistribution(self.mol, T/5.0 * units.kB)
 
         # Declare Dyn
-        self.dyn = Langevin(self.mol, dt * units.fs, T * units.kB, 0.1)
+        self.dyn = Langevin(self.mol, dt * units.fs, T * units.kB, 0.01)
 
         # Define the printer
         #def printenergy(a=self.mol, d=self.dyn, b=self.mdcrd, t=self.traj):  # store a reference to atoms in the definition.
@@ -477,69 +478,75 @@ class clustergenerator():
 
         self.maxsig = 0
 
+        CUT = 7.0
+
         for i in range(len(self.Na)):
             si = self.ctd[i][2]
             di = self.ctd[i][1]
             Nai = self.Na[i]
-            Xci = np.sum(self.X[si:si+Nai,:], axis=0)/ Nai
             Xi = self.X[si:si + Nai, :]
+            Xci = np.sum(Xi, axis=0)/ Nai
 
-            if np.all( Xci > 6.0 ) and np.all( Xci <= self.L-6.0 ):
+            if np.all( Xci > CUT+di ) and np.all( Xci <= self.L-(CUT+di) ):
 
-                if np.all(Xci > di) and np.all(Xci < self.L-di):
-                    Xf = Xi
-                    Sf = self.S[si:si + Nai]
+                #if np.all(Xci > di) and np.all(Xci <= self.L-di):
+                Xf = Xi
+                Sf = self.S[si:si + Nai]
 
-                    Nmax = np.random.randint(10, 14)
-                    Nmol = 0
-                    for j in range(len(self.Na)):
-                        if i != j:
-                            sj = self.ctd[j][2]
-                            dj = self.ctd[j][1]
-                            Naj = self.Na[j]
-                            Xcj = np.sum(self.X[sj:sj+Naj,:], axis=0)/ Naj
-                            Xj = self.X[sj:sj+Naj,:]
+                Nmax = np.random.randint(100, 101)
+                Nmol = 0
+                ridx = np.arange(len(self.Na))
+                np.random.shuffle(ridx)
+                for j in ridx:
+                    if i != j:
+                        sj = self.ctd[j][2]
+                        dj = self.ctd[j][1]
+                        Naj = self.Na[j]
+                        Xcj = np.sum(self.X[sj:sj+Naj,:], axis=0)/ Naj
+                        Xj = self.X[sj:sj+Naj,:]
 
-                            if np.all(Xcj > dj) and np.all(Xcj < self.L - dj):
-                                dc = np.linalg.norm(Xci - Xcj)
-                                if dc < di + dj + 5.0:
-                                    min = 10.0
-                                    for ii in range(Nai):
-                                        Xiii = Xi[ii]
-                                        for jj in range(Naj):
-                                            Xjjj = Xj[jj]
-                                            v = np.linalg.norm(Xiii-Xjjj)
-                                            if v < min:
-                                                min = v
+                        if np.all(Xcj > dj) and np.all(Xcj < self.L - dj):
+                            dc = np.linalg.norm(Xci - Xcj)
+                            if dc < di + dj + CUT:
+                                minl = 10.0
+                                for ii in range(Nai):
+                                    Xiii = Xi[ii]
+                                    for jj in range(Naj):
+                                        Xjjj = Xj[jj]
+                                        v = np.linalg.norm(Xiii-Xjjj)
+                                        if v < minl:
+                                            minl = v
 
-                                    if min < 6.0 and min > 0.70:
-                                        Xf = np.vstack([Xf, Xj])
-                                        Sf.extend(self.S[sj:sj+Naj])
-                                        Nmol += 1
-                            if Nmol >= Nmax:
-                                break
+                                #inc = np.random.uniform(0.0, 4.0)
+                                #if minl < 2.0+inc and minl > 0.0+inc:
+                                if minl < CUT and minl > 0.5:
+                                    Xf = np.vstack([Xf, Xj])
+                                    Sf.extend(self.S[sj:sj+Naj])
+                                    Nmol += 1
+                        if Nmol >= Nmax:
+                            break
 
-                    Xcf = np.sum(Xf, axis=0) / float(len(Sf))
-                    Xf = Xf - Xcf
+                Xcf = np.sum(Xf, axis=0) / float(len(Sf))
+                Xf = Xf
 
-                    E = np.empty(len(self.aens.ncl), dtype=np.float64)
-                    for id,nc in enumerate(self.aens.ncl):
-                        nc.setMolecule(coords=np.array(Xf,dtype=np.float32), types=Sf)
-                        E[id] = nc.energy()[0]
+                E = np.empty(len(self.aens.ncl), dtype=np.float64)
+                for idx,nc in enumerate(self.aens.ncl):
+                    nc.setMolecule(coords=np.array(Xf,dtype=np.float32), types=Sf)
+                    E[idx] = nc.energy()[0]
 
-                    sig = np.std(hdn.hatokcal*E)/np.sqrt(Nai+Naj)
-                    #print('Mol(',i,'): sig=',sig)
+                sig = np.std(hdn.hatokcal*E)/np.sqrt(Nai+Naj)
+                #print('Mol(',i,'): sig=',sig)
 
-                    self.Nt += 1
-                    if sig > sighat:
-                        if sig > self.maxsig:
-                            self.maxsig = sig
-                        self.Nd += 1
-                        hdn.writexyzfile(file+str(i).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf)
-                        self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
-                        #print(dc, Sf, sig)
+                self.Nt += 1
+                if sig > sighat:
+                    if sig > self.maxsig:
+                        self.maxsig = sig
+                    self.Nd += 1
+                    hdn.writexyzfilewc(file+str(i).zfill(4)+'.xyz', Xf.reshape(1,Xf.shape[0],3), Sf, cmt=['sigma:'+str(sig)])
+                    self.frag_list.append(dict({'coords': Xf,'spec': Sf}))
+                    #print(dc, Sf, sig)
 
-    def generate_clusters(self, gcmddict, mol_sizes, id):
+    def generate_clusters(self, gcmddict, mol_sizes, mol_temps, id):
 
         self.edgepad = gcmddict['edgepad']
         self.mindist = gcmddict['mindist']
@@ -552,19 +559,20 @@ class clustergenerator():
         Nt = 0
         Nd = 0
         for i in range(gcmddict['Nr']):
+            difo.write(str(i)+') Density='+"{:.2f}".format(29.8896980969*(mol_sizes[i]/np.power(30.0,3)))+' Set Temp: ' + "{:.2f}".format(mol_temps[i]) + '\n')
             self.init_dynamics(mol_sizes[i],
                                gcmddict['Nembed'],
                                gcmddict['V'],
                                gcmddict['L'],
                                gcmddict['dt'],
-                               gcmddict['T'],
+                               mol_temps[i],
                                )
 
             for j in range(gcmddict['Ns']):
-                if j is 0:
-                    Ni = 0
-                else:
-                    Ni = gcmddict['Ni']
+                #if j is 0:
+                #    Ni = 0
+                #else:
+                Ni = gcmddict['Ni']
                 self.run_dynamics(Ni)
                 self.__fragmentbox__(gcmddict['molfile'] + '-'  + str(id).zfill(2) + '-' +str(i).zfill(2) + '-' + str(j).zfill(4) + '_', gcmddict['sig'])
                 #print('Step (',i,',',j,') [', str(self.Nd), '/', str(self.Nt),'] generated ',len(self.frag_list),' maxsig: ', self.maxsig,' dimers...')
@@ -572,7 +580,7 @@ class clustergenerator():
                 Nt += self.Nt
                 Nd += self.Nd
                 if self.maxsig > gcmddict['maxsig']:
-                    difo.write("Terminated after: " + "{:.2f}".format(Ni*gcmddict['Ns']*gcmddict['dt']) + 'fs for maxsig\n')
+                    difo.write("Terminated after: " + "{:.2f}".format(Ni*j*gcmddict['dt']) + 'fs for maxsig\n')
                     break
                 difo.flush()
 

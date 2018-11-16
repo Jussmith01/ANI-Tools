@@ -221,7 +221,7 @@ def show2dcontradialgraph (ShfR,eta,Rc,func,title):
 #--------------------------------
 #File name
 #pf = '/home/jsmith48/scratch/ANI-1x_retrain/train_ens/rHCNO-4.6R_16-3.1A_a4-8.params' # Output filename
-#pf = '/home/jsmith48/scratch/ANI-2x_retrain/rHCNOSFCl-5.2R_16-3.8A_a4-8.params' # Output filename
+#pf = '/home/jsmith48/scratch/roman_tz_train/train/rHCNOSFCl-4.8R_16-3.1A_a4-8.params' # Output filename
 #pf = '/home/jsmith48/scratch/auto_dim_al/modeldim/rHCNO-5.2R_16-4.0A_a4-8.params' # Output filename
 #pf = '/nh/nest/u/jsmith/Research/gutzwiller_research/train_test/rX-5.0A_16-3.2A_a4-8.params'
 #pf = '/nh/nest/u/jsmith/Research/datasets/iso17/train/mol0/rHCO-5.0A_16-3.4A_a4-8.params'
