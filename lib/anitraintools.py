@@ -30,36 +30,46 @@ def get_train_stats(Nn,train_root):
     repo = re.compile('EPOCH\s+?(\d+?)\s+?\n')
     rerr = re.compile('\s+?(\S+?\s+?\(\S+?)\s+?((?:\d|inf)\S*?)\s+?((?:\d|inf)\S*?)\s+?((?:\d|inf)\S*?)\n')
     rtme = re.compile('TotalEpoch:\s+?(\d+?)\s+?dy\.\s+?(\d+?)\s+?hr\.\s+?(\d+?)\s+?mn\.\s+?(\d+?\.\d+?)\s+?sc\.')
+    comp = re.compile('Termination Criterion Met')
 
     allnets = []
+    completed = []
     for index in range(Nn):
         print('reading:', train_root + 'train' + str(index) + '/' + 'output.opt')
-        optfile = open(train_root + 'train' + str(index) + '/' + 'output.opt', 'r').read()
-        matches = re.findall(rblk, optfile)
+        if os.path.isfile(train_root + 'train' + str(index) + '/' + 'output.opt'):
+            optfile = open(train_root + 'train' + str(index) + '/' + 'output.opt', 'r').read()
+            matches = re.findall(rblk, optfile)
 
-        run = dict({'EPOCH': [], 'RTIME': [], 'ERROR': dict()})
-        for i, data in enumerate(matches):
-            run['EPOCH'].append(int(re.search(repo, data).group(1)))
+            run = dict({'EPOCH': [], 'RTIME': [], 'ERROR': dict()})
+            for i, data in enumerate(matches):
+                run['EPOCH'].append(int(re.search(repo, data).group(1)))
 
-            m = re.search(rtme, data)
-            run['RTIME'].append(86400.0 * float(m.group(1)) +
-                                3600.0 * float(m.group(2)) +
-                                60.0 * float(m.group(3)) +
-                                float(m.group(4)))
+                m = re.search(rtme, data)
+                run['RTIME'].append(86400.0 * float(m.group(1)) +
+                                    3600.0 * float(m.group(2)) +
+                                    60.0 * float(m.group(3)) +
+                                    float(m.group(4)))
 
-            err = re.findall(rerr, data)
-            for e in err:
-                if e[0] in run['ERROR']:
-                    run['ERROR'][e[0]].append(np.array([float(e[1]), float(e[2]), float(e[3])], dtype=np.float64))
-                else:
-                    run['ERROR'].update(
-                        {e[0]: [np.array([float(e[1]), float(e[2]), float(e[3])], dtype=np.float64)]})
+                err = re.findall(rerr, data)
+                for e in err:
+                    if e[0] in run['ERROR']:
+                        run['ERROR'][e[0]].append(np.array([float(e[1]), float(e[2]), float(e[3])], dtype=np.float64))
+                    else:
+                        run['ERROR'].update(
+                            {e[0]: [np.array([float(e[1]), float(e[2]), float(e[3])], dtype=np.float64)]})
 
-        for key in run['ERROR'].keys():
-            run['ERROR'][key] = np.vstack(run['ERROR'][key])
+            for key in run['ERROR'].keys():
+                run['ERROR'][key] = np.vstack(run['ERROR'][key])
 
-        allnets.append(run)
-    return allnets
+            if re.match(comp, optfile):
+                completed.append(True)
+            else:
+                completed.append(False)
+
+            allnets.append(run)
+        else:
+            completed.append(False)
+    return allnets, completed
 
 class anitrainerinputdesigner:
     def __init__(self):
