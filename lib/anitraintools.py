@@ -13,6 +13,7 @@ import os
 
 from multiprocessing import Process
 import shutil
+import copy
 
 def interval(v, S):
     ps = 0.0
@@ -536,7 +537,7 @@ class alaniensembletrainer():
         print('Training Ensemble...')
         processes = []
         indicies = np.array_split(np.arange(self.Nn), len(GPUList))
-        seeds = np.array_split(np.random.uniformint(low=0,high=2**32,size=self.Nn), len(GPUList))
+        seeds = np.array_split(np.random.randint(low=0,high=2**32,size=self.Nn), len(GPUList))
         for gpu, (idc,seedl) in enumerate(zip(indicies,seeds)):
             processes.append(Process(target=self.train_network, args=(GPUList[gpu], idc, seedl, remove_existing)))
             processes[-1].start()
@@ -547,7 +548,7 @@ class alaniensembletrainer():
         print('Training Complete.')
 
     def train_network(self, gpuid, indicies, seeds, remove_existing=False):
-        for index,seed in zip(indicies,seed):
+        for index,seed in zip(indicies,seeds):
             pyncdict = dict()
             pyncdict['wkdir'] = self.train_root + 'train' + str(index) + '/'
             pyncdict['ntwkStoreDir'] = self.train_root + 'train' + str(index) + '/' + 'networks/'
@@ -565,7 +566,7 @@ class alaniensembletrainer():
 
             outputfile = pyncdict['wkdir'] + 'output.opt'
 
-            ibuild = self.iptbuilder.copy()
+            ibuild = copy.deepcopy(self.iptbuilder)
             ibuild.set_parameter('seed',str(seed))
 
             nfile = pyncdict['wkdir']+'inputtrain.ipt'
