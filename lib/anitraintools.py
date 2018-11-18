@@ -92,7 +92,7 @@ class anitrainerinputdesigner:
             network += "    atom_net " + ak + " $\n"
 
             if int(self.params["dipole"]) != 0 or int(self.params["charge"]) != 0:
-                self.layers[ak].append({"nodes": 10, "activation": 6, "type": 0})
+                self.layers[ak].append({"nodes": 12, "activation": 6, "type": 0})
             else:
                 self.layers[ak].append({"nodes": 1, "activation": 6, "type": 0})
 
