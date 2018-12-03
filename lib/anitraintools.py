@@ -376,7 +376,7 @@ class alaniensembletrainer():
                                      forces=True, grad=False, Fkey='forces', forces_unit=1.0,
                                      dipole=False, dipole_unit=1.0, Dkey='dipoles',
                                      charge=False, charge_unit=1.0, Ckey='charges',
-                                     Eax0sum=False, rmhighe=True):
+                                     Eax0sum=False, rmhighe=True,rmhighf=False):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
 
@@ -414,7 +414,7 @@ class alaniensembletrainer():
                 adl = pyt.anidataloader(h5d + f)
                 for data in adl:
                     S = data['species']
-                    E = data['energies']
+                    E = data[Ekey]
                     X = data['coordinates']
 
                     Esae = hdt.compute_sae(self.netdict['saefile'], S)
@@ -475,6 +475,7 @@ class alaniensembletrainer():
 
                         hidx = np.union1d(np.where(ind_dE < -(15.0 * std + men))[0],
                                           np.where(ind_dE > (11.0 * std + men))[0])
+
                         lidx = np.intersect1d(np.where(ind_dE >= -(15.0 * std + men))[0],
                                               np.where(ind_dE <= (11.0 * std + men))[0])
 
@@ -487,6 +488,17 @@ class alaniensembletrainer():
                         F = F[lidx]
                         D = D[lidx]
                         C = C[lidx]
+
+                    if rmhighf:
+                        hfidx = np.where(np.abs(F) > rmhighf)
+                        if hfidx[0].size > 0:
+                            print('High force:',hfidx)
+                            hfidx = np.all(np.abs(F).reshape(E.size,-1) <= rmhighf,axis=1)
+                            X = X[hfidx]
+                            E = E[hfidx]
+                            F = F[hfidx]
+                            D = D[hfidx]
+                            C = C[hfidx]
 
                     # Build random split index
                     ridx = np.random.randint(0, Nblocks, size=E.size)
