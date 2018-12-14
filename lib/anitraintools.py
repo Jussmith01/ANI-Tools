@@ -142,6 +142,7 @@ class anitrainerinputdesigner:
 
             if int(self.params["dipole"]) != 0 or int(self.params["charge"]) != 0:
                 self.layers[ak].append({"nodes": 12, "activation": 6, "type": 0})
+                #self.layers[ak].append({"nodes": 2, "activation": 6, "type": 0})
             else:
                 self.layers[ak].append({"nodes": 1, "activation": 6, "type": 0})
 
@@ -376,6 +377,7 @@ class alaniensembletrainer():
                                      forces=True, grad=False, Fkey='forces', forces_unit=1.0,
                                      dipole=False, dipole_unit=1.0, Dkey='dipoles',
                                      charge=False, charge_unit=1.0, Ckey='charges',
+                                     pbc=False,
                                      Eax0sum=False, rmhighe=True,rmhighf=False):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
@@ -462,6 +464,13 @@ class alaniensembletrainer():
                     else:
                         D = 0.0 * D
 
+                    P = np.zeros((E.size,3,3),dtype=np.float32)
+                    if pbc:
+                        P = np.array(data['cell'], order='C', dtype=np.float32).reshape(E.size,3,3)
+                    else:
+                        P = 0.0 * P
+
+
                     C = np.zeros((E.size,X.shape[1]),dtype=np.float32)
                     if charge:
                         C = charge_unit * np.array(data[Ckey], order='C', dtype=np.float32).reshape(E.size,len(S))
@@ -488,6 +497,7 @@ class alaniensembletrainer():
                         F = F[lidx]
                         D = D[lidx]
                         C = C[lidx]
+                        P = P[lidx]
 
                     if rmhighf:
                         hfidx = np.where(np.abs(F) > rmhighf)
@@ -499,6 +509,7 @@ class alaniensembletrainer():
                             F = F[hfidx]
                             D = D[hfidx]
                             C = C[hfidx]
+                            P = P[hfidx]
 
                     # Build random split index
                     ridx = np.random.randint(0, Nblocks, size=E.size)
@@ -512,7 +523,8 @@ class alaniensembletrainer():
                             data_count[nid, 0] += set_idx.size
                             #print("Py tDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py tDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
 
                     for nid, cache in enumerate(cachev):
                         set_idx = np.concatenate(
@@ -521,7 +533,8 @@ class alaniensembletrainer():
                             data_count[nid, 1] += set_idx.size
                             #print("Py vDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py vDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
 
                     if build_test:
                         for nid, th5 in enumerate(testh5):
@@ -530,6 +543,7 @@ class alaniensembletrainer():
                             if set_idx.size != 0:
                                 data_count[nid, 2] += set_idx.size
                                 th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx],
+                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],
                                                energies=E[set_idx], species=list(S))
 
         # Save train and valid meta file and cleanup testh5
