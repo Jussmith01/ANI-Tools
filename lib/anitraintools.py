@@ -36,7 +36,7 @@ def get_train_stats(Nn,train_root):
     allnets = []
     completed = []
     for index in range(Nn):
-        print('reading:', train_root + 'train' + str(index) + '/' + 'output.opt')
+        #print('reading:', train_root + 'train' + str(index) + '/' + 'output.opt')
         if os.path.isfile(train_root + 'train' + str(index) + '/' + 'output.opt'):
             optfile = open(train_root + 'train' + str(index) + '/' + 'output.opt', 'r').read()
             matches = re.findall(rblk, optfile)
