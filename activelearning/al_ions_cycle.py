@@ -58,9 +58,58 @@ aevsize = 1008
 root = '/home/jsmith48/scratch/auto_ion_al'
 
 wkdir   = root+'/modelions/ANI-AL-smallions/'
-iptfile = root+'/modelions/inputtrain.ipt'
+#iptfile = root+'/modelions/inputtrain.ipt'
 saefile = root+'/modelions/sae_linfit.dat'
 cstfile = root+'/modelions/rHCNOSFCl-5.2R_16-3.8A_a4-8.params'
+
+ipt = alt.anitrainerinputdesigner()
+
+ipt.set_parameter('atomEnergyFile','sae_linfit.dat')
+ipt.set_parameter('sflparamsfile','rHCNOSFCl-5.2R_16-3.8A_a4-8.params')
+ipt.set_parameter('eta','0.001')
+ipt.set_parameter('energy','1')
+ipt.set_parameter('force','0')
+ipt.set_parameter('fmult','1.0')
+ipt.set_parameter('feps','0.001')
+ipt.set_parameter('dipole','0')
+ipt.set_parameter('charge','0')
+ipt.set_parameter('cdweight','2.0')
+ipt.set_parameter('tolr','100')
+ipt.set_parameter('tbtchsz','2560')
+ipt.set_parameter('vbtchsz','2560')
+ipt.set_parameter('nkde','2')
+
+
+# Set network layers
+ipt.add_layer('H',{"nodes":320,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('H',{"nodes":64 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('H',{"nodes":128,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('C',{"nodes":288,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('C',{"nodes":96 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('C',{"nodes":128,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('N',{"nodes":256,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('N',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('N',{"nodes":96 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('O',{"nodes":256,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('O',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('O',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('S',{"nodes":192,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('S',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('S',{"nodes":80 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('F',{"nodes":192,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('F',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('F',{"nodes":80 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('Cl',{"nodes":192,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('Cl',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('Cl',{"nodes":80 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.print_layer_parameters()
 
 #-----------0---------
 
@@ -144,7 +193,7 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
 #N = [20]
-N = [1]
+N = [2]
 
 for i in N:
     #netdir = wkdir+'ANI-1x-RXN-0000.00'+str(i).zfill(2)+'/'
@@ -156,9 +205,9 @@ for i in N:
 
     nnfprefix   = netdir + 'train'
 
-    netdict = {'iptfile' : iptfile,
-               'cnstfile' : cstfile,
+    netdict = {'cnstfile' : cstfile,
                'saefile': saefile,
+               'iptsize': 1008,
                'nnfprefix': netdir+'train',
                'aevsize': aevsize,
                'num_nets': Nnets,
@@ -166,8 +215,8 @@ for i in N:
                }
 
     ## Train the ensemble ##
-    aln = att.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
-    aln.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
+    aln = att.alaniensembletrainer(netdir, netdict, ipt, h5stor, Nnets)
+    aln.build_strided_training_cache(Nblock,Nbvald,Nbtest,Ekey='energy',forces=False,dipole=False,rmhighe=True)
     aln.train_ensemble(GPU)
 
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
