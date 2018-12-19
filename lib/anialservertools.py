@@ -145,7 +145,8 @@ class alQMserversubmission():
         sf.write(self.mae)
 
         sf.write('export OMP_STACKSIZE=64m\n')
-        sf.write('export OMP_NUM_THREADS='+ str(cores) +'\n')
+        #sf.write('export OMP_NUM_THREADS='+ str(cores) +'\n')
+        sf.write('export OMP_NUM_THREADS=1\n')
 
         #g09scr = self.ldtdir+self.datdir+'/working/' + f + '_scratch'
         #if not os.path.exists(g09scr):
@@ -153,7 +154,7 @@ class alQMserversubmission():
         #sf.write('mkdir /scratch/$USER/$SLURM_JOBID/')
         sf.write('export GAUSS_SCRDIR=/scratch/$USER/$SLURM_JOBID/\n\n')
 
-        sf.write('gcdata -i ' + self.swkdir+self.datdir+'/confs_iso/'+f+'.xyz' + ' -o ' + self.swkdir+self.datdir+'/data/' + f.split(".")[0] + '.dat -l ' + lot + ' -m ' + str(
+        sf.write('gcdata -i ' + self.swkdir+self.datdir+'/confs_iso/'+f+'.xyz' + ' -o ' + self.swkdir+self.datdir+'/data/' + f.split(".")[0] + '.dat -l ' + lot + ' -c ' + str(cores) + ' -m ' + str(
             Nmemr) + ' -s -p -f > ' + self.swkdir+self.datdir+'/output/' + f.split(".")[0] + '.opt')
 
         sf.close()
@@ -187,19 +188,21 @@ class alQMserversubmission():
             if id in ds:
                 sid = len(ds[id])
                 of.write(f + ' ' + convert_eformula(S) + ' ' + str(sid) + ' ' + str(X.shape[0]) + '\n')
-                ds[id].append((X, S))
+                ds[id].append((X, S, C))
             else:
                 of.write(f + ' ' + convert_eformula(S) + ' ' + str(0) + ' ' + str(X.shape[0]) + '\n')
-                ds.update({id: [(X, S)]})
+                ds.update({id: [(X, S, C)]})
         of.close()
 
         Nt = 0
         for i in ds.keys():
             X = []
             S = []
+            C = []
             for j in ds[i]:
                 X.append(j[0])
                 S.append(j[1])
+                C.extend(j[2])
 
             X = np.vstack(X)
             S = list(S[0])
@@ -207,17 +210,18 @@ class alQMserversubmission():
 
             Nt += N
 
-            if N < 96:
+            if N < 40:
                 #print(type(S), S)
                 fn = prefix + '_' + convert_eformula(S) + '-' + str(N).zfill(3) + '.xyz'
                 #print('Writing: ', fn)
-                hdt.writexyzfile(isoms_dir + '/' + fn, X, S)
+                hdt.writexyzfilewc(isoms_dir + '/' + fn, X, S, C)
             else:
-                Nsplit = int(math.ceil(N/float(96)))
+                Nsplit = int(math.ceil(N/float(40)))
                 X = np.array_split(X, Nsplit)
-                for l,x in enumerate(X):
+                C = np.array_split(np.array(C), Nsplit)
+                for l,(x,c) in enumerate(zip(X,C)):
                     fn = prefix + '_' + convert_eformula(S) + '_'  + str(l).zfill(2)  + '-' + str(x.shape[0]).zfill(3) + '.xyz'
-                    hdt.writexyzfile(isoms_dir + '/' + fn, x, S)
+                    hdt.writexyzfilewc(isoms_dir + '/' + fn, x, S, c)
                 
         #print('Total data:', Nt)
 
@@ -265,20 +269,20 @@ class alQMserversubmission():
             Na = np.sum(np.array(rgx.findall(As),dtype=np.int32))
 
             Nc = int(f.rsplit('-', 1)[1].split('.')[0])
-            if Nc > 64:
+            if Nc > 32:
                 Nproc = 8
-            elif Nc > 32:
-                Nproc = 4
-            elif Nc > 16:
-                Nproc = 2
+            elif Nc > 24:
+                Nproc = 8
+            elif Nc > 12:
+                Nproc = 6
             else:
-                Nproc = 1
+                Nproc = 4
 
-            if Na > 18:
-                Nproc = 2 * Nproc
+            #if Na > 18:
+            #    Nproc = 2 * Nproc
 
-            if Na <= 7 and Nproc > 1:
-                Nproc = int(Nproc/2)
+            #if Na <= 7 and Nproc > 1:
+            #    Nproc = int(Nproc/2)
 
             self.create_submission_script(f, Nproc, self.jtime)
 
