@@ -75,7 +75,7 @@ class alconformationalsampler():
         np.random.shuffle(md_work)
         md_work = md_work[0:int(perc*md_work.size)]
         md_work = np.array_split(md_work,len(gpus2))
-	
+
         proc = []
         for i,(md,g) in enumerate(zip(md_work,gpus2)):
             proc.append(Process(target=self.mol_dyn_sampling, args=(md,i,
@@ -246,6 +246,13 @@ class alconformationalsampler():
             #print(di, ') Working on', id, '...')
             S = data["species"]
 
+            if "charge" in data and "multip" in data:
+                chg = data["charge"]
+                mlt = data["multip"]
+            else:
+                chg = "0"
+                mlt = "1"
+
             # Set mols
             activ.setmol(data["coordinates"], S)
 
@@ -261,7 +268,7 @@ class alconformationalsampler():
             #print(nfo)
 
             if X.size > 0:
-                hdt.writexyzfile(self.cdir + 'mds_' + m.split('.')[0] + '_' + str(i).zfill(2) + str(di).zfill(4) + '.xyz', X, S)
+                hdt.writexyzfilewc(self.cdir + 'mds_' + m.split('.')[0] + '_' + str(i).zfill(2) + str(di).zfill(4) + '.xyz', X, S, ' '+chg+' '+mlt)
         difo.write('Complete mean fail time: ' + "{:.2f}".format(ftme_t / float(Nmol)) + '\n')
         print(Nmol)
         del activ
@@ -280,7 +287,7 @@ class alconformationalsampler():
         Nm = dparam['Nm']
         Ni = dparam['Ni']
         Ns = dparam['Ns']
-        
+
         mols = []
         difo = open(self.ldtdir + self.datdir + '/info_data_mddimer-'+str(tid)+'.nfo', 'w')
         for di,id in enumerate(dparam['mdselect']):
@@ -290,26 +297,26 @@ class alconformationalsampler():
             dnfo = str(di) + ' of ' + str(len(dparam['mdselect'])) + ') dir: ' + str(self.idir[id[1]]) + ' Selecting: '+str(id[0]*len(files))
             #print(dnfo)
             difo.write(dnfo+'\n')
-        
+
             for i in range(id[0]):
                 for n,m in enumerate(files):
                         data = hdt.read_rcdb_coordsandnm(self.idir[id[1]]+m)
                         if len(data['species']) < maxNa:
                             mols.append(data)
 
-        dgen = pmf.dimergenerator(self.netdict['cnstfile'], 
-                                  self.netdict['saefile'], 
-                                  self.netdict['nnfprefix'], 
-                                  self.netdict['num_nets'], 
+        dgen = pmf.dimergenerator(self.netdict['cnstfile'],
+                                  self.netdict['saefile'],
+                                  self.netdict['nnfprefix'],
+                                  self.netdict['num_nets'],
                                   mols, gpuid)
 
         difo.write('Beginning dimer generation...\n')
-        
+
         Nt = 0
         Nd = 0
         for i in range(Nr):
             dgen.init_dynamics(Nm, V, L, dt, T)
- 
+
             for j in range(Ns):
                 if j != 0:
                     dgen.run_dynamics(Ni)
@@ -322,7 +329,7 @@ class alconformationalsampler():
 
                 Nt += dgen.Nt
                 Nd += dgen.Nd
-        
+
                 #print('Step (',tid,',',i,') [', str(dgen.Nd), '/', str(dgen.Nt),'] generated ',len(dgen.frag_list), 'dimers...')
                 #difo.write('Step ('+str(i)+') ['+ str(dgen.Nd)+ '/'+ str(dgen.Nt)+'] generated '+str(len(dgen.frag_list))+'dimers...\n')
                 if max_sig > 3.0*sig:
@@ -376,7 +383,7 @@ class alconformationalsampler():
         np.random.shuffle(TS_infiles)
         TS_infiles = TS_infiles[0:int(perc*len(TS_infiles))]
         TS_infiles = np.array_split(TS_infiles,len(gpus2))
-	
+
         proc = []
         for i,g in enumerate(gpus2):
             proc.append(Process(target=self.TS_sampling, args=(i, TS_infiles[i], tsparams, g)))
@@ -481,7 +488,7 @@ class alconformationalsampler():
         print('Finished pDynamo sampling.')
 
 
-    def pDyn_QMsampling(self, pdynparams, gpuid):       
+    def pDyn_QMsampling(self, pdynparams, gpuid):
                                                                   #Call subproc_pDyn class in pyaniasetools as activ
         activ = aat.subproc_pDyn(self.netdict['cnstfile'],
                                          self.netdict['saefile'],
@@ -500,7 +507,7 @@ class alconformationalsampler():
         indir=pdynparams['indir']                               #path to save XYZ files of IRC points to check stddev
         XYZfile=pdynparams['XYZfile']                           #XYZ file with high standard deviations structures
         l_val=pdynparams['l_val']                               #Ri --> randomly perturb in the interval [+x,-x]
-        h_val=pdynparams['h_val']                               
+        h_val=pdynparams['h_val']
         n_points=pdynparams['n_points']                         #Number of points along IRC (forward+backward+1 for TS)
         sig=pdynparams['sig']
         N=pdynparams['N']
@@ -521,7 +528,7 @@ class alconformationalsampler():
             chk_TS = activ.subprocess_cmd(sbproc_cmdTS, False, logfile_TS)
             if chk_TS == 0:
                 chk_IRC = activ.subprocess_cmd(sbproc_cmdIRC, False, logfile_IRC)
-                
+
         # ----------------------- Save points along ANI IRC ------------------------
         IRCfils=os.listdir(IRCdir)
         IRCfils.sort()
@@ -530,16 +537,16 @@ class alconformationalsampler():
             activ.getIRCpoints_toXYZ(n_points, IRCdir+f, f, indir)
         infils=os.listdir(indir)
         infils.sort()
-        
+
         # ------ Check for high standard deviation structures and get vib modes -----
         for f in infils:
             stdev = activ.check_stddev(indir+f, sig)
             if stdev > sig:                      #if stddev is high then get modes for that point
                 nmc = activ.get_nm(indir+f)      #save modes in memory for later use
-            
+
             activ.write_nm_xyz(XYZfile)          #writes all the structures with high standard deviations to xyz file
 
-        # ----------------------------- Read XYZ for NM -----------------------------      
+        # ----------------------------- Read XYZ for NM -----------------------------
         X, spc, Na, C = hdt.readxyz3(XYZfile)
 
         # --------- NMS for XYZs with high stddev --------
@@ -553,7 +560,7 @@ class alconformationalsampler():
                     gen_crd[k] = gen.get_random_structure()
 
                 hdt.writexyzfile(self.cdir + 'nms_TS%i.xyz' %N, gen_crd, spc[i])
-                
+
         del activ
 
 
@@ -895,11 +902,11 @@ class alaniensembletrainer():
                     S = data['species']
                     E = data['energies']
                     X = data['coordinates']
-    
+
                     Esae = hdt.compute_sae(self.netdict['saefile'], S)
-    
+
                     dE.append((E-Esae)/np.sqrt(len(S)))
-    
+
             dE = np.concatenate(dE)
             cidx = np.where(np.abs(dE) < 15.0)
             std = np.abs(dE[cidx]).std()
