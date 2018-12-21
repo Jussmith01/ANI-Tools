@@ -36,7 +36,7 @@ def get_train_stats(Nn,train_root):
     allnets = []
     completed = []
     for index in range(Nn):
-        print('reading:', train_root + 'train' + str(index) + '/' + 'output.opt')
+        #print('reading:', train_root + 'train' + str(index) + '/' + 'output.opt')
         if os.path.isfile(train_root + 'train' + str(index) + '/' + 'output.opt'):
             optfile = open(train_root + 'train' + str(index) + '/' + 'output.opt', 'r').read()
             matches = re.findall(rblk, optfile)
@@ -378,7 +378,7 @@ class alaniensembletrainer():
                                      dipole=False, dipole_unit=1.0, Dkey='dipoles',
                                      charge=False, charge_unit=1.0, Ckey='charges',
                                      pbc=False,
-                                     Eax0sum=False, rmhighe=True,rmhighf=False):
+                                     Eax0sum=False, rmhighe=True,rmhighf=False,force_exact_split=False):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
 
@@ -469,7 +469,6 @@ class alaniensembletrainer():
                         P = np.array(data['cell'], order='C', dtype=np.float32).reshape(E.size,3,3)
                     else:
                         P = 0.0 * P
-
 
                     C = np.zeros((E.size,X.shape[1]),dtype=np.float32)
                     if charge:

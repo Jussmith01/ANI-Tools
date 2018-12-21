@@ -245,8 +245,8 @@ xs = 1.5
 #Atyp = '[H,C,N,O,S,F,Cl]'
 Atyp = '[Sn]'
 EtaR = np.array([32.0]) # Radial eta parameters
-EtaA = np.array([2.0]) # Angular/Radial eta parameters
-Zeta = np.array([16.0]) # Angular zeta parameters
+EtaA = np.array([4.0]) # Angular/Radial eta parameters
+Zeta = np.array([32.0]) # Angular zeta parameters
 # ****************************************************
 cmap = mpl.cm.brg
 
