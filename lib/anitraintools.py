@@ -176,7 +176,8 @@ class alaniensembletrainer():
         self.netdict = netdict
         self.iptbuilder = input_builder
 
-        self.h5file = [f for f in os.listdir(self.h5dir) if f.rsplit('.', 1)[1] == 'h5']
+        if h5dir is not None:
+            self.h5file = [f for f in os.listdir(self.h5dir) if f.rsplit('.', 1)[1] == 'h5']
         # print(self.h5dir,self.h5file)
 
     def build_training_cache(self, forces=True):
@@ -378,7 +379,7 @@ class alaniensembletrainer():
                                      dipole=False, dipole_unit=1.0, Dkey='dipoles',
                                      charge=False, charge_unit=1.0, Ckey='charges',
                                      pbc=False,
-                                     Eax0sum=False, rmhighe=True,rmhighf=False):
+                                     Eax0sum=False, rmhighe=True,rmhighf=False,force_exact_split=False):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
 
@@ -469,7 +470,6 @@ class alaniensembletrainer():
                         P = np.array(data['cell'], order='C', dtype=np.float32).reshape(E.size,3,3)
                     else:
                         P = 0.0 * P
-
 
                     C = np.zeros((E.size,X.shape[1]),dtype=np.float32)
                     if charge:
@@ -572,6 +572,15 @@ class alaniensembletrainer():
             p.join()
         print('Training Complete.')
 
+    def train_ensemble_single(self, gpuid, ntwkids, remove_existing=False, random_seed = 0):
+        print('Training Single Model From Ensemble...')
+
+        np.random.seed(random_seed)
+        random_seeds = np.random.randint(0,2**32,size=len(ntwkids))
+        self.train_network(gpuid, ntwkids, random_seeds, remove_existing)
+
+        print('Training Complete.')
+
     def train_network(self, gpuid, indicies, seeds, remove_existing=False):
         for index,seed in zip(indicies,seeds):
             pyncdict = dict()
@@ -608,4 +617,9 @@ class alaniensembletrainer():
             proc = subprocess.Popen(command, shell=True)
             proc.communicate()
 
+            if 'Termination Criterion Met!' not in open(pyncdict['wkdir']+'output.opt','r').read():
+                with open(pyncdict['wkdir']+"output.opt",'a+') as output:
+                    output.write("\n!!!TRAINING FAILED TO COMPLETE!!!\n")
+
             print('  -Model', index, 'complete')
+
