@@ -237,12 +237,22 @@ class anitrainerparamsdesigner():
             f.write(s)
         f.write(']\n')
 
+    def get_aev_size(self):
+        Na = len(self.params['elm'])
+        Nar = self.params['Nar']
+        Nzt = self.params['Nzt']
+        Nrr = self.params['Nrr']
+
+        Nat = Nar * (Na * (Na + 1) / 2) * Nzt
+        Nrt = Nrr * Na
+        return int(Nat + Nrt)
+
     # ------------------------------------------
     #             Create params file
     # ------------------------------------------
     def create_params_file(self, path):
-        ShfR,EtaR = self.get_Aradial_parameters()
-        ShfA,EtaA = self.get_Rradial_parameters()
+        ShfR,EtaR = self.get_Rradial_parameters()
+        ShfA,EtaA = self.get_Aradial_parameters()
         ShfZ,Zeta = self.get_angular_parameters()
 
         Rcr = self.params['Rcr']
