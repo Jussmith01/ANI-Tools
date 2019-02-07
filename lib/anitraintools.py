@@ -78,14 +78,15 @@ def get_train_stats(Nn,train_root):
     return allnets, completed
 
 class anitrainerparamsdesigner():
-    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst):
+    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst, charge=False):
         self.params = {"elm":elements,
                        "Nrr":Nrr,
                        "Nar":Nar,
                        "Nzt":Nzt,
                        "Rcr":Rcr,
                        "Rca":Rca,
-                       "Xst":Xst,}
+                       "Xst":Xst,
+                       "Crg":Charge}
 
     # ------------------------------------------
     #           Radial Function Cos
@@ -260,6 +261,7 @@ class anitrainerparamsdesigner():
 
         f = open(path+"/"+self.get_filename(),"w")
         f.write('TM = ' + str(1) + '\n')
+        f.write('CG = ' + str(self.params['Crg']) + '\n')
         f.write('Rcr = ' + "{:.4e}".format(Rcr) + '\n')
         f.write('Rca = ' + "{:.4e}".format(Rca) + '\n')
         self.printdatatofile(f, 'EtaR', [EtaR], 1)
