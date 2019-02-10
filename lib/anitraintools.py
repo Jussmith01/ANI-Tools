@@ -78,7 +78,7 @@ def get_train_stats(Nn,train_root):
     return allnets, completed
 
 class anitrainerparamsdesigner():
-    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst, charge=False):
+    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst, Charge=False):
         self.params = {"elm":elements,
                        "Nrr":Nrr,
                        "Nar":Nar,
