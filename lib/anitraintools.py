@@ -5,11 +5,16 @@ from pyNeuroChem import cachegenerator as cg
 
 import numpy as np
 
+from scipy.integrate import quad
+
 from time import sleep
 import subprocess
 import random
 import re
 import os
+
+import matplotlib as mpl
+from matplotlib import pyplot as plt
 
 from multiprocessing import Process
 import shutil
@@ -36,7 +41,7 @@ def get_train_stats(Nn,train_root):
     allnets = []
     completed = []
     for index in range(Nn):
-        print('reading:', train_root + 'train' + str(index) + '/' + 'output.opt')
+        #print('reading:', train_root + 'train' + str(index) + '/' + 'output.opt')
         if os.path.isfile(train_root + 'train' + str(index) + '/' + 'output.opt'):
             optfile = open(train_root + 'train' + str(index) + '/' + 'output.opt', 'r').read()
             matches = re.findall(rblk, optfile)
@@ -71,6 +76,204 @@ def get_train_stats(Nn,train_root):
         else:
             completed.append(False)
     return allnets, completed
+
+class anitrainerparamsdesigner():
+    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst, Charge=False, Repuls=False):
+        self.params = {"elm":elements,
+                       "Nrr":Nrr,
+                       "Nar":Nar,
+                       "Nzt":Nzt,
+                       "Rcr":Rcr,
+                       "Rca":Rca,
+                       "Xst":Xst,
+                       "Crg":Charge,
+                       "Rps":Repuls}
+
+    # ------------------------------------------
+    #           Radial Function Cos
+    # ------------------------------------------
+    def cutoffcos(self, X, Rc):
+        Xt = X
+        for i in range(0, Xt.shape[0]):
+            if Xt[i] > Rc:
+                Xt[i] = Rc
+
+        return 0.5 * (np.cos((np.pi * Xt) / Rc) + 1.0)
+
+    # ------------------------------------------
+    #           Radial Function Cos
+    # ------------------------------------------
+    def radialfunction(self, X, eta, Rs):
+        return np.exp(-eta * (X - Rs) ** 2.0)
+
+    # ------------------------------------------
+    #          Radial Build Functions
+    # ------------------------------------------
+    def radialfunctioncos(self, X, eta, Rc, Rs):
+        return self.radialfunction(X, eta, Rs) * self.cutoffcos(X, Rc)
+
+    def compute_overlap(self, eta, Rs1, Rs2):
+        func1 = lambda x: self.radialfunction(x, eta, Rs1)
+        func2 = lambda x: self.radialfunction(x, eta, Rs2)
+        funcC = lambda x: min(func1(x),func2(x))
+
+        i_f1 = quad(func1, -10, 20)[0]
+        i_fC = quad(funcC, -10, 20)
+
+        return i_fC[0]/i_f1
+
+    def determine_eta(self, req_olap, Rs1, Rs2, dx = 0.1):
+        eta = 0.1
+        olap = 1.0
+        while olap > req_olap:
+            eta = eta + 0.1
+            olap = self.compute_overlap(eta, Rs1, Rs2)
+        return eta
+
+    def obtain_radial_parameters(self, Nrr, Xst, Rcr):
+        ShfR = np.zeros(Nrr)
+        for i in range(0, Nrr):
+            stepsize = (Rcr - Xst) / float(Nrr)
+            step = i * stepsize + Xst
+            ShfR[i] = step
+        eta = self.determine_eta(0.4, ShfR[0], ShfR[1])
+        return ShfR, eta
+
+    def get_Rradial_parameters(self):
+        Nrr = self.params['Nrr']
+        Xst = self.params['Xst']
+        Rcr = self.params['Rcr']
+        return self.obtain_radial_parameters(Nrr, Xst, Rcr)
+
+    def get_Aradial_parameters(self):
+        Nar = self.params['Nar']
+        Xst = self.params['Xst']
+        Rca = self.params['Rca']
+        return self.obtain_radial_parameters(Nar, Xst, Rca)
+
+    def plot_radial_funcs(self, Shf, Eta, Rc):
+        for sr in Shf:
+            X = np.linspace(0, Rc, 1000, endpoint=True)
+            Y = self.radialfunctioncos(X, Eta, Rc, sr)
+            plt.plot(X, Y, color='red', linewidth=2)
+        plt.show()
+
+    def plot_Rradial_funcs(self):
+        ShfR, EtaR = self.obtain_Rradial_parameters()
+        self.plot_radial_funcs(ShfR, EtaR, self.params['Rcr'])
+
+    def plot_Aradial_funcs(self):
+        ShfA, EtaA = self.obtain_Aradial_parameters()
+        self.plot_radial_funcs(ShfA, EtaA, self.params['Rca'])
+
+    # ------------------------------------------
+    #          Angular Build Functions
+    # ------------------------------------------
+    def angularfunction(self, T, zeta, lam, Ts):
+        F = 0.5 * (2.0 ** (1.0 - zeta)) * ((1.0 + lam * np.cos(T - Ts)) ** zeta)
+        return F
+
+    def compute_overlap_angular(self, zeta, Zs1, Zs2):
+        func1 = lambda x: self.angularfunction(x, zeta, 1, Zs1)
+        func2 = lambda x: self.angularfunction(x, zeta, 1, Zs2)
+        funcC = lambda x: min(func1(x),func2(x))
+
+        i_f1 = quad(func1, -6, 6)[0]
+        i_fC = quad(funcC, -6, 6)
+
+        return i_fC[0]/i_f1
+
+    def determine_zeta(self, req_olap, Zs1, Zs2, dx = 0.1):
+        zeta = 4.0
+        olap = 1.0
+        while olap > req_olap:
+            zeta = zeta + dx
+            olap = self.compute_overlap_angular(zeta, Zs1, Zs2)
+        return zeta
+
+    def obtain_angular_parameters(self, Nzt):
+        ShfZ = np.zeros(Nzt)
+        for i in range(0, Nzt):
+            stepsize = np.pi / float(Nzt)
+            step = i * stepsize + stepsize/2.0
+            ShfZ[i] = step
+        zeta = self.determine_zeta(0.35, ShfZ[0], ShfZ[1])
+        return ShfZ, zeta
+
+    def get_angular_parameters(self):
+        Nzt = self.params['Nzt']
+        return self.obtain_angular_parameters(Nzt)
+
+    def build_angular_plots(self, ShfZ, Zeta):
+        for sz in ShfZ:
+            X = np.linspace(0, np.pi, 1000, endpoint=True)
+            Y = self.angularfunction(X, Zeta, 1, sz)
+            plt.plot(X, Y, color='red', linewidth=2)
+        plt.show()
+
+    def plot_angular_funcs(self):
+        ShfZ, Zeta = self.get_angular_parameters()
+        self.build_angular_plots(ShfZ, Zeta)
+
+
+    # ------------------------------------------
+    #             Get a file name
+    # ------------------------------------------
+    def get_filename(self):
+        return "r"+"".join(self.params["elm"])+"-" + "{0:.1f}".format(self.params["Rcr"]) + "R_" \
+                                                   + str(self.params["Nrr"]) + "-"\
+                                                   + "{0:.1f}".format(self.params["Rca"]) + "A_a" \
+                                                   + str(self.params["Nar"]) + "-" \
+                                                   + str(self.params["Nzt"]) + ".params"
+
+    # ------------------------------------------
+    #            Print data to file
+    # ------------------------------------------
+    def printdatatofile(self, f, title, X, N):
+        f.write(title + ' = [')
+        for i in range(0, N):
+            if i < N - 1:
+                s = "{:.7e}".format(X[i]) + ','
+            else:
+                s = "{:.7e}".format(X[i])
+            f.write(s)
+        f.write(']\n')
+
+    def get_aev_size(self):
+        Na = len(self.params['elm'])
+        Nar = self.params['Nar']
+        Nzt = self.params['Nzt']
+        Nrr = self.params['Nrr']
+
+        Nat = Nar * (Na * (Na + 1) / 2) * Nzt
+        Nrt = Nrr * Na
+        return int(Nat + Nrt)
+
+    # ------------------------------------------
+    #             Create params file
+    # ------------------------------------------
+    def create_params_file(self, path):
+        ShfR,EtaR = self.get_Rradial_parameters()
+        ShfA,EtaA = self.get_Aradial_parameters()
+        ShfZ,Zeta = self.get_angular_parameters()
+
+        Rcr = self.params['Rcr']
+        Rca = self.params['Rca']
+
+        f = open(path+"/"+self.get_filename(),"w")
+        f.write('TM = ' + str(1) + '\n')
+        f.write('CG = ' + str(self.params['Crg']) + '\n')
+        f.write('RP = ' + str(self.params['Rps']) + '\n')
+        f.write('Rcr = ' + "{:.4e}".format(Rcr) + '\n')
+        f.write('Rca = ' + "{:.4e}".format(Rca) + '\n')
+        self.printdatatofile(f, 'EtaR', [EtaR], 1)
+        self.printdatatofile(f, 'ShfR', ShfR, ShfR.size)
+        self.printdatatofile(f, 'Zeta', [Zeta], 1)
+        self.printdatatofile(f, 'ShfZ', ShfZ, ShfZ.size)
+        self.printdatatofile(f, 'EtaA', [EtaA], 1)
+        self.printdatatofile(f, 'ShfA', ShfA, ShfA.size)
+        f.write('Atyp = [' + ",".join(self.params['elm']) + ']\n')
+        f.close()
 
 class anitrainerinputdesigner:
     def __init__(self):
@@ -176,7 +379,8 @@ class alaniensembletrainer():
         self.netdict = netdict
         self.iptbuilder = input_builder
 
-        self.h5file = [f for f in os.listdir(self.h5dir) if f.rsplit('.', 1)[1] == 'h5']
+        if h5dir is not None:
+            self.h5file = [f for f in os.listdir(self.h5dir) if f.rsplit('.', 1)[1] == 'h5']
         # print(self.h5dir,self.h5file)
 
     def build_training_cache(self, forces=True):
@@ -378,7 +582,7 @@ class alaniensembletrainer():
                                      dipole=False, dipole_unit=1.0, Dkey='dipoles',
                                      charge=False, charge_unit=1.0, Ckey='charges',
                                      pbc=False,
-                                     Eax0sum=False, rmhighe=True,rmhighf=False):
+                                     Eax0sum=False, rmhighe=True,rmhighf=False,force_exact_split=False):
         if not os.path.isfile(self.netdict['saefile']):
             self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
 
@@ -470,7 +674,6 @@ class alaniensembletrainer():
                     else:
                         P = 0.0 * P
 
-
                     C = np.zeros((E.size,X.shape[1]),dtype=np.float32)
                     if charge:
                         C = charge_unit * np.array(data[Ckey], order='C', dtype=np.float32).reshape(E.size,len(S))
@@ -542,8 +745,9 @@ class alaniensembletrainer():
                                 [Didx[(Ntrain + Nvalid + bid + nid * int(Nstride)) % Nblocks] for bid in range(Ntest)])
                             if set_idx.size != 0:
                                 data_count[nid, 2] += set_idx.size
-                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx],energies=E[set_idx], species=list(S))
                                 #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx], species=list(S))
+                                #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx],
+                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx], species=list(S))
 
         # Save train and valid meta file and cleanup testh5
         for t, v in zip(cachet, cachev):
@@ -570,6 +774,15 @@ class alaniensembletrainer():
 
         for p in processes:
             p.join()
+        print('Training Complete.')
+
+    def train_ensemble_single(self, gpuid, ntwkids, remove_existing=False, random_seed = 0):
+        print('Training Single Model From Ensemble...')
+
+        np.random.seed(random_seed)
+        random_seeds = np.random.randint(0,2**32,size=len(ntwkids))
+        self.train_network(gpuid, ntwkids, random_seeds, remove_existing)
+
         print('Training Complete.')
 
     def train_network(self, gpuid, indicies, seeds, remove_existing=False):
@@ -608,4 +821,9 @@ class alaniensembletrainer():
             proc = subprocess.Popen(command, shell=True)
             proc.communicate()
 
+            if 'Termination Criterion Met!' not in open(pyncdict['wkdir']+'output.opt','r').read():
+                with open(pyncdict['wkdir']+"output.opt",'a+') as output:
+                    output.write("\n!!!TRAINING FAILED TO COMPLETE!!!\n")
+
             print('  -Model', index, 'complete')
+
