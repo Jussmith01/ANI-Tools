@@ -141,8 +141,8 @@ class anitrainerinputdesigner:
             network += "    atom_net " + ak + " $\n"
 
             if int(self.params["dipole"]) != 0 or int(self.params["charge"]) != 0:
-                self.layers[ak].append({"nodes": 12, "activation": 6, "type": 0})
-                #self.layers[ak].append({"nodes": 2, "activation": 6, "type": 0})
+                #self.layers[ak].append({"nodes": 12, "activation": 6, "type": 0})
+                self.layers[ak].append({"nodes": 2, "activation": 6, "type": 0})
             else:
                 self.layers[ak].append({"nodes": 1, "activation": 6, "type": 0})
 
@@ -523,8 +523,8 @@ class alaniensembletrainer():
                             data_count[nid, 0] += set_idx.size
                             #print("Py tDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py tDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
 
                     for nid, cache in enumerate(cachev):
                         set_idx = np.concatenate(
@@ -533,8 +533,8 @@ class alaniensembletrainer():
                             data_count[nid, 1] += set_idx.size
                             #print("Py vDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py vDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
 
                     if build_test:
                         for nid, th5 in enumerate(testh5):
@@ -542,9 +542,8 @@ class alaniensembletrainer():
                                 [Didx[(Ntrain + Nvalid + bid + nid * int(Nstride)) % Nblocks] for bid in range(Ntest)])
                             if set_idx.size != 0:
                                 data_count[nid, 2] += set_idx.size
-                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx],
-                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],
-                                               energies=E[set_idx], species=list(S))
+                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx],energies=E[set_idx], species=list(S))
+                                #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx], species=list(S))
 
         # Save train and valid meta file and cleanup testh5
         for t, v in zip(cachet, cachev):
