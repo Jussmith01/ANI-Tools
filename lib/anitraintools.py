@@ -262,8 +262,8 @@ class anitrainerparamsdesigner():
 
         f = open(path+"/"+self.get_filename(),"w")
         f.write('TM = ' + str(1) + '\n')
-        f.write('CG = ' + str(self.params['Crg']) + '\n')
-        f.write('RP = ' + str(self.params['Rps']) + '\n')
+        f.write('CG = ' + str(1 if self.params['Crg'] else 0) + '\n')
+        f.write('RP = ' + str(1 if self.params['Rps'] else 0) + '\n')
         f.write('Rcr = ' + "{:.4e}".format(Rcr) + '\n')
         f.write('Rca = ' + "{:.4e}".format(Rca) + '\n')
         self.printdatatofile(f, 'EtaR', [EtaR], 1)
