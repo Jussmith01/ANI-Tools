@@ -726,8 +726,8 @@ class alaniensembletrainer():
                             data_count[nid, 0] += set_idx.size
                             #print("Py tDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py tDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
-                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
 
                     for nid, cache in enumerate(cachev):
                         set_idx = np.concatenate(
@@ -736,8 +736,8 @@ class alaniensembletrainer():
                             data_count[nid, 1] += set_idx.size
                             #print("Py vDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py vDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
-                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
 
                     if build_test:
                         for nid, th5 in enumerate(testh5):
