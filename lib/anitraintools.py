@@ -78,7 +78,7 @@ def get_train_stats(Nn,train_root):
     return allnets, completed
 
 class anitrainerparamsdesigner():
-    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst, Dipole=False, ACA=False):
+    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst, Charge=False, Repuls=False, ACA= False):
         self.params = {"elm":elements,
                        "Nrr":Nrr,
                        "Nar":Nar,
@@ -86,8 +86,9 @@ class anitrainerparamsdesigner():
                        "Rcr":Rcr,
                        "Rca":Rca,
                        "Xst":Xst,
-                       "Dipole":Dipole,
-                       "ACA":ACA}
+                       "ACA":ACA,
+                       "Crg":Charge,
+                       "Rps":Repuls}
 
     # ------------------------------------------
     #           Radial Function Cos
@@ -262,8 +263,9 @@ class anitrainerparamsdesigner():
 
         f = open(path+"/"+self.get_filename(),"w")
         f.write('TM = ' + str(1) + '\n')
-        f.write('CG = ' + str(self.params['Dipole']) + '\n')
-        f.write('AC = ' + str(self.params['ACA']) + '\n')
+        f.write('CG = ' + str(1 if self.params['Crg'] else 0) + '\n')
+        f.write('RP = ' + str(1 if self.params['Rps'] else 0) + '\n')
+        f.write('AC = ' + str(1 if self.params['ACA'] else 0) + '\n')
         f.write('Rcr = ' + "{:.4e}".format(Rcr) + '\n')
         f.write('Rca = ' + "{:.4e}".format(Rca) + '\n')
         self.printdatatofile(f, 'EtaR', [EtaR], 1)
@@ -748,6 +750,7 @@ class alaniensembletrainer():
                                 [Didx[(Ntrain + Nvalid + bid + nid * int(Nstride)) % Nblocks] for bid in range(Ntest)])
                             if set_idx.size != 0:
                                 data_count[nid, 2] += set_idx.size
+                                #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx], species=list(S))
                                 #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx],
                                 th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx], species=list(S))
 

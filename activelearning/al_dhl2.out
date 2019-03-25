@@ -1,0 +1,1256 @@
+van Der Waals correction will be unavailable. Please install ased3
+ Train   Valid   Test 
+[[3164419 1264687       0]
+ [3163873 1266639       0]
+ [3162153 1267408       0]
+ [3164205 1266953       0]
+ [3164885 1266307       0]
+ [3166047 1264676       0]
+ [3165947 1265111       0]
+ [3166036 1265245       0]]
+Training set built.
+Training Ensemble...
+  -Model 4 complete
+  -Model 5 complete
+  -Model 2 complete
+  -Model 3 complete
+  -Model 0 complete
+  -Model 1 complete
+  -Model 6 complete
+  -Model 7 complete
+Training Complete.
+Connecting...
+Preparing iso confs...
+Compressing confs...
+(None, None)
+Building scripts...
+Loading to server...
+Wait
+(None, None)
+Generating Data...
+Submitted batch job 15809090
+Submitted batch job 15809091
+Submitted batch job 15809092
+Submitted batch job 15809093
+Submitted batch job 15809094
+Submitted batch job 15809095
+Submitted batch job 15809096
+Submitted batch job 15809097
+Submitted batch job 15809099
+Submitted batch job 15809100
+Submitted batch job 15809101
+Submitted batch job 15809102
+Submitted batch job 15809103
+Submitted batch job 15809104
+Submitted batch job 15809105
+Submitted batch job 15809106
+Submitted batch job 15809107
+Submitted batch job 15809108
+Submitted batch job 15809109
+Submitted batch job 15809110
+Submitted batch job 15809111
+Submitted batch job 15809112
+Submitted batch job 15809113
+Submitted batch job 15809114
+Submitted batch job 15809115
+Submitted batch job 15809116
+Submitted batch job 15809117
+Submitted batch job 15809118
+Submitted batch job 15809119
+Submitted batch job 15809120
+Submitted batch job 15809121
+Submitted batch job 15809122
+Submitted batch job 15809123
+Submitted batch job 15809124
+Submitted batch job 15809125
+Submitted batch job 15809126
+Submitted batch job 15809127
+Submitted batch job 15809128
+Submitted batch job 15809129
+Submitted batch job 15809130
+
+Running (0 : 40 : 55 : 95)...
+Running (40 : 0 : 55 : 95)...
+Submitted batch job 15809162
+Submitted batch job 15809163
+Submitted batch job 15809164
+Submitted batch job 15809165
+Submitted batch job 15809166
+
+
+Running (35 : 5 : 50 : 95)...
+Running (40 : 0 : 50 : 95)...
+Submitted batch job 15809205
+Submitted batch job 15809206
+
+
+Running (38 : 2 : 48 : 95)...
+Submitted batch job 15809236
+Submitted batch job 15809237
+Submitted batch job 15809238
+Submitted batch job 15809239
+Submitted batch job 15809241
+
+
+Running (35 : 5 : 43 : 95)...
+Submitted batch job 15809264
+Submitted batch job 15809265
+Submitted batch job 15809266
+Submitted batch job 15809267
+Submitted batch job 15809269
+Submitted batch job 15809270
+Submitted batch job 15809271
+Submitted batch job 15809272
+Submitted batch job 15809273
+Submitted batch job 15809274
+Submitted batch job 15809275
+Submitted batch job 15809276
+Submitted batch job 15809277
+Submitted batch job 15809278
+Submitted batch job 15809279
+
+
+Running (25 : 15 : 28 : 95)...
+Submitted batch job 15809305
+Submitted batch job 15809306
+Submitted batch job 15809307
+Submitted batch job 15809308
+Submitted batch job 15809309
+Submitted batch job 15809310
+Submitted batch job 15809311
+Submitted batch job 15809312
+
+
+Running (32 : 8 : 20 : 95)...
+Submitted batch job 15809340
+Submitted batch job 15809341
+Submitted batch job 15809342
+Submitted batch job 15809343
+Submitted batch job 15809344
+Submitted batch job 15809345
+Submitted batch job 15809346
+Submitted batch job 15809347
+
+
+Running (32 : 8 : 12 : 95)...
+Submitted batch job 15809376
+Submitted batch job 15809377
+Submitted batch job 15809378
+Submitted batch job 15809379
+Submitted batch job 15809380
+Submitted batch job 15809382
+
+
+Running (34 : 6 : 6 : 95)...
+Submitted batch job 15809399
+Submitted batch job 15809400
+Submitted batch job 15809401
+Submitted batch job 15809402
+Submitted batch job 15809403
+
+
+Running (35 : 5 : 1 : 95)...
+Submitted batch job 15809428
+
+
+Running (32 : 1 : 0 : 95)...
+Running (27 : 0 : 0 : 95)...
+Running (24 : 0 : 0 : 95)...
+Running (17 : 0 : 0 : 95)...
+Running (6 : 0 : 0 : 95)...
+Running (4 : 0 : 0 : 95)...
+Running (1 : 0 : 0 : 95)...
+Running (1 : 0 : 0 : 95)...
+Running (0 : 0 : 0 : 95)...
+Cleaing up server...
+Loading from server...
+Execute transfer from server...
+(None, None)
+Packing data...
+--Cycle Complete--
+ Train   Valid   Test 
+[[3168840 1267625       0]
+ [3169133 1267638       0]
+ [3168643 1266994       0]
+ [3169515 1267822       0]
+ [3168516 1267256       0]
+ [3169097 1267121       0]
+ [3168238 1268240       0]
+ [3168593 1267534       0]]
+Training set built.
+Training Ensemble...
+  -Model 6 complete
+  -Model 7 complete
+  -Model 0 complete
+  -Model 1 complete
+  -Model 2 complete
+  -Model 3 complete
+  -Model 4 complete
+  -Model 5 complete
+Training Complete.
+Connecting...
+Preparing iso confs...
+Compressing confs...
+(None, None)
+Building scripts...
+Loading to server...
+Wait
+(None, None)
+Generating Data...
+Submitted batch job 15811952
+Submitted batch job 15811953
+Submitted batch job 15811954
+Submitted batch job 15811955
+Submitted batch job 15811956
+Submitted batch job 15811957
+Submitted batch job 15811958
+Submitted batch job 15811959
+Submitted batch job 15811960
+Submitted batch job 15811961
+Submitted batch job 15811962
+Submitted batch job 15811963
+Submitted batch job 15811964
+Submitted batch job 15811965
+Submitted batch job 15811966
+Submitted batch job 15811967
+Submitted batch job 15811968
+Submitted batch job 15811969
+Submitted batch job 15811970
+Submitted batch job 15811971
+Submitted batch job 15811972
+Submitted batch job 15811973
+Submitted batch job 15811974
+Submitted batch job 15811975
+Submitted batch job 15811976
+Submitted batch job 15811977
+Submitted batch job 15811978
+Submitted batch job 15811979
+Submitted batch job 15811980
+Submitted batch job 15811981
+Submitted batch job 15811982
+Submitted batch job 15811983
+Submitted batch job 15811984
+Submitted batch job 15811985
+Submitted batch job 15811986
+Submitted batch job 15811987
+Submitted batch job 15811988
+Submitted batch job 15811989
+Submitted batch job 15811990
+Submitted batch job 15811991
+
+Running (0 : 40 : 57 : 97)...
+Running (40 : 0 : 57 : 97)...
+Running (40 : 0 : 57 : 97)...
+Running (40 : 0 : 57 : 97)...
+Running (40 : 0 : 57 : 97)...
+Submitted batch job 15812051
+Submitted batch job 15812052
+Submitted batch job 15812053
+
+
+Running (37 : 3 : 54 : 97)...
+Submitted batch job 15812071
+Submitted batch job 15812073
+Submitted batch job 15812074
+Submitted batch job 15812075
+Submitted batch job 15812076
+Submitted batch job 15812077
+Submitted batch job 15812078
+Submitted batch job 15812079
+
+
+Running (32 : 8 : 46 : 97)...
+Submitted batch job 15812097
+Submitted batch job 15812098
+Submitted batch job 15812099
+Submitted batch job 15812100
+Submitted batch job 15812101
+Submitted batch job 15812102
+Submitted batch job 15812103
+Submitted batch job 15812104
+Submitted batch job 15812105
+Submitted batch job 15812106
+Submitted batch job 15812107
+
+
+Running (29 : 11 : 35 : 97)...
+Submitted batch job 15812120
+Submitted batch job 15812121
+Submitted batch job 15812122
+Submitted batch job 15812123
+Submitted batch job 15812124
+Submitted batch job 15812125
+Submitted batch job 15812126
+Submitted batch job 15812127
+Submitted batch job 15812128
+
+
+Running (31 : 9 : 26 : 97)...
+Submitted batch job 15812149
+Submitted batch job 15812150
+Submitted batch job 15812151
+Submitted batch job 15812152
+Submitted batch job 15812153
+
+
+Running (35 : 5 : 21 : 97)...
+Submitted batch job 15812164
+Submitted batch job 15812165
+Submitted batch job 15812166
+Submitted batch job 15812167
+
+
+Running (36 : 4 : 17 : 97)...
+Submitted batch job 15812179
+Submitted batch job 15812180
+Submitted batch job 15812181
+Submitted batch job 15812182
+Submitted batch job 15812183
+Submitted batch job 15812184
+Submitted batch job 15812185
+
+
+Running (33 : 7 : 10 : 97)...
+Submitted batch job 15812209
+Submitted batch job 15812210
+Submitted batch job 15812211
+Submitted batch job 15812212
+Submitted batch job 15812213
+Submitted batch job 15812214
+Submitted batch job 15812215
+Submitted batch job 15812216
+Submitted batch job 15812217
+
+
+Running (31 : 9 : 1 : 97)...
+Submitted batch job 15812245
+
+
+Running (36 : 1 : 0 : 97)...
+Running (32 : 0 : 0 : 97)...
+Running (26 : 0 : 0 : 97)...
+Running (21 : 0 : 0 : 97)...
+Running (14 : 0 : 0 : 97)...
+Running (8 : 0 : 0 : 97)...
+Running (5 : 0 : 0 : 97)...
+Running (3 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (0 : 0 : 0 : 97)...
+Cleaing up server...
+Loading from server...
+Execute transfer from server...
+(None, None)
+Packing data...
+--Cycle Complete--
+ Train   Valid   Test 
+[[3174962 1267952       0]
+ [3173774 1267250       0]
+ [3172276 1270118       0]
+ [3171958 1270638       0]
+ [3172825 1269066       0]
+ [3172704 1269569       0]
+ [3172320 1269892       0]
+ [3174321 1269571       0]]
+Training set built.
+Training Ensemble...
+  -Model 2 complete
+  -Model 3 complete
+  -Model 0 complete
+  -Model 1 complete
+  -Model 6 complete
+  -Model 7 complete
+  -Model 4 complete
+  -Model 5 complete
+Training Complete.
+Connecting...
+Preparing iso confs...
+Compressing confs...
+(None, None)
+Building scripts...
+Loading to server...
+Wait
+(None, None)
+Generating Data...
+Submitted batch job 15816634
+Submitted batch job 15816635
+Submitted batch job 15816636
+Submitted batch job 15816638
+Submitted batch job 15816639
+Submitted batch job 15816640
+Submitted batch job 15816641
+Submitted batch job 15816642
+Submitted batch job 15816643
+Submitted batch job 15816645
+Submitted batch job 15816646
+Submitted batch job 15816647
+Submitted batch job 15816648
+Submitted batch job 15816649
+Submitted batch job 15816650
+Submitted batch job 15816651
+Submitted batch job 15816652
+Submitted batch job 15816653
+Submitted batch job 15816654
+Submitted batch job 15816655
+Submitted batch job 15816656
+Submitted batch job 15816657
+Submitted batch job 15816658
+Submitted batch job 15816659
+Submitted batch job 15816660
+Submitted batch job 15816661
+Submitted batch job 15816662
+Submitted batch job 15816663
+Submitted batch job 15816664
+Submitted batch job 15816665
+Submitted batch job 15816666
+Submitted batch job 15816667
+Submitted batch job 15816668
+Submitted batch job 15816669
+Submitted batch job 15816670
+Submitted batch job 15816671
+Submitted batch job 15816672
+Submitted batch job 15816673
+Submitted batch job 15816674
+Submitted batch job 15816675
+
+Running (0 : 40 : 58 : 98)...
+Running (40 : 0 : 58 : 98)...
+Running (40 : 0 : 58 : 98)...
+Running (40 : 0 : 58 : 98)...
+Submitted batch job 15816750
+Submitted batch job 15816751
+Submitted batch job 15816752
+
+
+Running (37 : 3 : 55 : 98)...
+Running (40 : 0 : 55 : 98)...
+Submitted batch job 15816805
+Submitted batch job 15816806
+
+
+Running (38 : 2 : 53 : 98)...
+Submitted batch job 15816824
+Submitted batch job 15816825
+Submitted batch job 15816826
+Submitted batch job 15816827
+Submitted batch job 15816828
+Submitted batch job 15816830
+Submitted batch job 15816831
+Submitted batch job 15816832
+Submitted batch job 15816833
+Submitted batch job 15816834
+Submitted batch job 15816835
+Submitted batch job 15816836
+Submitted batch job 15816837
+Submitted batch job 15816838
+Submitted batch job 15816839
+Submitted batch job 15816840
+Submitted batch job 15816841
+Submitted batch job 15816842
+
+
+Running (22 : 18 : 35 : 98)...
+Submitted batch job 15816875
+Submitted batch job 15816876
+Submitted batch job 15816877
+Submitted batch job 15816878
+Submitted batch job 15816879
+Submitted batch job 15816880
+Submitted batch job 15816881
+Submitted batch job 15816882
+Submitted batch job 15816883
+Submitted batch job 15816884
+Submitted batch job 15816886
+Submitted batch job 15816887
+Submitted batch job 15816888
+Submitted batch job 15816890
+
+
+Running (26 : 14 : 21 : 98)...
+Submitted batch job 15816917
+Submitted batch job 15816920
+
+
+Running (38 : 2 : 19 : 98)...
+Submitted batch job 15816935
+Submitted batch job 15816936
+
+
+Running (38 : 2 : 17 : 98)...
+Submitted batch job 15816953
+Submitted batch job 15816954
+Submitted batch job 15816955
+Submitted batch job 15816956
+Submitted batch job 15816957
+Submitted batch job 15816958
+Submitted batch job 15816959
+Submitted batch job 15816960
+Submitted batch job 15816961
+Submitted batch job 15816962
+
+
+Running (30 : 10 : 7 : 98)...
+Submitted batch job 15816992
+Submitted batch job 15816993
+Submitted batch job 15816994
+Submitted batch job 15816995
+Submitted batch job 15816996
+Submitted batch job 15816997
+Submitted batch job 15816998
+
+
+Running (24 : 7 : 0 : 98)...
+Running (27 : 0 : 0 : 98)...
+Running (24 : 0 : 0 : 98)...
+Running (23 : 0 : 0 : 98)...
+Running (16 : 0 : 0 : 98)...
+Running (15 : 0 : 0 : 98)...
+Running (10 : 0 : 0 : 98)...
+Running (7 : 0 : 0 : 98)...
+Running (7 : 0 : 0 : 98)...
+Running (6 : 0 : 0 : 98)...
+Running (5 : 0 : 0 : 98)...
+Running (4 : 0 : 0 : 98)...
+Running (2 : 0 : 0 : 98)...
+Running (1 : 0 : 0 : 98)...
+Running (1 : 0 : 0 : 98)...
+Running (0 : 0 : 0 : 98)...
+Cleaing up server...
+Loading from server...
+Execute transfer from server...
+(None, None)
+Packing data...
+--Cycle Complete--
+ Train   Valid   Test 
+[[3177827 1270978       0]
+ [3178161 1270207       0]
+ [3177197 1270507       0]
+ [3175677 1271608       0]
+ [3175619 1272691       0]
+ [3177621 1272085       0]
+ [3178370 1269664       0]
+ [3178728 1269940       0]]
+Training set built.
+Training Ensemble...
+  -Model 6 complete
+  -Model 7 complete
+  -Model 2 complete
+  -Model 3 complete
+  -Model 0 complete
+  -Model 1 complete
+  -Model 4 complete
+  -Model 5 complete
+Training Complete.
+Connecting...
+Preparing iso confs...
+Compressing confs...
+(None, None)
+Building scripts...
+Loading to server...
+Wait
+(None, None)
+Generating Data...
+Submitted batch job 15819431
+Submitted batch job 15819432
+Submitted batch job 15819434
+Submitted batch job 15819435
+Submitted batch job 15819436
+Submitted batch job 15819437
+Submitted batch job 15819438
+Submitted batch job 15819439
+Submitted batch job 15819440
+Submitted batch job 15819442
+Submitted batch job 15819443
+Submitted batch job 15819444
+Submitted batch job 15819445
+Submitted batch job 15819446
+Submitted batch job 15819447
+Submitted batch job 15819448
+Submitted batch job 15819449
+Submitted batch job 15819450
+Submitted batch job 15819451
+Submitted batch job 15819452
+Submitted batch job 15819453
+Submitted batch job 15819454
+Submitted batch job 15819455
+Submitted batch job 15819456
+Submitted batch job 15819457
+Submitted batch job 15819458
+Submitted batch job 15819459
+Submitted batch job 15819460
+Submitted batch job 15819461
+Submitted batch job 15819462
+Submitted batch job 15819463
+Submitted batch job 15819464
+Submitted batch job 15819465
+Submitted batch job 15819466
+Submitted batch job 15819467
+Submitted batch job 15819468
+Submitted batch job 15819469
+Submitted batch job 15819470
+Submitted batch job 15819471
+Submitted batch job 15819472
+
+Running (0 : 40 : 58 : 98)...
+Submitted batch job 15819486
+Submitted batch job 15819487
+
+
+Running (38 : 2 : 56 : 98)...
+Running (40 : 0 : 56 : 98)...
+Submitted batch job 15819501
+
+
+Running (39 : 1 : 55 : 98)...
+Submitted batch job 15819554
+Submitted batch job 15819556
+Submitted batch job 15819557
+Submitted batch job 15819559
+Submitted batch job 15819560
+Submitted batch job 15819561
+
+
+Running (34 : 6 : 49 : 98)...
+Submitted batch job 15819617
+Submitted batch job 15819618
+Submitted batch job 15819619
+Submitted batch job 15819620
+Submitted batch job 15819621
+Submitted batch job 15819622
+Submitted batch job 15819623
+Submitted batch job 15819624
+Submitted batch job 15819625
+Submitted batch job 15819626
+Submitted batch job 15819627
+Submitted batch job 15819628
+
+
+Running (28 : 12 : 37 : 98)...
+Submitted batch job 15819638
+Submitted batch job 15819639
+Submitted batch job 15819640
+Submitted batch job 15819641
+Submitted batch job 15819642
+Submitted batch job 15819643
+
+
+Running (34 : 6 : 31 : 98)...
+Submitted batch job 15819660
+Submitted batch job 15819661
+Submitted batch job 15819662
+Submitted batch job 15819663
+Submitted batch job 15819664
+
+
+Running (35 : 5 : 26 : 98)...
+Submitted batch job 15819685
+
+
+Running (39 : 1 : 25 : 98)...
+Submitted batch job 15819809
+Submitted batch job 15819810
+Submitted batch job 15819811
+Submitted batch job 15819812
+Submitted batch job 15819813
+Submitted batch job 15819814
+
+
+Running (34 : 6 : 19 : 98)...
+Submitted batch job 15819823
+Submitted batch job 15819824
+Submitted batch job 15819825
+Submitted batch job 15819826
+Submitted batch job 15819827
+Submitted batch job 15819828
+Submitted batch job 15819829
+
+
+Running (33 : 7 : 12 : 98)...
+Submitted batch job 15819850
+Submitted batch job 15819851
+Submitted batch job 15819852
+Submitted batch job 15819853
+Submitted batch job 15819854
+Submitted batch job 15819855
+Submitted batch job 15819856
+Submitted batch job 15819857
+Submitted batch job 15819858
+
+
+Running (31 : 9 : 3 : 98)...
+Submitted batch job 15819939
+Submitted batch job 15819940
+Submitted batch job 15819941
+
+
+Running (34 : 3 : 0 : 98)...
+Running (30 : 0 : 0 : 98)...
+Running (25 : 0 : 0 : 98)...
+Running (20 : 0 : 0 : 98)...
+Running (14 : 0 : 0 : 98)...
+Running (11 : 0 : 0 : 98)...
+Running (6 : 0 : 0 : 98)...
+Running (3 : 0 : 0 : 98)...
+Running (3 : 0 : 0 : 98)...
+Running (2 : 0 : 0 : 98)...
+Running (2 : 0 : 0 : 98)...
+Running (1 : 0 : 0 : 98)...
+Running (1 : 0 : 0 : 98)...
+Running (0 : 0 : 0 : 98)...
+Cleaing up server...
+Loading from server...
+Execute transfer from server...
+(None, None)
+Packing data...
+--Cycle Complete--
+ Train   Valid   Test 
+[[3181444 1273188       0]
+ [3182105 1272336       0]
+ [3182086 1272359       0]
+ [3181962 1272546       0]
+ [3182705 1272479       0]
+ [3181818 1271740       0]
+ [3181090 1272690       0]
+ [3180370 1274094       0]]
+Training set built.
+Training Ensemble...
+  -Model 6 complete
+  -Model 7 complete
+  -Model 2 complete
+  -Model 3 complete
+  -Model 4 complete
+  -Model 5 complete
+  -Model 0 complete
+  -Model 1 complete
+Training Complete.
+Connecting...
+Preparing iso confs...
+Compressing confs...
+(None, None)
+Building scripts...
+Loading to server...
+Wait
+(None, None)
+Generating Data...
+Submitted batch job 15825018
+Submitted batch job 15825019
+Submitted batch job 15825020
+Submitted batch job 15825021
+Submitted batch job 15825022
+Submitted batch job 15825023
+Submitted batch job 15825024
+Submitted batch job 15825025
+Submitted batch job 15825026
+Submitted batch job 15825027
+Submitted batch job 15825028
+Submitted batch job 15825029
+Submitted batch job 15825031
+Submitted batch job 15825032
+Submitted batch job 15825033
+Submitted batch job 15825034
+Submitted batch job 15825035
+Submitted batch job 15825036
+Submitted batch job 15825037
+Submitted batch job 15825038
+Submitted batch job 15825039
+Submitted batch job 15825040
+Submitted batch job 15825041
+Submitted batch job 15825042
+Submitted batch job 15825043
+Submitted batch job 15825044
+Submitted batch job 15825045
+Submitted batch job 15825046
+Submitted batch job 15825047
+Submitted batch job 15825048
+Submitted batch job 15825049
+Submitted batch job 15825050
+Submitted batch job 15825051
+Submitted batch job 15825052
+Submitted batch job 15825053
+Submitted batch job 15825054
+Submitted batch job 15825055
+Submitted batch job 15825056
+Submitted batch job 15825057
+Submitted batch job 15825058
+
+Running (0 : 40 : 56 : 96)...
+Running (40 : 0 : 56 : 96)...
+Submitted batch job 15825086
+Submitted batch job 15825087
+Submitted batch job 15825088
+
+
+Running (37 : 3 : 53 : 96)...
+Submitted batch job 15825136
+
+
+Running (39 : 1 : 52 : 96)...
+Submitted batch job 15825245
+Submitted batch job 15825246
+
+
+Running (38 : 2 : 50 : 96)...
+Submitted batch job 15825264
+Submitted batch job 15825265
+Submitted batch job 15825266
+Submitted batch job 15825267
+Submitted batch job 15825268
+Submitted batch job 15825269
+Submitted batch job 15825270
+Submitted batch job 15825271
+Submitted batch job 15825272
+Submitted batch job 15825273
+Submitted batch job 15825274
+Submitted batch job 15825275
+Submitted batch job 15825276
+
+
+Running (27 : 13 : 37 : 96)...
+Submitted batch job 15825295
+Submitted batch job 15825296
+Submitted batch job 15825297
+Submitted batch job 15825298
+Submitted batch job 15825299
+Submitted batch job 15825300
+Submitted batch job 15825301
+Submitted batch job 15825302
+
+
+Running (32 : 8 : 29 : 96)...
+Submitted batch job 15825324
+Submitted batch job 15825325
+Submitted batch job 15825326
+Submitted batch job 15825327
+Submitted batch job 15825328
+
+
+Running (35 : 5 : 24 : 96)...
+Submitted batch job 15825339
+Submitted batch job 15825340
+Submitted batch job 15825341
+
+
+Running (37 : 3 : 21 : 96)...
+Submitted batch job 15825356
+Submitted batch job 15825357
+Submitted batch job 15825358
+Submitted batch job 15825359
+Submitted batch job 15825360
+Submitted batch job 15825361
+Submitted batch job 15825362
+
+
+Running (33 : 7 : 14 : 96)...
+Submitted batch job 15825408
+Submitted batch job 15825409
+Submitted batch job 15825410
+Submitted batch job 15825411
+Submitted batch job 15825412
+Submitted batch job 15825413
+
+
+Running (34 : 6 : 8 : 96)...
+Submitted batch job 15825471
+Submitted batch job 15825472
+Submitted batch job 15825473
+Submitted batch job 15825474
+Submitted batch job 15825475
+Submitted batch job 15825476
+Submitted batch job 15825477
+Submitted batch job 15825478
+
+
+Running (32 : 8 : 0 : 96)...
+Running (34 : 0 : 0 : 96)...
+Running (29 : 0 : 0 : 96)...
+Running (27 : 0 : 0 : 96)...
+Running (20 : 0 : 0 : 96)...
+Running (14 : 0 : 0 : 96)...
+Running (10 : 0 : 0 : 96)...
+Running (8 : 0 : 0 : 96)...
+Running (7 : 0 : 0 : 96)...
+Running (6 : 0 : 0 : 96)...
+Running (5 : 0 : 0 : 96)...
+Running (3 : 0 : 0 : 96)...
+Running (1 : 0 : 0 : 96)...
+Running (1 : 0 : 0 : 96)...
+Running (0 : 0 : 0 : 96)...
+Cleaing up server...
+Loading from server...
+Execute transfer from server...
+(None, None)
+Packing data...
+--Cycle Complete--
+ Train   Valid   Test 
+[[3184284 1276453       0]
+ [3185733 1275311       0]
+ [3187131 1273197       0]
+ [3187113 1273606       0]
+ [3185856 1273931       0]
+ [3186811 1274472       0]
+ [3185687 1273908       0]
+ [3184830 1274100       0]]
+Training set built.
+Training Ensemble...
+  -Model 4 complete
+  -Model 5 complete
+  -Model 2 complete
+  -Model 3 complete
+  -Model 6 complete
+  -Model 7 complete
+  -Model 0 complete
+  -Model 1 complete
+Training Complete.
+Connecting...
+Preparing iso confs...
+Compressing confs...
+(None, None)
+Building scripts...
+Loading to server...
+Wait
+(None, None)
+Generating Data...
+Submitted batch job 15829442
+Submitted batch job 15829443
+Submitted batch job 15829444
+Submitted batch job 15829445
+Submitted batch job 15829446
+Submitted batch job 15829447
+Submitted batch job 15829448
+Submitted batch job 15829449
+Submitted batch job 15829450
+Submitted batch job 15829451
+Submitted batch job 15829452
+Submitted batch job 15829453
+Submitted batch job 15829454
+Submitted batch job 15829455
+Submitted batch job 15829456
+Submitted batch job 15829457
+Submitted batch job 15829458
+Submitted batch job 15829460
+Submitted batch job 15829461
+Submitted batch job 15829462
+Submitted batch job 15829463
+Submitted batch job 15829464
+Submitted batch job 15829465
+Submitted batch job 15829466
+Submitted batch job 15829468
+Submitted batch job 15829469
+Submitted batch job 15829470
+Submitted batch job 15829471
+Submitted batch job 15829472
+Submitted batch job 15829473
+Submitted batch job 15829474
+Submitted batch job 15829475
+Submitted batch job 15829476
+Submitted batch job 15829477
+Submitted batch job 15829478
+Submitted batch job 15829479
+Submitted batch job 15829480
+Submitted batch job 15829481
+Submitted batch job 15829483
+Submitted batch job 15829484
+
+Running (0 : 40 : 56 : 96)...
+Running (40 : 0 : 56 : 96)...
+Running (40 : 0 : 56 : 96)...
+Running (40 : 0 : 56 : 96)...
+Running (40 : 0 : 56 : 96)...
+Submitted batch job 15829736
+Submitted batch job 15829738
+Submitted batch job 15829739
+Submitted batch job 15829740
+Submitted batch job 15829741
+Submitted batch job 15829742
+Submitted batch job 15829744
+Submitted batch job 15829745
+Submitted batch job 15829746
+
+
+Running (31 : 9 : 47 : 96)...
+Submitted batch job 15829864
+Submitted batch job 15829865
+Submitted batch job 15829866
+Submitted batch job 15829867
+Submitted batch job 15829868
+Submitted batch job 15829869
+Submitted batch job 15829871
+Submitted batch job 15829872
+Submitted batch job 15829873
+Submitted batch job 15829874
+Submitted batch job 15829875
+Submitted batch job 15829876
+Submitted batch job 15829877
+Submitted batch job 15829878
+Submitted batch job 15829879
+Submitted batch job 15829880
+
+
+Running (24 : 16 : 31 : 96)...
+Submitted batch job 15829911
+Submitted batch job 15829912
+Submitted batch job 15829913
+Submitted batch job 15829914
+Submitted batch job 15829915
+Submitted batch job 15829916
+Submitted batch job 15829917
+Submitted batch job 15829919
+Submitted batch job 15829920
+Submitted batch job 15829921
+Submitted batch job 15829922
+Submitted batch job 15829923
+
+
+Running (28 : 12 : 19 : 96)...
+Submitted batch job 15829950
+Submitted batch job 15829951
+Submitted batch job 15829952
+Submitted batch job 15829953
+Submitted batch job 15829954
+Submitted batch job 15829955
+Submitted batch job 15829956
+
+
+Running (33 : 7 : 12 : 96)...
+Submitted batch job 15829977
+Submitted batch job 15829978
+Submitted batch job 15829979
+Submitted batch job 15829980
+Submitted batch job 15829981
+Submitted batch job 15829982
+Submitted batch job 15829983
+Submitted batch job 15829984
+
+
+Running (32 : 8 : 4 : 96)...
+Submitted batch job 15830000
+Submitted batch job 15830001
+Submitted batch job 15830002
+Submitted batch job 15830003
+
+
+Running (36 : 4 : 0 : 96)...
+Running (32 : 0 : 0 : 96)...
+Running (29 : 0 : 0 : 96)...
+Running (24 : 0 : 0 : 96)...
+Running (16 : 0 : 0 : 96)...
+Running (13 : 0 : 0 : 96)...
+Running (8 : 0 : 0 : 96)...
+Running (7 : 0 : 0 : 96)...
+Running (6 : 0 : 0 : 96)...
+Running (4 : 0 : 0 : 96)...
+Running (2 : 0 : 0 : 96)...
+Running (0 : 0 : 0 : 96)...
+Cleaing up server...
+Loading from server...
+Execute transfer from server...
+(None, None)
+Packing data...
+--Cycle Complete--
+ Train   Valid   Test 
+[[3191537 1275254       0]
+ [3190819 1275361       0]
+ [3190557 1275831       0]
+ [3189673 1276234       0]
+ [3189466 1276507       0]
+ [3189098 1276922       0]
+ [3190089 1276809       0]
+ [3190766 1275884       0]]
+Training set built.
+Training Ensemble...
+  -Model 6 complete
+  -Model 7 complete
+  -Model 0 complete
+  -Model 1 complete
+  -Model 2 complete
+  -Model 3 complete
+  -Model 4 complete
+  -Model 5 complete
+Training Complete.
+Connecting...
+Preparing iso confs...
+Compressing confs...
+(None, None)
+Building scripts...
+Loading to server...
+Wait
+(None, None)
+Generating Data...
+Submitted batch job 15833394
+Submitted batch job 15833395
+Submitted batch job 15833396
+Submitted batch job 15833397
+Submitted batch job 15833398
+Submitted batch job 15833399
+Submitted batch job 15833400
+Submitted batch job 15833401
+Submitted batch job 15833402
+Submitted batch job 15833403
+Submitted batch job 15833404
+Submitted batch job 15833405
+Submitted batch job 15833406
+Submitted batch job 15833407
+Submitted batch job 15833408
+Submitted batch job 15833409
+Submitted batch job 15833410
+Submitted batch job 15833411
+Submitted batch job 15833412
+Submitted batch job 15833413
+Submitted batch job 15833414
+Submitted batch job 15833415
+Submitted batch job 15833416
+Submitted batch job 15833417
+Submitted batch job 15833418
+Submitted batch job 15833420
+Submitted batch job 15833421
+Submitted batch job 15833422
+Submitted batch job 15833423
+Submitted batch job 15833424
+Submitted batch job 15833425
+Submitted batch job 15833426
+Submitted batch job 15833427
+Submitted batch job 15833428
+Submitted batch job 15833429
+Submitted batch job 15833430
+Submitted batch job 15833431
+Submitted batch job 15833432
+Submitted batch job 15833433
+Submitted batch job 15833434
+
+Running (0 : 40 : 57 : 97)...
+Submitted batch job 15833440
+
+
+Running (39 : 1 : 56 : 97)...
+Running (40 : 0 : 56 : 97)...
+Submitted batch job 15833462
+
+
+Running (39 : 1 : 55 : 97)...
+Submitted batch job 15833543
+Submitted batch job 15833544
+Submitted batch job 15833545
+Submitted batch job 15833546
+Submitted batch job 15833547
+Submitted batch job 15833548
+Submitted batch job 15833549
+Submitted batch job 15833550
+Submitted batch job 15833551
+Submitted batch job 15833552
+Submitted batch job 15833553
+
+
+Running (29 : 11 : 44 : 97)...
+Submitted batch job 15833560
+Submitted batch job 15833561
+Submitted batch job 15833562
+Submitted batch job 15833563
+Submitted batch job 15833564
+Submitted batch job 15833565
+Submitted batch job 15833566
+Submitted batch job 15833567
+Submitted batch job 15833568
+Submitted batch job 15833569
+
+
+Running (30 : 10 : 34 : 97)...
+Submitted batch job 15833582
+Submitted batch job 15833583
+Submitted batch job 15833584
+Submitted batch job 15833585
+Submitted batch job 15833586
+
+
+Running (35 : 5 : 29 : 97)...
+Submitted batch job 15833597
+Submitted batch job 15833598
+Submitted batch job 15833599
+Submitted batch job 15833600
+Submitted batch job 15833601
+Submitted batch job 15833602
+Submitted batch job 15833603
+Submitted batch job 15833604
+
+
+Running (32 : 8 : 21 : 97)...
+Submitted batch job 15833611
+Submitted batch job 15833612
+Submitted batch job 15833613
+Submitted batch job 15833614
+
+
+Running (36 : 4 : 17 : 97)...
+Submitted batch job 15833689
+Submitted batch job 15833690
+Submitted batch job 15833691
+Submitted batch job 15833692
+
+
+Running (36 : 4 : 13 : 97)...
+Submitted batch job 15833702
+Submitted batch job 15833703
+Submitted batch job 15833704
+Submitted batch job 15833705
+Submitted batch job 15833706
+Submitted batch job 15833707
+Submitted batch job 15833708
+Submitted batch job 15833709
+Submitted batch job 15833710
+Submitted batch job 15833711
+
+
+Running (30 : 10 : 3 : 97)...
+Submitted batch job 15833719
+Submitted batch job 15833720
+Submitted batch job 15833721
+
+
+Running (34 : 3 : 0 : 97)...
+Running (29 : 0 : 0 : 97)...
+Running (26 : 0 : 0 : 97)...
+Running (18 : 0 : 0 : 97)...
+Running (14 : 0 : 0 : 97)...
+Running (12 : 0 : 0 : 97)...
+Running (10 : 0 : 0 : 97)...
+Running (6 : 0 : 0 : 97)...
+Running (6 : 0 : 0 : 97)...
+Running (5 : 0 : 0 : 97)...
+Running (3 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (2 : 0 : 0 : 97)...
+Running (1 : 0 : 0 : 97)...
+Running (0 : 0 : 0 : 97)...
+Cleaing up server...
+Loading from server...
+Execute transfer from server...
+(None, None)
+Packing data...
+--Cycle Complete--
+ Train   Valid   Test 
+[[3194699 1278218       0]
+ [3194437 1277566       0]
+ [3194919 1277666       0]
+ [3193767 1277998       0]
+ [3194517 1278236       0]
+ [3194592 1278068       0]
+ [3195092 1277173       0]
+ [3194442 1277661       0]]
+Training set built.
+Training Ensemble...
+  -Model 2 complete
+  -Model 3 complete
+  -Model 6 complete
+  -Model 7 complete
+  -Model 4 complete
+  -Model 5 complete
+  -Model 0 complete
+  -Model 1 complete
+Training Complete.
