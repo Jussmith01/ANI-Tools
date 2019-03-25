@@ -78,7 +78,7 @@ def get_train_stats(Nn,train_root):
     return allnets, completed
 
 class anitrainerparamsdesigner():
-    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst, Charge=False):
+    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst, Dipole=False, ACA=False):
         self.params = {"elm":elements,
                        "Nrr":Nrr,
                        "Nar":Nar,
@@ -86,7 +86,8 @@ class anitrainerparamsdesigner():
                        "Rcr":Rcr,
                        "Rca":Rca,
                        "Xst":Xst,
-                       "Crg":Charge}
+                       "Dipole":Dipole,
+                       "ACA":ACA}
 
     # ------------------------------------------
     #           Radial Function Cos
@@ -261,7 +262,8 @@ class anitrainerparamsdesigner():
 
         f = open(path+"/"+self.get_filename(),"w")
         f.write('TM = ' + str(1) + '\n')
-        f.write('CG = ' + str(self.params['Crg']) + '\n')
+        f.write('CG = ' + str(self.params['Dipole']) + '\n')
+        f.write('AC = ' + str(self.params['ACA']) + '\n')
         f.write('Rcr = ' + "{:.4e}".format(Rcr) + '\n')
         f.write('Rca = ' + "{:.4e}".format(Rca) + '\n')
         self.printdatatofile(f, 'EtaR', [EtaR], 1)
@@ -293,6 +295,7 @@ class anitrainerinputdesigner:
                        "force": 0,  # Enable/disable force training
                        "dipole": 0,  # Enable/disable dipole training
                        "charge": 0,  # Enable/disable charge training
+                       "acachg": 0,  # Enable/disable ACA charge training
                        "fmult": 1.0,  # Multiplier of force cost
                        "pbc": 0,  # Use PBC in training (Warning, this only works for data with a single rect. box size)
                        "cmult": 1.0,  # Charge cost multiplier (CHARGE TRAINING BROKEN IN CURRENT VERSION)
@@ -344,6 +347,8 @@ class anitrainerinputdesigner:
             if int(self.params["dipole"]) != 0 or int(self.params["charge"]) != 0:
                 self.layers[ak].append({"nodes": 12, "activation": 6, "type": 0})
                 #self.layers[ak].append({"nodes": 2, "activation": 6, "type": 0})
+            elif int(self.params["acachg"]) != 0:
+                self.layers[ak].append({"nodes": 2, "activation": 6, "type": 0})
             else:
                 self.layers[ak].append({"nodes": 1, "activation": 6, "type": 0})
 
