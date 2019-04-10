@@ -78,7 +78,7 @@ def get_train_stats(Nn,train_root):
     return allnets, completed
 
 class anitrainerparamsdesigner():
-    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst, Charge=False, Repuls=False):
+    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst, Charge=False, Repuls=False, ACA= False):
         self.params = {"elm":elements,
                        "Nrr":Nrr,
                        "Nar":Nar,
@@ -86,6 +86,7 @@ class anitrainerparamsdesigner():
                        "Rcr":Rcr,
                        "Rca":Rca,
                        "Xst":Xst,
+                       "ACA":ACA,
                        "Crg":Charge,
                        "Rps":Repuls}
 
@@ -262,8 +263,9 @@ class anitrainerparamsdesigner():
 
         f = open(path+"/"+self.get_filename(),"w")
         f.write('TM = ' + str(1) + '\n')
-        f.write('CG = ' + str(self.params['Crg']) + '\n')
-        f.write('RP = ' + str(self.params['Rps']) + '\n')
+        f.write('CG = ' + str(1 if self.params['Crg'] else 0) + '\n')
+        f.write('RP = ' + str(1 if self.params['Rps'] else 0) + '\n')
+        f.write('AC = ' + str(1 if self.params['ACA'] else 0) + '\n')
         f.write('Rcr = ' + "{:.4e}".format(Rcr) + '\n')
         f.write('Rca = ' + "{:.4e}".format(Rca) + '\n')
         self.printdatatofile(f, 'EtaR', [EtaR], 1)
@@ -295,6 +297,7 @@ class anitrainerinputdesigner:
                        "force": 0,  # Enable/disable force training
                        "dipole": 0,  # Enable/disable dipole training
                        "charge": 0,  # Enable/disable charge training
+                       "acachg": 0,  # Enable/disable ACA charge training
                        "fmult": 1.0,  # Multiplier of force cost
                        "pbc": 0,  # Use PBC in training (Warning, this only works for data with a single rect. box size)
                        "cmult": 1.0,  # Charge cost multiplier (CHARGE TRAINING BROKEN IN CURRENT VERSION)
@@ -344,7 +347,9 @@ class anitrainerinputdesigner:
             network += "    atom_net " + ak + " $\n"
 
             if int(self.params["dipole"]) != 0 or int(self.params["charge"]) != 0:
-                #self.layers[ak].append({"nodes": 12, "activation": 6, "type": 0})
+                self.layers[ak].append({"nodes": 12, "activation": 6, "type": 0})
+                #self.layers[ak].append({"nodes": 2, "activation": 6, "type": 0})
+            elif int(self.params["acachg"]) != 0:
                 self.layers[ak].append({"nodes": 2, "activation": 6, "type": 0})
             else:
                 self.layers[ak].append({"nodes": 1, "activation": 6, "type": 0})
@@ -726,8 +731,8 @@ class alaniensembletrainer():
                             data_count[nid, 0] += set_idx.size
                             #print("Py tDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py tDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
-                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
 
                     for nid, cache in enumerate(cachev):
                         set_idx = np.concatenate(
@@ -736,8 +741,8 @@ class alaniensembletrainer():
                             data_count[nid, 1] += set_idx.size
                             #print("Py vDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py vDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
-                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
 
                     if build_test:
                         for nid, th5 in enumerate(testh5):
