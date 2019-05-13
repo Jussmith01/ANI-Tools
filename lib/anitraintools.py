@@ -78,17 +78,19 @@ def get_train_stats(Nn,train_root):
     return allnets, completed
 
 class anitrainerparamsdesigner():
-    def __init__(self, elements, Nrr, Nar, Nzt, Rcr, Rca, Xst, Charge=False, Repuls=False, ACA= False):
+    def __init__(self, elements, Nrr, Rcr, Nar=0, Nzt=0, Rca=3.5, Xst=0.7, Charge=False, Repuls=False, ACA=False, descriptor="ANI_NORMAL"):
         self.params = {"elm":elements,
                        "Nrr":Nrr,
+                       "Rcr":Rcr,
                        "Nar":Nar,
                        "Nzt":Nzt,
-                       "Rcr":Rcr,
                        "Rca":Rca,
                        "Xst":Xst,
                        "ACA":ACA,
                        "Crg":Charge,
-                       "Rps":Repuls}
+                       "Rps":Repuls,
+                       "Dsc":descriptor
+                      }
 
     # ------------------------------------------
     #           Radial Function Cos
@@ -255,13 +257,17 @@ class anitrainerparamsdesigner():
     # ------------------------------------------
     def create_params_file(self, path):
         ShfR,EtaR = self.get_Rradial_parameters()
-        ShfA,EtaA = self.get_Aradial_parameters()
-        ShfZ,Zeta = self.get_angular_parameters()
+
+        if self.params["Nzt"] is not 0 or self.params["Nar"] is not 0:
+            ShfA,EtaA = self.get_Aradial_parameters()
+            ShfZ,Zeta = self.get_angular_parameters()
 
         Rcr = self.params['Rcr']
         Rca = self.params['Rca']
 
         f = open(path+"/"+self.get_filename(),"w")
+
+        f.write('DESC = ' + self.params['Dsc'] + '\n')
         f.write('TM = ' + str(1) + '\n')
         f.write('CG = ' + str(1 if self.params['Crg'] else 0) + '\n')
         f.write('RP = ' + str(1 if self.params['Rps'] else 0) + '\n')
@@ -270,10 +276,13 @@ class anitrainerparamsdesigner():
         f.write('Rca = ' + "{:.4e}".format(Rca) + '\n')
         self.printdatatofile(f, 'EtaR', [EtaR], 1)
         self.printdatatofile(f, 'ShfR', ShfR, ShfR.size)
-        self.printdatatofile(f, 'Zeta', [Zeta], 1)
-        self.printdatatofile(f, 'ShfZ', ShfZ, ShfZ.size)
-        self.printdatatofile(f, 'EtaA', [EtaA], 1)
-        self.printdatatofile(f, 'ShfA', ShfA, ShfA.size)
+
+        if self.params["Nzt"] is not 0 or self.params["Nar"] is not 0:
+            self.printdatatofile(f, 'Zeta', [Zeta], 1)
+            self.printdatatofile(f, 'ShfZ', ShfZ, ShfZ.size)
+            self.printdatatofile(f, 'EtaA', [EtaA], 1)
+            self.printdatatofile(f, 'ShfA', ShfA, ShfA.size)
+
         f.write('Atyp = [' + ",".join(self.params['elm']) + ']\n')
         f.close()
 
