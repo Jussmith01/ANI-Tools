@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 class alconformationalsampler():
 
     # Constructor
-    def __init__(self, ldtdir, datdir, optlfile, fpatoms, netdict):
+    def __init__(self, ldtdir, datdir, optlfile, strucsfolder, fpatoms, netdict):
         self.ldtdir = ldtdir # local working dir
         self.datdir = datdir # working data dir
         self.cdir = ldtdir+datdir+'/confs/' # confs store dir (the data gen code looks here for conformations to run QM on)
@@ -34,6 +34,8 @@ class alconformationalsampler():
         self.fpatoms = fpatoms # atomic species being sampled
 
         self.optlfile = optlfile # Optimized molecules store path file
+
+        self.strucsfolder = strucsfolder # Structures folder
 
         self.idir = [f for f in open(optlfile).read().split('\n') if f != ''] # read and store the paths to the opt files
 
@@ -54,6 +56,15 @@ class alconformationalsampler():
                                                             nmsparams['maxd'],
                                                             nmsparams['sig'],
                                                             gpus[0]))
+        p.start()
+        p.join()
+
+    # Runs structural sampling (single GPU only currently)
+    def run_sampling_strucs(self, strucsparams, gpus=[0]):
+        print('Running Structural sampling...')
+        p = Process(target=self.structural_sampling, args=(strucsparams['N'],
+                                                           strucsparams['sig'],
+                                                           gpus[0]))
         p.start()
         p.join()
 
@@ -204,7 +215,6 @@ class alconformationalsampler():
                     sigma = anicv.compute_stddev_conformations(conformers,spc)
                     sid = np.where( sigma >  sig )[0]
 
-
                     Nt += sigma.size
                     Nk += sid.size
                     if 100.0*sid.size/float(Ngen) > 0:
@@ -225,6 +235,91 @@ class alconformationalsampler():
 
         of.write('\nGrand Total: '+ str(Nkt)+ ' of '+ str(Ntt)+' percent: '+"{:.2f}".format(100.0*Nkt/Ntt)+ ' Kept '+str(Nkp)+'\n')
         #print('\nGrand Total:', Nkt, 'of', Ntt,'percent:',"{:.2f}".format(100.0*Nkt/Ntt), 'Kept',Nkp)
+        of.close()
+
+    # Structural sampler function
+    def structural_sampling(self, N, sig, gpuid):
+        of = open(self.ldtdir + self.datdir + '/info_data_strucs.nfo', 'w')
+
+        aevsize = self.netdict['aevsize']
+
+        anicv = aat.anicrossvalidationconformer(self.netdict['cnstfile'],
+                                                self.netdict['saefile'],
+                                                self.netdict['nnfprefix'],
+                                                self.netdict['num_nets'],
+                                                [gpuid], False)
+
+        dc = aat.diverseconformers(self.netdict['cnstfile'],
+                                   self.netdict['saefile'],
+                                   self.netdict['nnfprefix']+'0/networks/',
+                                   aevsize,
+                                   gpuid, False)
+
+        files = os.listdir(self.strucsfolder)
+        files.sort()
+
+        Nkt = 0
+        Ntt = 0
+        cnt = 0
+        for fi,f in enumerate(files):
+            print(f)
+            fil = open(self.strucsfolder+f,'r')
+            lines = fil.readlines()
+            fil.close()
+            nlines = len(lines)
+            # Reading all conformations
+            nat = int(lines[0])
+            nconfs=int(round(len(lines)/(nat+2)))
+            crds=[]
+            for conf in range(nconfs):
+                crd =[]
+                if (conf==0):
+                    if (not re.search("Charge:",lines[1]) or not re.search("Mul:",lines[1])):
+                        raise ValueError('Error: the first comment line in %s must have charge and multiplicity. Please add something like " Charge: 0 Mul: 1 "'%(self.strucsfolder+f))
+                    chg = lines[1].split("Charge:")[1].split()[0]
+                    mul = lines[1].split("Mul:")[1].split()[0]
+                    spc = []
+                    for i in range(nat):
+                        var = lines[conf*(nat+2)+2+i].split()
+                        spc.append(var[0])
+                        crd.append([float(var[1]),float(var[2]),float(var[3])])
+                else:
+                    for i in range(nat):
+                        var = lines[conf*(nat+2)+2+i].split()
+                        crd.append([float(var[1]),float(var[2]),float(var[3])])
+                crds.append(crd)
+            # Select up to N random structures, if needed
+            if (nconfs>N):
+                list=[]
+                for i in range(N):
+                    num=np.random.random_integers(0,nconfs-1)
+                    while(num in list):
+                        num=num=np.random.random_integers(0,nconfs-1)
+                    list.append(num)
+                ncrds=[]
+                for i in sorted(list):
+                    ncrds.append(crds[i])
+                del crds
+                crds=ncrds
+                del ncrds
+            # Converting list to numpy array
+            crds=np.asarray(crds, dtype=np.float32)
+            # Filter by QBC
+            sigma = anicv.compute_stddev_conformations(crds,spc)
+            sid = np.where( sigma >  sig )[0]
+
+            Ntt += sigma.size
+            Nkt += sid.size
+            of.write(str(cnt+1)+' of '+str(len(files))+') file: '+ str(self.strucsfolder+f) +'\n')
+            of.write('    -Total: '+str(sid.size)+' of '+str(sigma.size)+' percent: '+"{:.2f}".format(100.0*sid.size/sigma.size)+'\n')
+            of.flush()
+            if sid.size > 0:
+                cfn = f.split('.')[0]+'_strucs.xyz'
+                cmts = [' '+chg+' '+mul for c in range(sid.size)]
+                hdt.writexyzfilewc(self.cdir+cfn,crds[sid],spc,cmts)
+            cnt += 1
+
+        of.write('\nGrand Total: '+ str(Nkt)+ ' of '+ str(Ntt)+' percent: '+"{:.2f}".format(100.0*Nkt/Ntt)+'\n')
         of.close()
 
     # MD Sampling function
