@@ -303,7 +303,7 @@ class anicrossvalidationmolecule(object):
         return sigma, hdt.hatokcal *energies
 
     def compute_energies_and_forces_molecule(self, x, S):
-        Na = x.shape[0]
+        Na = x.shape[0]machine learning water potential pisani
         energy = np.zeros((self.Nn), dtype=np.float64)
         forces = np.zeros((self.Nn, Na, 3), dtype=np.float32)
         for i,nc in enumerate(self.ncl):
@@ -674,8 +674,8 @@ class ani_torsion_scanner():
         c = FixInternals(dihedrals=phi_fix, epsilon=1.e-9)
         atm.set_constraint(c)
 
-        dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorith
-        #dyn = LBFGS(atm)                               #Choose optimization algorith
+        #dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorith
+        dyn = LBFGS(atm)                               #Choose optimization algorith
 
         try:
             dyn.run(fmax=self.fmax, steps=5000)         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
