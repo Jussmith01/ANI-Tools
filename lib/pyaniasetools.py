@@ -303,7 +303,7 @@ class anicrossvalidationmolecule(object):
         return sigma, hdt.hatokcal *energies
 
     def compute_energies_and_forces_molecule(self, x, S):
-        Na = x.shape[0]machine learning water potential pisani
+        Na = x.shape[0]
         energy = np.zeros((self.Nn), dtype=np.float64)
         forces = np.zeros((self.Nn, Na, 3), dtype=np.float32)
         for i,nc in enumerate(self.ncl):
