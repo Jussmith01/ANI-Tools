@@ -674,8 +674,8 @@ class ani_torsion_scanner():
         c = FixInternals(dihedrals=phi_fix, epsilon=1.e-9)
         atm.set_constraint(c)
 
-        #dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorith
-        dyn = LBFGS(atm)                               #Choose optimization algorith
+        dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorith
+        #dyn = LBFGS(atm)                               #Choose optimization algorith
 
         try:
             dyn.run(fmax=self.fmax, steps=5000)         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
