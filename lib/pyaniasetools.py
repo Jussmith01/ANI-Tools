@@ -674,8 +674,8 @@ class ani_torsion_scanner():
         c = FixInternals(dihedrals=phi_fix, epsilon=1.e-9)
         atm.set_constraint(c)
 
-        dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorith
-        #dyn = LBFGS(atm)                               #Choose optimization algorith
+        dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorithm
+        #dyn = LBFGS(atm)                               #Choose optimization algorithm
 
         try:
             dyn.run(fmax=self.fmax, steps=5000)         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
@@ -723,8 +723,6 @@ class ani_torsion_scanner():
         ind = itertools.product(np.arange(stps),repeat=len(atid))
         shape = [stps for _ in range(len(atid))]
 
-        print(ind)
-
         ang = np.empty(shape+[len(atid)],dtype=np.float64)
         sig = np.empty(shape,dtype=np.float64)
         enr = np.empty(shape,dtype=np.float64)
@@ -732,24 +730,22 @@ class ani_torsion_scanner():
 
         if GetCharge:
             chg = np.empty(shape+[mol_copy.GetNumAtoms()], dtype=np.float32)
-            print(chg.shape)
 
         for index,i in enumerate(ind):
             aset = [-180 + j*inc for j,ai in zip(i,init)]
             phi, e, s, atm = self.rot(mol_copy, dhls, aset)
             x = atm.get_positions()
 
+            sidx = tuple([j for j in i])
             if GetCharge:
                 q = self.ens.compute_mean_charges()
-                chg[index] = q[0]
-                print(i,index,phi,aset)
+                chg[sidx] = q[0]
 
             conf = mol_copy.GetConformer(-1)
             for aid in range(conf.GetNumAtoms()):
                 pos = Geometry.rdGeometry.Point3D(x[aid][0],x[aid][1],x[aid][2])
                 conf.SetAtomPosition(aid, pos)
 
-            sidx = tuple([j for j in i])
             ang[sidx] = aset
             sig[sidx] = s
             enr[sidx] = e
