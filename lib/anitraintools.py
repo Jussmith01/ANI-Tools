@@ -21,6 +21,15 @@ from multiprocessing import Process
 import shutil
 import copy
 
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.colors import LogNorm
+import matplotlib.cm as cm
+
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+from matplotlib.backends.backend_pdf import PdfPages
+
 conv_au_ev = 27.21138505
 
 def interval(v, S):
@@ -128,6 +137,76 @@ class ANITesterTool:
 
         return Evals,Fvals
         
+    def plot_corr_dist(self, Xa, Xp, inset=True,linfit=True, xlabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', ylabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', figsize=[13,10], cmap=mpl.cm.viridis):
+        Fmx = Xa.max()
+        Fmn = Xa.min()
+    
+        label_size = 14
+        mpl.rcParams['xtick.labelsize'] = label_size
+        mpl.rcParams['ytick.labelsize'] = label_size
+    
+        fig, ax = plt.subplots(figsize=figsize)
+    
+        # Plot ground truth line
+        if linfit:
+            ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='r', linewidth=3)
+    
+        # Set labels
+        ax.set_xlabel(xlabel, fontsize=22)
+        ax.set_ylabel(ylabel, fontsize=22)
+    
+        #cmap = mpl.cm.viridis
+        #cmap = mpl.cm.brg
+    
+        # Plot 2d Histogram
+        if linfit:
+            bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), range= [[Xa.min(), Xa.max()], [Xp.min(), Xp.max()]], cmap=cmap)
+        else:
+            bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), cmap=cmap)
+    
+        # Build color bar
+        #cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
+        cb1 = fig.colorbar(bins[-1], cmap=cmap)
+        cb1.set_label('Count', fontsize=16)
+    
+        # Annotate with errors
+        PMAE = hdt.calculatemeanabserror(Xa, Xp)
+        PRMS = hdt.calculaterootmeansqrerror(Xa, Xp)
+        if linfit:
+            ax.text(0.75*((Fmx-Fmn))+Fmn, 0.43*((Fmx-Fmn))+Fmn, 'MAE='+"{:.3f}".format(PMAE)+'\nRMSE='+"{:.3f}".format(PRMS), fontsize=20,
+                    bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
+    
+        if not linfit:
+            plt.vlines(x=0.0,ymin=130,ymax=300,linestyle='--',color='red')
+            
+        if inset:
+            axins = zoomed_inset_axes(ax, 2.2, loc=2) # zoom = 6
+    
+            sz = 6
+            axins.hist2d(Xa, Xp,bins=50, range=[[Fmn/sz, Fmx/sz], [Fmn/sz, Fmx/sz]], norm=LogNorm(), cmap=cmap)
+            axins.plot([Xa.min(), Xa.max()], [Xa.min(), Xa.max()], '--', c='r', linewidth=3)
+    
+            # sub region of the original image
+            x1, x2, y1, y2 = Fmn/sz, Fmx/sz, Fmn/sz, Fmx/sz
+            axins.set_xlim(x1, x2)
+            axins.set_ylim(y1, y2)
+            axins.yaxis.tick_right()
+    
+            plt.xticks(visible=True)
+            plt.yticks(visible=True)
+    
+            mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.5")
+    
+            Ferr = Xa - Xp
+            std = np.std(Ferr)
+            men = np.mean(Ferr)
+            axh = plt.axes([.49, .16, .235, .235])
+            axh.hist(Ferr, bins=75, range=[men-4*std, men+4*std], normed=True)
+            axh.set_title('Difference distribution')
+    
+        #plt.draw()
+        plt.show()
+    
     def evaluate_dataset(self):
         print('Eval DSET')
         
