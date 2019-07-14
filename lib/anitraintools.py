@@ -136,6 +136,39 @@ class ANITesterTool:
             Fvals.append(np.vstack(Fvals_ind))
 
         return Evals,Fvals
+    
+    def evaluate_individual_dataset(self,dataset_file,energy_key='energies',force_key='forces'):
+        Evals = []
+        Fvals = []
+        for i,nc in enumerate(self.ncl):
+            adl = pyt.anidataloader(dataset_file)
+            
+            Evals_ind = []
+            Fvals_ind = []
+            for data in adl:
+                S = data['species']
+            
+                X = data['coordinates']
+                C = data['cell']
+                
+                E = conv_au_ev*data[energy_key]
+                F = conv_au_ev*data[force_key]
+                
+                for x,c,e,f in zip(X,C,E,F):
+                    pbc_inv = np.linalg.inv(c).astype(np.float32)
+                    
+                    nc.setMolecule(coords=np.array(x,dtype=np.float32), types=list(S))
+                    nc.setPBC(bool(True), bool(True), bool(True))
+                    nc.setCell(c,pbc_inv)
+                    Eani = conv_au_ev*nc.energy().copy()[0]
+                    Fani = conv_au_ev*nc.force().copy()
+                    Evals_ind.append(np.array([Eani,e])/len(S))
+                    Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
+                    
+            Evals.append(np.stack(Evals_ind))
+            Fvals.append(np.vstack(Fvals_ind))
+
+        return Evals,Fvals
         
     def plot_corr_dist(self, Xa, Xp, inset=True,linfit=True, xlabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', ylabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', figsize=[13,10], cmap=mpl.cm.viridis):
         Fmx = Xa.max()
