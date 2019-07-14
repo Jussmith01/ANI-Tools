@@ -102,7 +102,7 @@ class ANITesterTool:
             adl = pyt.anidataloader(self.model_path+'/testset/testset'+str(i)+'.h5')
             
             Evals_ind = []
-            Evals_ind = []
+            Fvals_ind = []
             for data in adl:
                 S = data['species']
             
