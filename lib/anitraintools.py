@@ -80,7 +80,8 @@ def get_train_stats(Nn,train_root):
 class ANITesterTool():
     def __init__(self,model_path):
         self.model_path = model_path
-        print([f for f in os.listdir(self.model_path) if f[:5] == 'train'])
+        print([f for f in os.listdir(self.model_path) if f[-7:] == '.params'])
+        print([f for f in os.listdir(self.model_path) if f[-4:] == '.dat'])
         
 
 class anitrainerparamsdesigner():
