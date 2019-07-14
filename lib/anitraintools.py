@@ -77,7 +77,11 @@ def get_train_stats(Nn,train_root):
             completed.append(False)
     return allnets, completed
 
-class ANITesterTool():
+class ANITesterTool:
+    def load_models(self):
+        self.ncl = [pync.molecule(self.cnstfile, self.saefile, self.model_path + 'train' + str(i+net_start_id) + '/networks/', self.gpuid, False) for i in range(self.ens_size)]
+
+    
     def __init__(self,model_path,ens_size,gpuid):
         self.model_path = model_path
         self.ens_size = ens_size
@@ -87,9 +91,6 @@ class ANITesterTool():
         
         self.load_models()
         
-        def load_models(self):
-            self.ncl = [pync.molecule(self.cnstfile, self.saefile, self.model_path + 'train' + str(i+net_start_id) + '/networks/', self.gpuid, False) for i in range(self.ens_size)]
-
 class anitrainerparamsdesigner():
     def __init__(self, elements, Nrr, Rcr, Nar=0, Nzt=0, Rca=3.5, Xst=0.7, Charge=False, Repuls=False, ACA=False, descriptor="ANI_NORMAL"):
         self.params = {"elm":elements,
