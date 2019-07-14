@@ -79,8 +79,9 @@ def get_train_stats(Nn,train_root):
     return allnets, completed
 
 class ANITesterTool:
+    
     def load_models(self):
-        self.ncl = [pync.molecule(self.cnstfile, self.saefile, self.model_path + 'train' + str(i+net_start_id) + '/networks/', self.gpuid, False) for i in range(self.ens_size)]
+        self.ncl = [pync.molecule(self.cnstfile, self.saefile, self.model_path + 'train' + str(i) + '/networks/', self.gpuid, False) for i in range(self.ens_size)]
 
     
     def __init__(self,model_path,ens_size,gpuid):
@@ -88,9 +89,19 @@ class ANITesterTool:
         self.ens_size = ens_size
         self.gpuid = gpuid
         self.cnstfile = model_path+[f for f in os.listdir(self.model_path) if f[-7:] == '.params'][0]
-        self.saefile = model_path+[f for f in os.listdir(self.model_path) if f[-4:] == '.dat'][0]
+        self.saefile  = model_path+[f for f in os.listdir(self.model_path) if f[-4:] == '.dat'][0]
         
         self.load_models()
+        
+    def evaluate_testset(self):
+        for i in range(self.ens_size):
+            adl = pyt.anidataloader(self.model_path+'/testset/testset'+str(i)+'.h5')
+            for data in adl:
+                print(data.keys())
+            
+        
+    def evaluate_dataset(self):
+        print('Eval DSET')
         
 class anitrainerparamsdesigner():
     def __init__(self, elements, Nrr, Rcr, Nar=0, Nzt=0, Rca=3.5, Xst=0.7, Charge=False, Repuls=False, ACA=False, descriptor="ANI_NORMAL"):
