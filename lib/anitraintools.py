@@ -93,12 +93,27 @@ class ANITesterTool:
         
         self.load_models()
         
-    def evaluate_testset(self):
-        for i in range(self.ens_size):
+    def evaluate_individual_testset(self,energy_key='energies',force_key='forces'):
+        errors = []
+        for i,nc in enumerate(self.ncl):
             adl = pyt.anidataloader(self.model_path+'/testset/testset'+str(i)+'.h5')
             for data in adl:
-                print(data.keys())
+                S = data['species']
             
+                X = data['coordinates']
+                C = data['cell']
+                
+                for x,c in zip(X,C):
+                    pbc_inv = np.linalg.inv(c).astype(np.float32)
+                    
+                    nc.setMolecule(coords=np.array(x,dtype=np.float32), types=list(S))
+                    nc.setPBC(bool(self.atoms.get_pbc()[0]), bool(self.atoms.get_pbc()[1]), bool(self.atoms.get_pbc()[2]))
+                    nc.set_cell(c,pbc_inv)
+                    E = nc.energy().copy()
+                    F = nc.force().copy()
+                    print(E)
+                    
+        return np.stack(errors)
         
     def evaluate_dataset(self):
         print('Eval DSET')
