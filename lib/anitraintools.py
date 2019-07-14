@@ -1,6 +1,7 @@
 import hdnntools as hdt
 import pyanitools as pyt
 
+import pyNeuroChem as pync
 from pyNeuroChem import cachegenerator as cg
 
 import numpy as np
