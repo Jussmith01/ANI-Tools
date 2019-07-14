@@ -108,6 +108,7 @@ class ANITesterTool:
                 E = conv_au_ev*data[energy_key]
                 F = conv_au_ev*data[force_key]
                 
+                Err = []
                 for x,c,e,f in zip(X,C,E,F):
                     pbc_inv = np.linalg.inv(c).astype(np.float32)
                     
@@ -116,7 +117,8 @@ class ANITesterTool:
                     nc.setCell(c,pbc_inv)
                     Eani = conv_au_ev*nc.energy().copy()[0]
                     Fani = conv_au_ev*nc.force().copy()
-                    print(E-Eani)
+                    Err = np.array([Eani-e,np.mean(np.abs(Fani-f))])
+                print(np.stack(Err))
                     
         return np.stack(errors)
         
