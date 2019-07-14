@@ -121,10 +121,10 @@ class ANITesterTool:
                     Eani = conv_au_ev*nc.energy().copy()[0]
                     Fani = conv_au_ev*nc.force().copy()
                     Evals_ind.append(np.array([Eani,e]))
-                    Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]))
+                    Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
                     
             Evals.append(np.stack(Evals_ind))
-            Fvals.append(np.hstack(Fvals_ind))
+            Fvals.append(np.vstack(Fvals_ind))
 
         return Evals,Fvals
         
