@@ -7,6 +7,7 @@ from pyNeuroChem import cachegenerator as cg
 import numpy as np
 
 from scipy.integrate import quad
+import pandas as pd
 
 from time import sleep
 import subprocess
@@ -105,8 +106,8 @@ class ANITesterTool:
         self.load_models()
         
     def evaluate_individual_testset(self,energy_key='energies',force_key='forces'):
-        Evals = []
-        Fvals = []
+        self.Evals = []
+        self.Fvals = []
         for i,nc in enumerate(self.ncl):
             adl = pyt.anidataloader(self.model_path+'/testset/testset'+str(i)+'.h5')
             
@@ -132,14 +133,14 @@ class ANITesterTool:
                     Evals_ind.append(np.array([Eani,e])/len(S))
                     Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
                     
-            Evals.append(np.stack(Evals_ind))
-            Fvals.append(np.vstack(Fvals_ind))
+            self.Evals.append(np.stack(Evals_ind))
+            self.Fvals.append(np.vstack(Fvals_ind))
 
-        return Evals,Fvals
+        return self.Evals,self.Fvals
     
     def evaluate_individual_dataset(self,dataset_file,energy_key='energies',force_key='forces'):
-        Evals = []
-        Fvals = []
+        self.Evals = []
+        self.Fvals = []
         for i,nc in enumerate(self.ncl):
             adl = pyt.anidataloader(dataset_file)
             
@@ -165,11 +166,21 @@ class ANITesterTool:
                     Evals_ind.append(np.array([Eani,e])/len(S))
                     Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
                     
-            Evals.append(np.stack(Evals_ind))
-            Fvals.append(np.vstack(Fvals_ind))
+            self.Evals.append(np.stack(Evals_ind))
+            self.Fvals.append(np.vstack(Fvals_ind))
 
-        return Evals,Fvals
+        return self.Evals,self.Fvals
         
+    def build_ind_error_dataframe(self):
+        d = {'Emae':[],'Erms':[],'Fmae':[],'Frms':[],}
+        for i,(e,f) in enumerate(zip(self.Evals,self.Fvals)):
+            d[Emae].append(1000.0*hdt.calculatemeanabserror(e[:,0],e[:,1]))
+            d[Erms].append(1000.0*hdt.calculaterootmeansqrerror(e[:,0],e[:,1]))
+            d[Fmae].append(hdt.calculatemeanabserror(f[:,0],f[:,1]))
+            d[Frms].append(hdt.calculaterootmeansqrerror(f[:,0],f[:,1]))
+        return pd.DataFrame(data=d)
+            
+    
     def plot_corr_dist(self, Xa, Xp, inset=True,linfit=True, xlabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', ylabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', figsize=[13,10], cmap=mpl.cm.viridis):
         Fmx = Xa.max()
         Fmn = Xa.min()
