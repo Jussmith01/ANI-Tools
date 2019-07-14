@@ -174,10 +174,10 @@ class ANITesterTool:
     def build_ind_error_dataframe(self):
         d = {'Emae':[],'Erms':[],'Fmae':[],'Frms':[],}
         for i,(e,f) in enumerate(zip(self.Evals,self.Fvals)):
-            d[Emae].append(1000.0*hdt.calculatemeanabserror(e[:,0],e[:,1]))
-            d[Erms].append(1000.0*hdt.calculaterootmeansqrerror(e[:,0],e[:,1]))
-            d[Fmae].append(hdt.calculatemeanabserror(f[:,0],f[:,1]))
-            d[Frms].append(hdt.calculaterootmeansqrerror(f[:,0],f[:,1]))
+            d['Emae'].append(1000.0*hdt.calculatemeanabserror(e[:,0],e[:,1]))
+            d['Erms'].append(1000.0*hdt.calculaterootmeansqrerror(e[:,0],e[:,1]))
+            d['Fmae'].append(hdt.calculatemeanabserror(f[:,0],f[:,1]))
+            d['Frms'].append(hdt.calculaterootmeansqrerror(f[:,0],f[:,1]))
         return pd.DataFrame(data=d)
             
     
