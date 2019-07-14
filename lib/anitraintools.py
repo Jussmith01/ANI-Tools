@@ -105,8 +105,8 @@ class ANITesterTool:
                 X = data['coordinates']
                 C = data['cell']
                 
-                E = data[energy_key]
-                F = data[force_key]
+                E = conv_au_ev*data[energy_key]
+                F = conv_au_ev*data[force_key]
                 
                 for x,c,e,f in zip(X,C,E,F):
                     pbc_inv = np.linalg.inv(c).astype(np.float32)
@@ -114,7 +114,7 @@ class ANITesterTool:
                     nc.setMolecule(coords=np.array(x,dtype=np.float32), types=list(S))
                     nc.setPBC(bool(True), bool(True), bool(True))
                     nc.setCell(c,pbc_inv)
-                    Eani = conv_au_ev*nc.energy().copy()
+                    Eani = conv_au_ev*nc.energy().copy()[0]
                     Fani = conv_au_ev*nc.force().copy()
                     print(E-Eani)
                     
