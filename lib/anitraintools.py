@@ -108,7 +108,7 @@ class ANITesterTool:
                     
                     nc.setMolecule(coords=np.array(x,dtype=np.float32), types=list(S))
                     nc.setPBC(bool(True), bool(True), bool(True))
-                    nc.set_cell(c,pbc_inv)
+                    nc.setCell(c,pbc_inv)
                     E = nc.energy().copy()
                     F = nc.force().copy()
                     print(E)
