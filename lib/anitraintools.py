@@ -126,7 +126,7 @@ class ANITesterTool:
             Evals.append(np.stack(Evals_ind))
             Fvals.append(np.hstack(Fvals_ind))
 
-        return np.stack(Evals),np.stack(Fvals)
+        return Evals,Fvals
         
     def evaluate_dataset(self):
         print('Eval DSET')
