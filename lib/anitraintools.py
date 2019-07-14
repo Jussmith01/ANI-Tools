@@ -21,6 +21,8 @@ from multiprocessing import Process
 import shutil
 import copy
 
+conv_au_ev = 27.21138505
+
 def interval(v, S):
     ps = 0.0
     ds = 1.0 / float(S)
@@ -103,15 +105,18 @@ class ANITesterTool:
                 X = data['coordinates']
                 C = data['cell']
                 
-                for x,c in zip(X,C):
+                E = data[energy_key]
+                F = data[force_key]
+                
+                for x,c,e,f in zip(X,C,E,F):
                     pbc_inv = np.linalg.inv(c).astype(np.float32)
                     
                     nc.setMolecule(coords=np.array(x,dtype=np.float32), types=list(S))
                     nc.setPBC(bool(True), bool(True), bool(True))
                     nc.setCell(c,pbc_inv)
-                    E = nc.energy().copy()
-                    F = nc.force().copy()
-                    print(E)
+                    Eani = conv_au_ev*nc.energy().copy()
+                    Fani = conv_au_ev*nc.force().copy()
+                    print(E-Eani)
                     
         return np.stack(errors)
         
