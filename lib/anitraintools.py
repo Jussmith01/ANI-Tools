@@ -107,7 +107,7 @@ class ANITesterTool:
                     pbc_inv = np.linalg.inv(c).astype(np.float32)
                     
                     nc.setMolecule(coords=np.array(x,dtype=np.float32), types=list(S))
-                    nc.setPBC(bool(self.atoms.get_pbc()[0]), bool(self.atoms.get_pbc()[1]), bool(self.atoms.get_pbc()[2]))
+                    nc.setPBC(bool(True), bool(True), bool(True))
                     nc.set_cell(c,pbc_inv)
                     E = nc.energy().copy()
                     F = nc.force().copy()
