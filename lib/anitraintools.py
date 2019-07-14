@@ -77,6 +77,12 @@ def get_train_stats(Nn,train_root):
             completed.append(False)
     return allnets, completed
 
+class ANITesterTool():
+    def __init__(self,model_path):
+        self.model_path = model_path
+        print(os.listdir(self.model_path))
+        
+
 class anitrainerparamsdesigner():
     def __init__(self, elements, Nrr, Rcr, Nar=0, Nzt=0, Rca=3.5, Xst=0.7, Charge=False, Repuls=False, ACA=False, descriptor="ANI_NORMAL"):
         self.params = {"elm":elements,
