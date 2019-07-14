@@ -129,7 +129,7 @@ class ANITesterTool:
                     nc.setCell(c,pbc_inv)
                     Eani = conv_au_ev*nc.energy().copy()[0]
                     Fani = conv_au_ev*nc.force().copy()
-                    Evals_ind.append(np.array([Eani,e]))
+                    Evals_ind.append(np.array([Eani,e])/len(S))
                     Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
                     
             Evals.append(np.stack(Evals_ind))
