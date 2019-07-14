@@ -96,7 +96,8 @@ class ANITesterTool:
         self.load_models()
         
     def evaluate_individual_testset(self,energy_key='energies',force_key='forces'):
-        errors = []
+        Evals = []
+        Fvals = []
         for i,nc in enumerate(self.ncl):
             adl = pyt.anidataloader(self.model_path+'/testset/testset'+str(i)+'.h5')
             for data in adl:
@@ -108,7 +109,6 @@ class ANITesterTool:
                 E = conv_au_ev*data[energy_key]
                 F = conv_au_ev*data[force_key]
                 
-                Err = []
                 for x,c,e,f in zip(X,C,E,F):
                     pbc_inv = np.linalg.inv(c).astype(np.float32)
                     
@@ -117,10 +117,10 @@ class ANITesterTool:
                     nc.setCell(c,pbc_inv)
                     Eani = conv_au_ev*nc.energy().copy()[0]
                     Fani = conv_au_ev*nc.force().copy()
-                    Err = np.array([Eani-e,np.mean(np.abs(Fani-f))])
-                print(np.stack(Err))
-                    
-        return np.stack(errors)
+                    Evals.append(np.array([Eani,e]))
+                    Fvals.append(np.stack([Fani.flatten(),f.flatten()]))
+
+        return np.stack(Evals),np.hstack(Fvals)
         
     def evaluate_dataset(self):
         print('Eval DSET')
