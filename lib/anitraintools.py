@@ -100,6 +100,9 @@ class ANITesterTool:
         Fvals = []
         for i,nc in enumerate(self.ncl):
             adl = pyt.anidataloader(self.model_path+'/testset/testset'+str(i)+'.h5')
+            
+            Evals_ind = []
+            Evals_ind = []
             for data in adl:
                 S = data['species']
             
@@ -117,10 +120,13 @@ class ANITesterTool:
                     nc.setCell(c,pbc_inv)
                     Eani = conv_au_ev*nc.energy().copy()[0]
                     Fani = conv_au_ev*nc.force().copy()
-                    Evals.append(np.array([Eani,e]))
-                    Fvals.append(np.stack([Fani.flatten(),f.flatten()]))
+                    Evals_ind.append(np.array([Eani,e]))
+                    Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]))
+                    
+            Evals.append(np.stack(Evals_ind))
+            Fvals.append(np.hstack(Fvals_ind))
 
-        return np.stack(Evals),np.hstack(Fvals)
+        return np.stack(Evals),np.stack(Fvals)
         
     def evaluate_dataset(self):
         print('Eval DSET')
