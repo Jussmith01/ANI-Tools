@@ -178,7 +178,9 @@ class ANITesterTool:
             d['Erms'].append(1000.0*hdt.calculaterootmeansqrerror(e[:,0],e[:,1]))
             d['Fmae'].append(hdt.calculatemeanabserror(f[:,0],f[:,1]))
             d['Frms'].append(hdt.calculaterootmeansqrerror(f[:,0],f[:,1]))
-        return pd.DataFrame(data=d)
+        df = pd.DataFrame(data=d)
+        df.loc['Avg.'] = df.mean()
+        return df
             
     
     def plot_corr_dist(self, Xa, Xp, inset=True,linfit=True, xlabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', ylabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', figsize=[13,10], cmap=mpl.cm.viridis):
