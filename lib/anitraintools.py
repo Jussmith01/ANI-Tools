@@ -15,21 +15,9 @@ import random
 import re
 import os
 
-import matplotlib as mpl
-from matplotlib import pyplot as plt
-
 from multiprocessing import Process
 import shutil
 import copy
-
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-from matplotlib.colors import LogNorm
-import matplotlib.cm as cm
-
-from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
-from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-from matplotlib.backends.backend_pdf import PdfPages
 
 conv_au_ev = 27.21138505
 
@@ -90,6 +78,53 @@ def get_train_stats(Nn,train_root):
             completed.append(False)
     return allnets, completed
 
+def get_train_stats_ind(index,train_root):
+    # rerr = re.compile('EPOCH\s+?(\d+?)\n[\s\S]+?E \(kcal\/mol\)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\n\s+?dE \(kcal\/mol\)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\s+?(\d+?\.\d+?)\n[\s\S]+?Current best:\s+?(\d+?)\n[\s\S]+?Learning Rate:\s+?(\S+?)\n[\s\S]+?TotalEpoch:\s+([\s\S]+?)\n')
+    # rerr = re.compile('EPOCH\s+?(\d+?)\s+?\n[\s\S]+?E \(kcal\/mol\)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\n\s+?dE \(kcal\/mol\)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\n')
+    rblk = re.compile('=+?\n([\s\S]+?=+?\n[\s\S]+?(?:=|Deleting))')
+    repo = re.compile('EPOCH\s+?(\d+?)\s+?\n')
+    rerr = re.compile('\s+?(\S+?\s+?\(\S+?)\s+?((?:\d|inf)\S*?)\s+?((?:\d|inf)\S*?)\s+?((?:\d|inf)\S*?)\n')
+    rtme = re.compile('TotalEpoch:\s+?(\d+?)\s+?dy\.\s+?(\d+?)\s+?hr\.\s+?(\d+?)\s+?mn\.\s+?(\d+?\.\d+?)\s+?sc\.')
+    comp = re.compile('Termination Criterion Met')
+
+    allnets = []
+    completed = False
+    #print('reading:', train_root + 'train' + str(index) + '/' + 'output.opt')
+    if os.path.isfile(train_root + 'train' + str(index) + '/' + 'output.opt'):
+        optfile = open(train_root + 'train' + str(index) + '/' + 'output.opt', 'r').read()
+        matches = re.findall(rblk, optfile)
+
+        run = dict({'EPOCH': [], 'RTIME': [], 'ERROR': dict()})
+        for i, data in enumerate(matches):
+            run['EPOCH'].append(int(re.search(repo, data).group(1)))
+
+            m = re.search(rtme, data)
+            run['RTIME'].append(86400.0 * float(m.group(1)) +
+                                3600.0 * float(m.group(2)) +
+                                60.0 * float(m.group(3)) +
+                                float(m.group(4)))
+
+            err = re.findall(rerr, data)
+            for e in err:
+                if e[0] in run['ERROR']:
+                    run['ERROR'][e[0]].append(np.array([float(e[1]), float(e[2]), float(e[3])], dtype=np.float64))
+                else:
+                    run['ERROR'].update(
+                        {e[0]: [np.array([float(e[1]), float(e[2]), float(e[3])], dtype=np.float64)]})
+
+        for key in run['ERROR'].keys():
+            run['ERROR'][key] = np.vstack(run['ERROR'][key])
+
+        if re.match(comp, optfile):
+            completed = True
+        else:
+            completed = False
+
+        allnets.append(run)
+    else:
+        completed = False
+    return allnets, True
+
 class ANITesterTool:
     
     def load_models(self):
@@ -105,7 +140,7 @@ class ANITesterTool:
         
         self.load_models()
         
-    def evaluate_individual_testset(self,energy_key='energies',force_key='forces'):
+    def evaluate_individual_testset(self,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True):
         self.Evals = []
         self.Fvals = []
         for i,nc in enumerate(self.ncl):
@@ -121,56 +156,96 @@ class ANITesterTool:
                 
                 E = conv_au_ev*data[energy_key]
                 F = conv_au_ev*data[force_key]
+
+                if remove_sae:
+                    Esae = conv_au_ev*hdt.compute_sae(self.saefile,S)
+                else:
+                    Esae = 0.0
                 
                 for x,c,e,f in zip(X,C,E,F):
-                    pbc_inv = np.linalg.inv(c).astype(np.float32)
+                    if pbc is True:
+                        pbc_inv = np.linalg.inv(c).astype(np.float64)
                     
-                    nc.setMolecule(coords=np.array(x,dtype=np.float32), types=list(S))
-                    nc.setPBC(bool(True), bool(True), bool(True))
-                    nc.setCell(c,pbc_inv)
+                        nc.setMolecule(coords=np.array(x,dtype=np.float64), types=list(S))
+                        nc.setPBC(bool(True), bool(True), bool(True))
+                        nc.setCell(np.array(c,dtype=np.float64),pbc_inv)
+                    else:
+                        nc.setMolecule(coords=np.array(x, dtype=np.float64), types=list(S))
+
                     Eani = conv_au_ev*nc.energy().copy()[0]
-                    Fani = conv_au_ev*nc.force().copy()
-                    Evals_ind.append(np.array([Eani,e])/len(S))
+                    if forces:
+                        Fani = conv_au_ev*nc.force().copy()
+                    else:
+                        Fani = f
+
+                    if pbc is True:
+                        Evals_ind.append(np.array([Eani-Esae,e-Esae])/len(S))
+                    else:
+                        Evals_ind.append(np.array([Eani-Esae,e-Esae]))
                     Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
                     
             self.Evals.append(np.stack(Evals_ind))
             self.Fvals.append(np.vstack(Fvals_ind))
 
         return self.Evals,self.Fvals
-    
-    def evaluate_individual_dataset(self,dataset_file,energy_key='energies',force_key='forces'):
+
+    def evaluate_individual_dataset(self,dataset_file,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True):
         self.Evals = []
         self.Fvals = []
         for i,nc in enumerate(self.ncl):
             adl = pyt.anidataloader(dataset_file)
-            
+
             Evals_ind = []
             Fvals_ind = []
             for data in adl:
                 S = data['species']
-            
+
                 X = data['coordinates']
-                C = data['cell']
-                
+
                 E = conv_au_ev*data[energy_key]
-                F = conv_au_ev*data[force_key]
-                
+
+                if pbc:
+                    C = data['cell']
+                else:
+                    C = np.zeros(shape=(E.size,3,3),dtype=np.float64)
+
+                if forces:
+                    F = conv_au_ev*data[force_key]
+                else:
+                    F = np.zeros(shape=X.shape,dtype=np.float64)
+
+                if remove_sae:
+                    Esae = conv_au_ev*hdt.compute_sae(self.saefile,S)
+                else:
+                    Esae = 0.0
+
                 for x,c,e,f in zip(X,C,E,F):
-                    pbc_inv = np.linalg.inv(c).astype(np.float32)
-                    
-                    nc.setMolecule(coords=np.array(x,dtype=np.float32), types=list(S))
-                    nc.setPBC(bool(True), bool(True), bool(True))
-                    nc.setCell(c,pbc_inv)
+                    if pbc is True:
+                        pbc_inv = np.linalg.inv(c).astype(np.float64)
+
+                        nc.setMolecule(coords=np.array(x,dtype=np.float64), types=list(S))
+                        nc.setPBC(bool(True), bool(True), bool(True))
+                        nc.setCell(np.array(c,dtype=np.float64),pbc_inv)
+                    else:
+                        nc.setMolecule(coords=np.array(x, dtype=np.float64), types=list(S))
+
                     Eani = conv_au_ev*nc.energy().copy()[0]
-                    Fani = conv_au_ev*nc.force().copy()
-                    Evals_ind.append(np.array([Eani,e])/len(S))
+                    if forces:
+                        Fani = conv_au_ev*nc.force().copy()
+                    else:
+                        Fani = f
+
+                    if pbc is True:
+                        Evals_ind.append(np.array([Eani-Esae,e-Esae])/len(S))
+                    else:
+                        Evals_ind.append(np.array([Eani-Esae,e-Esae]))
                     Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
-                    
+
             self.Evals.append(np.stack(Evals_ind))
             self.Fvals.append(np.vstack(Fvals_ind))
 
         return self.Evals,self.Fvals
-        
+ 
     def build_ind_error_dataframe(self):
         d = {'Emae':[],'Erms':[],'Fmae':[],'Frms':[],}
         for i,(e,f) in enumerate(zip(self.Evals,self.Fvals)):
@@ -183,7 +258,18 @@ class ANITesterTool:
         return df
             
     
-    def plot_corr_dist(self, Xa, Xp, inset=True,linfit=True, xlabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', ylabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', figsize=[13,10], cmap=mpl.cm.viridis):
+    def plot_corr_dist(self, Xa, Xp, inset=True,linfit=True, xlabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', ylabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', figsize=[13,10]):
+        import matplotlib as mpl
+        import matplotlib.pyplot as plt
+        from matplotlib.colors import LogNorm
+        import matplotlib.cm as cm
+
+        from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
+        from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+        from matplotlib.backends.backend_pdf import PdfPages
+
+        cmap = mpl.cm.viridis
+
         Fmx = Xa.max()
         Fmn = Xa.min()
     
@@ -252,10 +338,54 @@ class ANITesterTool:
     
         #plt.draw()
         plt.show()
-    
-    def evaluate_dataset(self):
-        print('Eval DSET')
-        
+
+def plot_corr_dist_ax(ax, Xa, Xp, errors=False,linfit=True, xlabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', ylabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$'):
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LogNorm
+    import matplotlib.cm as cm
+
+    from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
+    from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+    from matplotlib.backends.backend_pdf import PdfPages
+
+    cmap = mpl.cm.viridis
+
+    Fmx = Xa.max()
+    Fmn = Xa.min()
+
+    label_size = 14
+    #mpl.rcParams['xtick.labelsize'] = label_size
+    #mpl.rcParams['ytick.labelsize'] = label_size
+
+    # Plot ground truth line
+    if linfit:
+        ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='r', linewidth=1)
+
+    # Set labels
+    #ax.set_xlabel(xlabel, fontsize=18)
+    #ax.set_ylabel(ylabel, fontsize=18)
+
+    # Plot 2d Histogram
+    if linfit:
+        bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), range= [[Xa.min(), Xa.max()], [Xp.min(), Xp.max()]], cmap=cmap)
+    else:
+        bins = ax.hist2d(Xa, Xp, bins=200, norm=LogNorm(), cmap=cmap)
+        # Build color bar
+        #cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
+        #cb1 = ax.colorbar(bins[-1], cmap=cmap)
+        #cb1.set_label('Count', fontsize=16)
+
+    # Annotate with errors
+    PMAE = hdt.calculatemeanabserror(Xa, Xp)
+    PRMS = hdt.calculaterootmeansqrerror(Xa, Xp)
+    if errors:
+        ax.text(0.55*((Fmx-Fmn))+Fmn, 0.2*((Fmx-Fmn))+Fmn, 'MAE='+"{:.3f}".format(PMAE)+'\nRMSE='+"{:.3f}".format(PRMS), fontsize=20,
+                    bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
+
+    #if not linfit:
+    #    plt.vlines(x=0.0,ymin=130,ymax=300,linestyle='--',color='red')        
+ 
 class anitrainerparamsdesigner():
     def __init__(self, elements, Nrr, Rcr, Nar=0, Nzt=0, Rca=3.5, Xst=0.7, Charge=False, Repuls=False, ACA=False, descriptor="ANI_NORMAL"):
         self.params = {"elm":elements,
@@ -774,6 +904,7 @@ class alaniensembletrainer():
                                      forces=True, grad=False, Fkey='forces', forces_unit=1.0,
                                      dipole=False, dipole_unit=1.0, Dkey='dipoles',
                                      charge=False, charge_unit=1.0, Ckey='charges',
+                                     solvent=False,
                                      pbc=False,
                                      Eax0sum=False, rmhighe=True,rmhighf=False,force_exact_split=False):
         if not os.path.isfile(self.netdict['saefile']):
@@ -806,6 +937,199 @@ class alaniensembletrainer():
 
         if build_test:
             testh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/testset' + str(r) + '.h5') for r in range(N)]
+
+        if rmhighe:
+            dE = []
+            for f in self.h5file:
+                adl = pyt.anidataloader(h5d + f)
+                for data in adl:
+                    S = data['species']
+                    E = data[Ekey]
+                    X = data['coordinates']
+
+                    Esae = hdt.compute_sae(self.netdict['saefile'], S)
+
+                    dE.append((E - Esae) / np.sqrt(len(S)))
+
+            dE = np.concatenate(dE)
+            cidx = np.where(np.abs(dE) < 15.0)
+            std = dE[cidx].std()
+            men = np.mean(dE[cidx])
+
+            print(men, std, men + std)
+            idx = np.intersect1d(np.where(dE >= -np.abs(9 * std + men))[0], np.where(dE <= np.abs(9 * std + men))[0])
+            cnt = idx.size
+            print('DATADIST: ', dE.size, cnt, (dE.size - cnt), 100.0 * ((dE.size - cnt) / dE.size))
+
+        E = []
+        data_count = np.zeros((N, 3), dtype=np.int32)
+        for f in self.h5file:
+            adl = pyt.anidataloader(h5d + f)
+            for data in adl:
+                # print(data['path'],data['energies'].size)
+
+                S = data['species']
+
+                if data[Ekey].size > 0 and (set(S).issubset(self.netdict['atomtyp'])):
+
+                    X = np.array(data['coordinates'], order='C', dtype=np.float32)
+
+                    if Eax0sum:
+                        E = energy_unit * np.sum(np.array(data[Ekey], order='C', dtype=np.float64), axis=1)
+                    else:
+                        E = energy_unit * np.array(data[Ekey], order='C', dtype=np.float64)
+
+                    Sv = np.zeros((E.size,7),dtype=np.float32)
+                    if solvent:
+                        Sv = np.array(data['solvent'], order='C', dtype=np.float32)
+
+                    if forces and not grad:
+                        F = forces_unit * np.array(data[Fkey], order='C', dtype=np.float32)
+                    elif forces and grad:
+                        F = -forces_unit * np.array(data[Fkey], order='C', dtype=np.float32)
+                    else:
+                        F = 0.0 * X
+
+                    D = np.zeros((E.size,3),dtype=np.float32)
+                    if dipole:
+                        D = dipole_unit * np.array(data[Dkey], order='C', dtype=np.float32).reshape(E.size,3)
+                    else:
+                        D = 0.0 * D
+
+                    P = np.zeros((E.size,3,3),dtype=np.float32)
+                    if pbc:
+                        P = np.array(data['cell'], order='C', dtype=np.float32).reshape(E.size,3,3)
+                    else:
+                        P = 0.0 * P
+
+                    C = np.zeros((E.size,X.shape[1]),dtype=np.float32)
+                    if charge:
+                        C = charge_unit * np.array(data[Ckey], order='C', dtype=np.float32).reshape(E.size,len(S))
+                    else:
+                        C = 0.0 * C
+
+                    if rmhighe:
+                        Esae = hdt.compute_sae(self.netdict['saefile'], S)
+
+                        ind_dE = (E - Esae) / np.sqrt(len(S))
+
+                        hidx = np.union1d(np.where(ind_dE < -(9.0 * std + men))[0],
+                                          np.where(ind_dE >  (9.0 * std + men))[0])
+
+                        lidx = np.intersect1d(np.where(ind_dE >= -(9.0 * std + men))[0],
+                                              np.where(ind_dE <=  (9.0 * std + men))[0])
+
+                        if hidx.size > 0:
+                            print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ',
+                                  (E[hidx] - Esae) / np.sqrt(len(S)))
+
+                        X = X[lidx]
+                        E = E[lidx]
+                        F = F[lidx]
+                        D = D[lidx]
+                        C = C[lidx]
+                        P = P[lidx]
+                        Sv = Sv[lidx]
+
+                    if rmhighf:
+                        hfidx = np.where(np.abs(F) > 2.0)
+                        if hfidx[0].size > 0:
+                            print('High force:',hfidx)
+                            hfidx = np.all(np.abs(F).reshape(E.size,-1) <= 2.0,axis=1)
+                            X = X[hfidx]
+                            E = E[hfidx]
+                            F = F[hfidx]
+                            D = D[hfidx]
+                            C = C[hfidx]
+                            P = P[hfidx]
+                            Sv = Sv[hfidx]
+
+                    # Build random split index
+                    ridx = np.random.randint(0, Nblocks, size=E.size)
+                    Didx = [np.argsort(ridx)[np.where(ridx == i)] for i in range(Nblocks)]
+
+                    # Build training cache
+                    for nid, cache in enumerate(cachet):
+                        set_idx = np.concatenate(
+                            [Didx[((bid + nid * int(Nstride)) % Nblocks)] for bid in range(Ntrain)])
+                        if set_idx.size != 0:
+                            data_count[nid, 0] += set_idx.size
+                            #print("Py tDIPOLE1:\n",D[set_idx][0:3],D.shape)
+                            #print("Py tDIPOLE2:\n",D[set_idx][-3:],D.shape)
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], Sv[set_idx], list(S))
+
+                    for nid, cache in enumerate(cachev):
+                        set_idx = np.concatenate(
+                            [Didx[(Ntrain + bid + nid * int(Nstride)) % Nblocks] for bid in range(Nvalid)])
+                        if set_idx.size != 0:
+                            data_count[nid, 1] += set_idx.size
+                            #print("Py vDIPOLE1:\n",D[set_idx][0:3],D.shape)
+                            #print("Py vDIPOLE2:\n",D[set_idx][-3:],D.shape)
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx],Sv[set_idx], list(S))
+
+                    if build_test:
+                        for nid, th5 in enumerate(testh5):
+                            set_idx = np.concatenate(
+                                [Didx[(Ntrain + Nvalid + bid + nid * int(Nstride)) % Nblocks] for bid in range(Ntest)])
+                            if set_idx.size != 0:
+                                data_count[nid, 2] += set_idx.size
+                                #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx], species=list(S))
+                                #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx],
+                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx],solvent=Sv[set_idx], species=list(S))
+
+        # Save train and valid meta file and cleanup testh5
+        for t, v in zip(cachet, cachev):
+            t.makemetadata()
+            v.makemetadata()
+
+        if build_test:
+            for th in testh5:
+                th.cleanup()
+
+        print(' Train ', ' Valid ', ' Test ')
+        print(data_count)
+        print('Training set built.')
+
+    def build_strided_training_cache_ind(self, ids, rseed, Nblocks, Nvalid, Ntest, build_test=True,
+                                         Ekey='energies', energy_unit=1.0,
+                                         forces=True, grad=False, Fkey='forces', forces_unit=1.0,
+                                         dipole=False, dipole_unit=1.0, Dkey='dipoles',
+                                         charge=False, charge_unit=1.0, Ckey='charges',
+                                         pbc=False,
+                                         Eax0sum=False, rmhighe=True,rmhighf=False,force_exact_split=False):
+        np.random.seed(rseed)
+
+        if not os.path.isfile(self.netdict['saefile']):
+            self.sae_linear_fitting(Ekey=Ekey, energy_unit=energy_unit, Eax0sum=Eax0sum)
+
+        h5d = self.h5dir
+
+        store_dir = self.train_root + "cache-data-"
+        N = self.Nn
+        Ntrain = Nblocks - Nvalid - Ntest
+
+        if Nblocks % N != 0:
+            raise ValueError('Error: number of networks must evenly divide number of blocks.')
+
+        Nstride = Nblocks / N
+
+        if not os.path.exists(store_dir + str(ids)):
+            os.mkdir(store_dir + str(ids))
+
+        if build_test:
+            if os.path.exists(store_dir + str(ids) + '/../testset/testset' + str(ids) + '.h5'):
+                os.remove(store_dir + str(ids) + '/../testset/testset' + str(ids) + '.h5')
+
+            if not os.path.exists(store_dir + str(ids) + '/../testset'):
+                os.mkdir(store_dir + str(ids) + '/../testset')
+
+        cachet = cg('_train', self.netdict['saefile'], store_dir + str(ids) + '/', False)
+        cachev = cg('_valid', self.netdict['saefile'], store_dir + str(ids) + '/', False)
+
+        if build_test:
+            testh5 = pyt.datapacker(store_dir + str(ids) + '/../testset/testset' + str(ids) + '.h5')
 
         if rmhighe:
             dE = []
@@ -885,7 +1209,7 @@ class alaniensembletrainer():
                                               np.where(ind_dE <= (11.0 * std + men))[0])
 
                         if hidx.size > 0:
-                            print('  -(' + f + ':' + data['path'] + ')High energies detected:\n    ',
+                            print('  -(' + f + ':' + data['path'] + ') High energies detected:\n    ',
                                   (E[hidx] - Esae) / np.sqrt(len(S)))
 
                         X = X[lidx]
@@ -912,48 +1236,41 @@ class alaniensembletrainer():
                     Didx = [np.argsort(ridx)[np.where(ridx == i)] for i in range(Nblocks)]
 
                     # Build training cache
-                    for nid, cache in enumerate(cachet):
-                        set_idx = np.concatenate(
-                            [Didx[((bid + nid * int(Nstride)) % Nblocks)] for bid in range(Ntrain)])
-                        if set_idx.size != 0:
-                            data_count[nid, 0] += set_idx.size
-                            #print("Py tDIPOLE1:\n",D[set_idx][0:3],D.shape)
-                            #print("Py tDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
+                    #for nid, cache in enumerate(cachet):
 
-                    for nid, cache in enumerate(cachev):
-                        set_idx = np.concatenate(
-                            [Didx[(Ntrain + bid + nid * int(Nstride)) % Nblocks] for bid in range(Nvalid)])
-                        if set_idx.size != 0:
-                            data_count[nid, 1] += set_idx.size
-                            #print("Py vDIPOLE1:\n",D[set_idx][0:3],D.shape)
-                            #print("Py vDIPOLE2:\n",D[set_idx][-3:],D.shape)
-                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
+                    set_idx = np.concatenate(
+                        [Didx[((bid + ids * int(Nstride)) % Nblocks)] for bid in range(Ntrain)])
+                    if set_idx.size != 0:
+                        data_count[ids, 0] += set_idx.size
+                        cachet.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
+
+                    #for nid, cache in enumerate(cachev):
+
+                    set_idx = np.concatenate(
+                        [Didx[(Ntrain + bid + ids * int(Nstride)) % Nblocks] for bid in range(Nvalid)])
+                    if set_idx.size != 0:
+                        data_count[ids, 1] += set_idx.size
+                        cachev.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
 
                     if build_test:
-                        for nid, th5 in enumerate(testh5):
-                            set_idx = np.concatenate(
-                                [Didx[(Ntrain + Nvalid + bid + nid * int(Nstride)) % Nblocks] for bid in range(Ntest)])
-                            if set_idx.size != 0:
-                                data_count[nid, 2] += set_idx.size
-                                #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx], species=list(S))
-                                #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx],
-                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx], species=list(S))
+                        #for nid, th5 in enumerate(testh5):
+
+                        set_idx = np.concatenate(
+                            [Didx[(Ntrain + Nvalid + bid + ids * int(Nstride)) % Nblocks] for bid in range(Ntest)])
+                        if set_idx.size != 0:
+                            data_count[ids, 2] += set_idx.size
+                            testh5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx], energies=E[set_idx], species=list(S))
 
         # Save train and valid meta file and cleanup testh5
-        for t, v in zip(cachet, cachev):
-            t.makemetadata()
-            v.makemetadata()
+        cachet.makemetadata()
+        cachev.makemetadata()
 
         if build_test:
-            for th in testh5:
-                th.cleanup()
+            testh5.cleanup()
 
-        print(' Train ', ' Valid ', ' Test ')
-        print(data_count)
-        print('Training set built.')
+        #print(' Train ', ' Valid ', ' Test ')
+        #print(data_count[ids])
+        #print(ids,'Training set built.')
 
     def train_ensemble(self, GPUList, remove_existing=False):
         print('Training Ensemble...')

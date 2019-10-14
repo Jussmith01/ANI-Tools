@@ -174,12 +174,13 @@ class generate_ensemble_data(aat.anicrossvalidationconformer):
                           'Na2': [],})
 
             for file in self.tsfiles[key]:
+                print(key,file)
                 adl = ant.anidataloader(file)
                 for i, data in enumerate(adl):
                     #if i > 5:
                     #    break
                     if data['coordinates'].shape[0] != 0:
-                        Eani, Fani, sig = self.compute_energyandforce_conformations(np.array(data['coordinates'],dtype=np.float32), data['species'], ensemble=False)
+                        Eani, Fani, sig = self.compute_energyandforce_conformations(np.array(data['coordinates'],dtype=np.float64), data['species'], ensemble=False)
 
                         midx = np.where( data['energies'] - data['energies'].min() < maxe/hdt.hatokcal )[0]
 
@@ -551,6 +552,14 @@ class evaluate_ensemble_data(aat.anicrossvalidationconformer):
     def generate_correlation_plot(self, ntkey, tskey, prop1, prop2, figsize=[13,10],cmap=mpl.cm.viridis):
         Nn = self.fdata[ntkey][tskey][prop1].shape[0]-1
         plot_corr_dist(self.fdata[ntkey][tskey][prop1][Nn,:], self.fdata[ntkey][tskey][prop2], True, figsize, cmap)
+
+    def generate_error_distribution(self, tskey, prop1, prop2, bins=100, figsize=[13,10],cmap=mpl.cm.viridis):
+        fig = plt.figure(figsize=figsize)
+        for ntkey in self.fdata:
+            Nn = self.fdata[ntkey][tskey][prop1].shape[0]-1
+            plt.hist(self.fdata[ntkey][tskey][prop1][Nn,:]-self.fdata[ntkey][tskey][prop2],bins=bins,log=True,alpha=0.5,label=ntkey)
+        plt.legend()
+        plt.show()
 
     def generate_rmserror(self, ntkey, tskey, prop1, prop2):
         Nn = self.fdata[ntkey][tskey][prop1].shape[0]-1

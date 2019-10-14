@@ -192,7 +192,7 @@ class anicrossvalidationconformer(object):
         shift = 0
         for j,x in enumerate(X_split):
             for i, nc in enumerate(self.ncl):
-                nc.setConformers(confs=x,types=list(S))
+                nc.setConformers(confs=np.array(x,dtype=np.float64),types=list(S))
                 E = nc.energy().copy()
                 F = nc.force().copy()
                 #print(E.shape,x.shape,energies.shape,shift)
@@ -216,12 +216,14 @@ class anicrossvalidationconformer(object):
         forces   = np.zeros((X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
         shift = 0
         for j,x in enumerate(X_split):
-            self.ncl[netid].setConformers(confs=x,types=list(S))
+            self.ncl[netid].setConformers(confs=np.array(x,dtype=np.float64),types=list(S))
             E = self.ncl[netid].energy().copy()
+            F = self.ncl[netid].force().copy()
             energies[shift:shift+E.shape[0]] = E
+            forces  [shift:shift+E.shape[0]] = F
             shift += x.shape[0]
 
-        return hdt.hatokcal*energies#, charges
+        return hdt.hatokcal*energies,hdt.hatokcal*forces#, charges
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_separate(self,X,S,i):
@@ -321,14 +323,14 @@ class anicrossvalidationmolecule(object):
         Nd = X.shape[0]
         Na = X.shape[1]
         for nc in self.ncl:
-            nc.setMolecule(coords=X[0], types=list(S))
+            nc.setMolecule(coords=np.array(X[0],dtype=np.float64), types=list(S))
 
         energies = np.zeros((self.Nn, Nd), dtype=np.float64)
         forces = np.zeros((self.Nn, Nd, Na, 3), dtype=np.float32)
 
         for i, x in enumerate(X):
             for j, nc in enumerate(self.ncl):
-                nc.setCoordinates(coords=x)
+                nc.setCoordinates(coords=np.array(x,dtype=np.float64))
                 energies[j,i] = nc.energy()[0]
                 forces[j,i,:,:] = nc.force()
 
@@ -701,8 +703,10 @@ class ani_torsion_scanner():
             a1=int(d[1])
             a2=int(d[2])
             a3=int(d[3])
-        
+
+            #print(mol.get_dihedral(d) * 180./np.pi)
             Chem.rdMolTransforms.SetDihedralDeg(c, a0, a1, a2, a3, p)
+            #print(Chem.rdMolTransforms.GetDihedralDeg(c, a0, a1, a2, a3,),p)
             #print(Chem.rdMolTransforms.GetDihedralDeg(c, a0, a1, a2, a3,),p,c)
 
         phi_value, e, s, atm = self.opt(mol, dhls)
@@ -739,7 +743,10 @@ class ani_torsion_scanner():
             sidx = tuple([j for j in i])
             if GetCharge:
                 q = self.ens.compute_mean_charges()
+                print(q[0])
+                print(atm.get_chemical_symbols())
                 chg[sidx] = q[0]
+                print('Dipole:',np.linalg.norm(np.sum(1.889725988579*(q[0]*x.T).T,axis=0))/0.393456)
 
             conf = mol_copy.GetConformer(-1)
             for aid in range(conf.GetNumAtoms()):
