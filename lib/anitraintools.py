@@ -957,7 +957,7 @@ class alaniensembletrainer():
             men = np.mean(dE[cidx])
 
             print(men, std, men + std)
-            idx = np.intersect1d(np.where(dE >= -np.abs(9 * std + men))[0], np.where(dE <= np.abs(9 * std + men))[0])
+            idx = np.intersect1d(np.where(dE >= -np.abs(8 * std + men))[0], np.where(dE <= np.abs(8 * std + men))[0])
             cnt = idx.size
             print('DATADIST: ', dE.size, cnt, (dE.size - cnt), 100.0 * ((dE.size - cnt) / dE.size))
 
