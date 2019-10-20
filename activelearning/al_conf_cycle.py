@@ -22,6 +22,8 @@ datdir = 'ANI-1x-DHL-0000.00'
 
 h5stor = root_dir + 'h5files/'# h5store location
 
+strucsfolder = root_dir + 'strucs/'# strucs location
+
 optlfile = root_dir + 'optimized_input_files.dat'
 
 #Comet
@@ -73,6 +75,10 @@ nmsparams = {'T': 600.0, # Temperature
              'sig' : M,
              }
 
+strucsparams = {'N': 40, # number of maximum structures to select before QBC from each XYZ file
+                'sig': M,
+               }
+
 mdsparams = {'N': 2, # trajectories to run
              'T1': 300,
              'T2': 1000,
@@ -91,7 +97,7 @@ tsparams = {'T':200, # trajectories to run
              'tsfiles': ['/home/jsmith48/scratch/auto_rxn_al/rxns/'],
              'nmfile':None,                          #path to gaussian log file containing the data
              'nm':0,                                 #id of normal mode
-             'perc':0,                               #Move the molecules initial coordiantes along the mode by this amount. Negative numbers are ok. 
+             'perc':0,                               #Move the molecules initial coordiantes along the mode by this amount. Negative numbers are ok.
              }
 
 dhparams = { 'Nmol': 100,
@@ -106,9 +112,9 @@ dhparams = { 'Nmol': 100,
 dmrparams = {#'mdselect' : [(400,0),(60,2),(40,3),(5,4)],
              'mdselect' : [(10,0), (1,11)],
              'N' : 20,
-             'T' : 400.0, # running temp 
+             'T' : 400.0, # running temp
              'L' : 25.0, # box length
-             'V' : 0.04, # Random init velocities 
+             'V' : 0.04, # Random init velocities
              'dt' : 0.5, # MD time step
              'Nm' : 140, # Molecules to embed
              #'Nm' : 160, # Molecules to embed
@@ -186,10 +192,11 @@ for i in N:
         os.mkdir(root_dir + datdir + str(i+1).zfill(2))
 
     ## Run active learning sampling ##
-    acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms, netdict)
+    acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, strucsfolder, fpatoms, netdict)
     #acs.run_sampling_cluster(gcmddict, GPU)
     #acs.run_sampling_dimer(dmrparams, GPU)
     #acs.run_sampling_nms(nmsparams, GPU)
+    #acs.run_sampling_strucs(strucsparams, GPU)
     #acs.run_sampling_md(mdsparams, perc=0.5, gpus=GPU)
     #acs.run_sampling_TS(tsparams, gpus=[2])
     acs.run_sampling_dhl(dhparams, gpus=GPU+GPU)
@@ -199,5 +206,3 @@ for i in N:
 
     ## Submit jobs, return and pack data
     ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae, jtime)
-
-

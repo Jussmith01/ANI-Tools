@@ -20,6 +20,8 @@ datdir = 'ANI-AL-smallions-'
 
 h5stor = root_dir + 'h5files/'# h5store location
 
+strucsfolder = root_dir + 'strucs/'# strucs locations
+
 optlfile = root_dir + 'optimized_input_files.dat'
 
 #Comet
@@ -123,6 +125,10 @@ nmsparams = {'T': 600.0, # Temperature
              'sig' : M,
              }
 
+strucsparams = {'N': 40, # number of maximum structures to select before QBC from each XYZ file
+                'sig': M,
+               }
+
 mdsparams = {'N': 1, # trajectories to run
              'T1': 300,
              'T2': 1000,
@@ -223,10 +229,11 @@ for i in N:
         os.mkdir(root_dir + datdir + str(i+1).zfill(2))
 
     ## Run active learning sampling ##
-    acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms+['H'], netdict)
+    acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, strucsfolder, fpatoms+['H'], netdict)
     #acs.run_sampling_cluster(gcmddict, GPU)
     #acs.run_sampling_dimer(dmrparams, GPU)
     acs.run_sampling_nms(nmsparams, GPU)
+    #acs.run_sampling_strucs(strucsparams, GPU)
     acs.run_sampling_md(mdsparams, perc=0.25, gpus=GPU+GPU+GPU)
     #acs.run_sampling_dhl(dhparams, gpus=GPU+GPU)
     #acs.run_sampling_TS(tsparams, gpus=GPU)
