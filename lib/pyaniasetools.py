@@ -192,7 +192,7 @@ class anicrossvalidationconformer(object):
         shift = 0
         for j,x in enumerate(X_split):
             for i, nc in enumerate(self.ncl):
-                nc.setConformers(confs=x,types=list(S))
+                nc.setConformers(confs=np.array(x,dtype=np.float64),types=list(S))
                 E = nc.energy().copy()
                 F = nc.force().copy()
                 #print(E.shape,x.shape,energies.shape,shift)
@@ -216,12 +216,14 @@ class anicrossvalidationconformer(object):
         forces   = np.zeros((X.shape[0], X.shape[1], X.shape[2]), dtype=np.float32)
         shift = 0
         for j,x in enumerate(X_split):
-            self.ncl[netid].setConformers(confs=x,types=list(S))
+            self.ncl[netid].setConformers(confs=np.array(x,dtype=np.float64),types=list(S))
             E = self.ncl[netid].energy().copy()
+            F = self.ncl[netid].force().copy()
             energies[shift:shift+E.shape[0]] = E
+            forces  [shift:shift+E.shape[0]] = F
             shift += x.shape[0]
 
-        return hdt.hatokcal*energies#, charges
+        return hdt.hatokcal*energies,hdt.hatokcal*forces#, charges
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
     def compute_separate(self,X,S,i):
@@ -321,14 +323,14 @@ class anicrossvalidationmolecule(object):
         Nd = X.shape[0]
         Na = X.shape[1]
         for nc in self.ncl:
-            nc.setMolecule(coords=X[0], types=list(S))
+            nc.setMolecule(coords=np.array(X[0],dtype=np.float64), types=list(S))
 
         energies = np.zeros((self.Nn, Nd), dtype=np.float64)
         forces = np.zeros((self.Nn, Nd, Na, 3), dtype=np.float32)
 
         for i, x in enumerate(X):
             for j, nc in enumerate(self.ncl):
-                nc.setCoordinates(coords=x)
+                nc.setCoordinates(coords=np.array(x,dtype=np.float64))
                 energies[j,i] = nc.energy()[0]
                 forces[j,i,:,:] = nc.force()
 
@@ -651,7 +653,7 @@ class diverseconformers():
         ids.sort()
         return ids
 
-class ani_tortion_scanner():
+class ani_torsion_scanner():
     def __init__(self,ens,fmax=0.000514221,printer=False):
         self.ens = ens
         self.fmax=fmax
@@ -660,17 +662,22 @@ class ani_tortion_scanner():
     def opt(self, rdkmol, dhls, logger='optlog.out'):
         Na = rdkmol.GetNumAtoms()
         X, S = __convert_rdkitmol_to_nparr__(rdkmol)
+
         atm=Atoms(symbols=S, positions=X)
         atm.set_calculator(ANIENS(self.ens))                #Set the ANI Ensemble as the calculator
+        self.ens.set_molecule(X,S)
+
 
         phi_fix = []
         for d in dhls:
             phi_restraint=atm.get_dihedral(d)
             phi_fix.append([phi_restraint, d])
+
         c = FixInternals(dihedrals=phi_fix, epsilon=1.e-9)
         atm.set_constraint(c)
 
-        dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorith
+        dyn = LBFGS(atm, logfile=logger)                               #Choose optimization algorithm
+        #dyn = LBFGS(atm)                               #Choose optimization algorithm
 
         try:
             dyn.run(fmax=self.fmax, steps=5000)         #optimize molecule to Gaussian's Opt=Tight fmax criteria, input in eV/A (I think)
@@ -688,20 +695,24 @@ class ani_tortion_scanner():
         return phi_value, e, s, atm
 
     def rot(self, mol, dhls, phi):
+
+        c = mol.GetConformer(-1)
+
         for d,p in zip(dhls,phi):
             a0=int(d[0])
             a1=int(d[1])
             a2=int(d[2])
             a3=int(d[3])
-        
-            c=mol.GetConformer()
+
+            #print(mol.get_dihedral(d) * 180./np.pi)
             Chem.rdMolTransforms.SetDihedralDeg(c, a0, a1, a2, a3, p)
+            #print(Chem.rdMolTransforms.GetDihedralDeg(c, a0, a1, a2, a3,),p)
+            #print(Chem.rdMolTransforms.GetDihedralDeg(c, a0, a1, a2, a3,),p,c)
 
         phi_value, e, s, atm = self.opt(mol, dhls)
-        #print(X)
         return phi_value, e, s, atm
 
-    def scan_tortion(self, mol, atid, inc, stps):
+    def scan_torsion(self, mol, atid, inc, stps, GetCharge=False):
         mol_copy = copy.deepcopy(mol)
 
         c=mol_copy.GetConformer()
@@ -720,17 +731,28 @@ class ani_tortion_scanner():
         sig = np.empty(shape,dtype=np.float64)
         enr = np.empty(shape,dtype=np.float64)
         crd = np.empty(shape+[mol_copy.GetNumAtoms(), 3], dtype=np.float32)
-        for i in ind:
+
+        if GetCharge:
+            chg = np.empty(shape+[mol_copy.GetNumAtoms()], dtype=np.float32)
+
+        for index,i in enumerate(ind):
             aset = [-180 + j*inc for j,ai in zip(i,init)]
             phi, e, s, atm = self.rot(mol_copy, dhls, aset)
             x = atm.get_positions()
+
+            sidx = tuple([j for j in i])
+            if GetCharge:
+                q = self.ens.compute_mean_charges()
+                print(q[0])
+                print(atm.get_chemical_symbols())
+                chg[sidx] = q[0]
+                print('Dipole:',np.linalg.norm(np.sum(1.889725988579*(q[0]*x.T).T,axis=0))/0.393456)
 
             conf = mol_copy.GetConformer(-1)
             for aid in range(conf.GetNumAtoms()):
                 pos = Geometry.rdGeometry.Point3D(x[aid][0],x[aid][1],x[aid][2])
                 conf.SetAtomPosition(aid, pos)
 
-            sidx = tuple([j for j in i])
             ang[sidx] = aset
             sig[sidx] = s
             enr[sidx] = e
@@ -738,6 +760,7 @@ class ani_tortion_scanner():
         
         self.keys=keys
         self.X = crd
+        self.Q = chg
         return ang, enr, sig
 
     def get_modes(self,atm,freqname="vib."):
@@ -754,7 +777,7 @@ class ani_tortion_scanner():
         sys.stdout = old_target
         return modes
 
-    def tortional_sampler(self, mol, Ngen, atid, inc, stps, sigma=0.15,rng=0.3, freqname="vib."):
+    def torsional_sampler(self, mol, Ngen, atid, inc, stps, sigma=0.15,rng=0.3, freqname="vib."):
         mol_copy = copy.deepcopy(mol)
 
         a0=int(atid[0])
@@ -793,7 +816,7 @@ class ani_tortion_scanner():
         else:
             return np.empty((0,len(S),2),dtype=np.float32), S, np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64), np.empty((0),dtype=np.float64)
 
-class aniTortionSampler:
+class aniTorsionSampler:
     def __init__(self, netdict, storedir, smilefile, Nmol, Nsamp, sigma, rng, atsym=['H', 'C', 'N', 'O'], seed=np.random.randint(0,100000,1), gpuid=0):
         self.storedir = storedir
         self.Nmol = Nmol
@@ -881,7 +904,7 @@ class aniTortionSampler:
         return dihedrals
 
     def generate_dhl_samples(self,MaxNa=25,fmax=0.005,fpref='dhl_scan-', freqname="vib."):
-        ts = ani_tortion_scanner(self.ens, fmax)
+        ts = ani_torsion_scanner(self.ens, fmax)
         dhls = self.get_index_set(self.smiles, self.Nmol, MaxNa=MaxNa)
         print('Runnning ',len(dhls),'torsions.',freqname)
         for i, dhl in enumerate(dhls):
