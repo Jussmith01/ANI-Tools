@@ -62,17 +62,14 @@ class nmsgenerator():
 
     # Generate a structure
     def __genrandomstruct__(self):
-        rdt = np.random.random(self.Nf+1)
-        rdt[0] = 0.0
+        rdt = np.random.random(self.Nf)
         norm = np.random.random(1)[0]
-        rdt = norm*np.sort(rdt)
-        rdt[self.Nf] = norm
 
         oxyz = self.xyz.copy()
 
         for i in range(self.Nf):
             Ki = mDynetoMet * self.fcc[i]
-            ci = rdt[i+1]-rdt[i]
+            ci = norm*rdt[i]/np.sum(rdt)
             Sn = -1.0 if np.random.binomial(1,0.5,1) else 1.0
             Ri = Sn * MtoA * np.sqrt((ci * Kb * float(self.Nf) * self.T)/(Ki))
             Ri = min([Ri,self.maxd])
