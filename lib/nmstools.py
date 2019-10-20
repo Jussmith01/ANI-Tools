@@ -74,7 +74,7 @@ class nmsgenerator():
             Ki = mDynetoMet * self.fcc[i]
             ci = rdt[i+1]-rdt[i]
             Sn = -1.0 if np.random.binomial(1,0.5,1) else 1.0
-            Ri = Sn * MtoA * np.sqrt((3.0 * ci * Kb * float(self.Nf) * self.T)/(Ki))
+            Ri = Sn * MtoA * np.sqrt((ci * Kb * float(self.Nf) * self.T)/(Ki))
             Ri = min([Ri,self.maxd])
             oxyz = oxyz + Ri * self.nmo[i]
         return oxyz
@@ -157,7 +157,7 @@ class nmsgenerator_RXN():
     def __genrandomstruct__(self):
         ("generating randomstruct")
         oxyz = self.xyz.copy()
-        Ri = np.random.uniform(low=self.l_val, high=self.h_val, size=None)             
+        Ri = np.random.uniform(low=self.l_val, high=self.h_val, size=None)
         oxyz = oxyz + Ri * self.nmo
         return oxyz
 
