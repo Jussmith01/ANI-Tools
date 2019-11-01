@@ -128,7 +128,7 @@ class anicrossvalidationconformer(object):
     def compute_stddev_conformations(self,X,S):
         energies = np.zeros((self.Nn,X.shape[0]),dtype=np.float64)
         for i,nc in enumerate(self.ncl):
-            nc.setConformers(confs=X,types=list(S))
+            nc.setConformers(confs=np.array(X,dtype=np.float64),types=list(S))
             energies[i] = nc.energy().copy()
         sigma1 = hdt.hatokcal * np.std(energies,axis=0) / np.sqrt(float(len(S)))
         #sigma2 = hdt.hatokcal * np.std(energies, axis=0) / float(len(S))
@@ -162,7 +162,7 @@ class anicrossvalidationconformer(object):
 #            return hdt.hatokcal*energy, hdt.hatokcal*forces, sigmap
 
     ''' Compute the energy and mean force of a set of conformers for the CV networks '''
-    def compute_energy_conformations(self,X,S):
+    def compute_energy_conformations(self, X, S):
         Na = X.shape[0] * len(S)
 
         X_split = np.array_split(X, math.ceil(Na/10000))
@@ -172,7 +172,7 @@ class anicrossvalidationconformer(object):
         shift = 0
         for j,x in enumerate(X_split):
             for i, nc in enumerate(self.ncl):
-                nc.setConformers(confs=x,types=list(S))
+                nc.setConformers(confs=np.array(x,dtype=np.float64),types=list(S))
                 E = nc.energy().copy()
                 #print(E,x)
                 energies[i,shift:shift+E.shape[0]] = E
