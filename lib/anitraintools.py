@@ -339,7 +339,7 @@ class ANITesterTool:
         #plt.draw()
         plt.show()
 
-def plot_corr_dist_ax(ax, Xa, Xp, errors=False,linfit=True, xlabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$', ylabel='$F_{dft}$' + r' $(kcal \times mol^{-1} \times \AA^{-1})$'):
+def plot_corr_dist_ax(ax, Xa, Xp, errors=False,linfit=True):
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     from matplotlib.colors import LogNorm
@@ -355,16 +355,10 @@ def plot_corr_dist_ax(ax, Xa, Xp, errors=False,linfit=True, xlabel='$F_{dft}$' +
     Fmn = Xa.min()
 
     label_size = 14
-    #mpl.rcParams['xtick.labelsize'] = label_size
-    #mpl.rcParams['ytick.labelsize'] = label_size
 
     # Plot ground truth line
     if linfit:
         ax.plot([Fmn, Fmx], [Fmn, Fmx], '--', c='r', linewidth=1)
-
-    # Set labels
-    #ax.set_xlabel(xlabel, fontsize=18)
-    #ax.set_ylabel(ylabel, fontsize=18)
 
     # Plot 2d Histogram
     if linfit:
@@ -380,8 +374,8 @@ def plot_corr_dist_ax(ax, Xa, Xp, errors=False,linfit=True, xlabel='$F_{dft}$' +
     PMAE = hdt.calculatemeanabserror(Xa, Xp)
     PRMS = hdt.calculaterootmeansqrerror(Xa, Xp)
     if errors:
-        ax.text(0.55*((Fmx-Fmn))+Fmn, 0.2*((Fmx-Fmn))+Fmn, 'MAE='+"{:.3f}".format(PMAE)+'\nRMSE='+"{:.3f}".format(PRMS), fontsize=20,
-                    bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
+        #ax.text(0.55*((Fmx-Fmn))+Fmn, 0.2*((Fmx-Fmn))+Fmn, 'MAE='+"{:.3f}".format(PMAE)+'\nRMSE='+"{:.3f}".format(PRMS), fontsize=20, bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
+        ax.text(0.60, 0.05, 'MAE='+"{:.3f}".format(PMAE)+'\nRMSE='+"{:.3f}".format(PRMS), transform=ax.transAxes, fontsize=20, bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
 
     #if not linfit:
     #    plt.vlines(x=0.0,ymin=130,ymax=300,linestyle='--',color='red')        
@@ -1175,6 +1169,10 @@ class alaniensembletrainer():
                     else:
                         E = energy_unit * np.array(data[Ekey], order='C', dtype=np.float64)
 
+                    Sv = np.zeros((E.size,7),dtype=np.float32)
+                    if solvent:
+                        Sv = np.array(data['solvent'], order='C', dtype=np.float32)
+
                     if forces and not grad:
                         F = forces_unit * np.array(data[Fkey], order='C', dtype=np.float32)
                     elif forces and grad:
@@ -1221,6 +1219,7 @@ class alaniensembletrainer():
                         D = D[lidx]
                         C = C[lidx]
                         P = P[lidx]
+                        Sv = Sv[lidx]
 
                     if rmhighf:
                         hfidx = np.where(np.abs(F) > rmhighf)
@@ -1233,6 +1232,7 @@ class alaniensembletrainer():
                             D = D[hfidx]
                             C = C[hfidx]
                             P = P[hfidx]
+                            Sv = Sv[hfidx]
 
                     # Build random split index
                     ridx = np.random.randint(0, Nblocks, size=E.size)
@@ -1245,7 +1245,7 @@ class alaniensembletrainer():
                         [Didx[((bid + ids * int(Nstride)) % Nblocks)] for bid in range(Ntrain)])
                     if set_idx.size != 0:
                         data_count[ids, 0] += set_idx.size
-                        cachet.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
+                        cachet.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], Sv[set_idx], list(S))
 
                     #for nid, cache in enumerate(cachev):
 
@@ -1253,7 +1253,7 @@ class alaniensembletrainer():
                         [Didx[(Ntrain + bid + ids * int(Nstride)) % Nblocks] for bid in range(Nvalid)])
                     if set_idx.size != 0:
                         data_count[ids, 1] += set_idx.size
-                        cachev.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
+                        cachev.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], Sv[set_idx], list(S))
 
                     if build_test:
                         #for nid, th5 in enumerate(testh5):
@@ -1262,7 +1262,7 @@ class alaniensembletrainer():
                             [Didx[(Ntrain + Nvalid + bid + ids * int(Nstride)) % Nblocks] for bid in range(Ntest)])
                         if set_idx.size != 0:
                             data_count[ids, 2] += set_idx.size
-                            testh5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx], energies=E[set_idx], species=list(S))
+                            testh5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx], energies=E[set_idx], solvent=Sv[set_idx], species=list(S))
 
         # Save train and valid meta file and cleanup testh5
         cachet.makemetadata()
