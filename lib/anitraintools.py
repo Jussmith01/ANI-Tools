@@ -602,6 +602,7 @@ class anitrainerparamsdesigner():
 
 class anitrainerinputdesigner:
     def __init__(self):
+        self.final_layer_type = 6
         self.params = {"sflparamsfile": None,  # AEV parameters file
                        "ntwkStoreDir": "networks/",  # Store network dir
                        "atomEnergyFile": None,  # Atomic energy shift file
@@ -670,12 +671,12 @@ class anitrainerinputdesigner:
             network += "    atom_net " + ak + " $\n"
 
             if int(self.params["dipole"]) != 0 or int(self.params["charge"]) != 0:
-                self.layers[ak].append({"nodes": 12, "activation": 6, "type": 0})
-                #self.layers[ak].append({"nodes": 2, "activation": 6, "type": 0})
+                self.layers[ak].append({"nodes": 12, "activation": self.final_layer_type, "type": 0})
+                #self.layers[ak].append({"nodes": 2, "activation": self.final_layer_type, "type": 0})
             elif int(self.params["acachg"]) != 0:
-                self.layers[ak].append({"nodes": 2, "activation": 6, "type": 0})
+                self.layers[ak].append({"nodes": 2, "activation": self.final_layer_type, "type": 0})
             else:
-                self.layers[ak].append({"nodes": 1, "activation": 6, "type": 0})
+                self.layers[ak].append({"nodes": 1, "activation": self.final_layer_type, "type": 0})
 
             for l in self.layers[ak]:
                 network += "        layer [\n"
