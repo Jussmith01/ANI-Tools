@@ -27,15 +27,15 @@ class nmsgenerator():
         elif type is 'C':
             return 6.0
         elif type is 'N':
-            return 6.0
+            return 7.0
         elif type is 'O':
-            return 6.0
+            return 8.0
         elif type is 'F':
-            return 6.0
+            return 9.0
         elif type is 'S':
-            return 6.0
+            return 16.0
         elif type == 'Cl':
-            return 6.0
+            return 17.0
         else:
             print('Unknown atom type! ',type)
             exit(1)

@@ -962,7 +962,7 @@ class alaniensembletrainer():
             men = np.mean(dE[cidx])
 
             print(men, std, men + std)
-            idx = np.intersect1d(np.where(dE >= -np.abs(9 * std + men))[0], np.where(dE <= np.abs(9 * std + men))[0])
+            idx = np.intersect1d(np.where(dE >= -np.abs(8 * std + men))[0], np.where(dE <= np.abs(8 * std + men))[0])
             cnt = idx.size
             print('DATADIST: ', dE.size, cnt, (dE.size - cnt), 100.0 * ((dE.size - cnt) / dE.size))
 
@@ -1034,7 +1034,7 @@ class alaniensembletrainer():
                         D = D[lidx]
                         C = C[lidx]
                         P = P[lidx]
-                        Sv = Sv[lidx]
+                        #Sv = Sv[lidx]
 
                     if rmhighf:
                         hfidx = np.where(np.abs(F) > 2.0)
@@ -1047,7 +1047,7 @@ class alaniensembletrainer():
                             D = D[hfidx]
                             C = C[hfidx]
                             P = P[hfidx]
-                            Sv = Sv[hfidx]
+                            #Sv = Sv[hfidx]
 
                     # Build random split index
                     ridx = np.random.randint(0, Nblocks, size=E.size)
@@ -1062,7 +1062,8 @@ class alaniensembletrainer():
                             #print("Py tDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py tDIPOLE2:\n",D[set_idx][-3:],D.shape)
                             #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], Sv[set_idx], list(S))
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], Sv[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
 
                     for nid, cache in enumerate(cachev):
                         set_idx = np.concatenate(
@@ -1072,7 +1073,8 @@ class alaniensembletrainer():
                             #print("Py vDIPOLE1:\n",D[set_idx][0:3],D.shape)
                             #print("Py vDIPOLE2:\n",D[set_idx][-3:],D.shape)
                             #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], E[set_idx], list(S))
-                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx],Sv[set_idx], list(S))
+                            #cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx],Sv[set_idx], list(S))
+                            cache.insertdata(X[set_idx], F[set_idx], C[set_idx], D[set_idx], P[set_idx], E[set_idx], list(S))
 
                     if build_test:
                         for nid, th5 in enumerate(testh5):
@@ -1082,7 +1084,8 @@ class alaniensembletrainer():
                                 data_count[nid, 2] += set_idx.size
                                 #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx], species=list(S))
                                 #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx],
-                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx],solvent=Sv[set_idx], species=list(S))
+                                th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx], species=list(S))
+                                #th5.store_data(f + data['path'], coordinates=X[set_idx], forces=F[set_idx], charges=C[set_idx], dipoles=D[set_idx], cell=P[set_idx],energies=E[set_idx],solvent=Sv[set_idx], species=list(S))
 
         # Save train and valid meta file and cleanup testh5
         for t, v in zip(cachet, cachev):
