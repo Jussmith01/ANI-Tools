@@ -143,6 +143,10 @@ class ANITesterTool:
     def evaluate_individual_testset(self,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True):
         self.Evals = []
         self.Fvals = []
+        self.min_box_size = []
+
+        Nall = 0
+        Ndrp = 0
         for i,nc in enumerate(self.ncl):
             adl = pyt.anidataloader(self.model_path+'/testset/testset'+str(i)+'.h5')
             
@@ -163,30 +167,37 @@ class ANITesterTool:
                     Esae = 0.0
                 
                 for x,c,e,f in zip(X,C,E,F):
-                    if pbc is True:
-                        pbc_inv = np.linalg.inv(c).astype(np.float64)
-                    
-                        nc.setMolecule(coords=np.array(x,dtype=np.float64), types=list(S))
-                        nc.setPBC(bool(True), bool(True), bool(True))
-                        nc.setCell(np.array(c,dtype=np.float64),pbc_inv)
+                    Nall += 1
+                    if np.min(np.sum(c,axis=0)) < 6.0:
+                        Ndrp += 1
+                        #print(np.sum(c,axis=0))
                     else:
-                        nc.setMolecule(coords=np.array(x, dtype=np.float64), types=list(S))
+                        if pbc is True:
+                            pbc_inv = np.linalg.inv(c).astype(np.float64)
 
-                    Eani = conv_au_ev*nc.energy().copy()[0]
-                    if forces:
-                        Fani = conv_au_ev*nc.force().copy()
-                    else:
-                        Fani = f
+                            nc.setMolecule(coords=np.array(x,dtype=np.float64), types=list(S))
+                            nc.setPBC(bool(True), bool(True), bool(True))
+                            nc.setCell(np.array(c,dtype=np.float64),pbc_inv)
+                        else:
+                            nc.setMolecule(coords=np.array(x, dtype=np.float64), types=list(S))
 
-                    if pbc is True:
-                        Evals_ind.append(np.array([Eani-Esae,e-Esae])/len(S))
-                    else:
-                        Evals_ind.append(np.array([Eani-Esae,e-Esae]))
-                    Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
-                    
+                        Eani = conv_au_ev*nc.energy().copy()[0]
+                        self.min_box_size.append(np.min(np.sum(c,axis=0)))
+                        if forces:
+                            Fani = conv_au_ev*nc.force().copy()
+                        else:
+                            Fani = f
+
+                        if pbc is True:
+                            Evals_ind.append(np.array([Eani-Esae,e-Esae])/len(S))
+                        else:
+                            Evals_ind.append(np.array([Eani-Esae,e-Esae]))
+                        Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
+
             self.Evals.append(np.stack(Evals_ind))
             self.Fvals.append(np.vstack(Fvals_ind))
 
+        print('Counts:',Nall,Ndrp)
         return self.Evals,self.Fvals
 
     def evaluate_individual_dataset(self,dataset_file,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True):
