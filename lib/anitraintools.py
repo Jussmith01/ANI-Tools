@@ -311,12 +311,49 @@ class ANITesterTool:
                         Evals_ind.append(np.array([Eani-Esae,e-Esae])/len(S))
                     else:
                         Evals_ind.append(np.array([Eani-Esae,e-Esae]))
-                    Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
+                    Fvals_ind.append(np.stack([Fani,f]))
 
             self.Evals.append(np.stack(Evals_ind))
-            self.Fvals.append(np.vstack(Fvals_ind))
+            self.Fvals.append(Fvals_ind)
 
         return self.Evals,self.Fvals
+
+    def determine_sigma_max(self,percentile,forces=True,pbc=False):
+        E1,F1 = self.evaluate_individual_dataset(self.model_path+'/holdout.h5',forces=forces,pbc=pbc)
+        Edata = []
+        for i in range(len(E1[0])):
+            Ei = np.zeros((self.ens_size))
+            for j in range(self.ens_size):
+                Ei[j] = E1[j][i][0]
+        
+            ErrEi = Ei - E1[0][i][1]
+            ErrE = np.mean(np.abs(ErrEi))
+            E_v2 = np.sqrt(np.sum(np.power(Ei-np.mean(Ei),2.0)))
+            Edata.append(np.array([ErrE,E_v2]))
+        Edata = np.stack(Edata)
+
+        f = np.poly1d(np.polyfit(Edata[:,0],Edata[:,1],1))
+        ErrNth = np.percentile(Edata[:,0], percentile)
+        Euqmax = f(ErrNth)
+
+        Fdata = []
+        for i in range(len(F1[0])):
+            Fi = np.zeros((self.ens_size,F1[0][i].shape[1],3))
+            for j in range(self.ens_size):
+                Fi[j] = F1[j][i][0]
+            dF = Fi - np.mean(Fi, axis=0)[np.newaxis, :, :]
+    
+            ErrFi = Fi - F1[j][i][1][np.newaxis, :, :]
+            ErrF = np.mean(np.linalg.norm(ErrFi,axis=2))
+    
+            F_v2 = np.sqrt(np.sum(np.sum(np.power(dF, 2), axis=0) / (self.ens_size * (self.ens_size - 1))))  
+            Fdata.append(np.array([ErrF,F_v2]))
+        Fdata = np.stack(Fdata)
+
+        f = np.poly1d(np.polyfit(Fdata[:,0],Fdata[:,1],1))
+        ErrNth = np.percentile(Fdata[:,0], percentile)
+        Fuqmax = f(ErrNth)
+        return Euqmax,Fuqmax
  
     def build_ind_error_dataframe(self):
         d = {'Emae':[],'Erms':[],'Fmae':[],'Frms':[],}
@@ -1174,7 +1211,7 @@ class alaniensembletrainer():
         print(data_count)
         print('Training set built.')
 
-    def build_strided_training_cache_ind(self, ids, rseed, Nblocks, Nvalid, Ntest, build_test=True, hold_out=0.0
+    def build_strided_training_cache_ind(self, ids, rseed, Nblocks, Nvalid, Ntest, build_test=True, hold_out=0.0,
                                          Ekey='energies', energy_unit=1.0,
                                          forces=True, grad=False, Fkey='forces', forces_unit=1.0,
                                          dipole=False, dipole_unit=1.0, Dkey='dipoles',
