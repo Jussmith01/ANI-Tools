@@ -328,7 +328,7 @@ class ANITesterTool:
         
             ErrEi = Ei - E1[0][i][1]
             ErrE = np.mean(np.abs(ErrEi))
-            E_v2 = np.sqrt(np.sum(np.power(Ei-np.mean(Ei),2.0)))
+            E_v2 = np.sqrt(np.sum(np.power(Ei-np.mean(Ei),2.0)))/np.sqrt(F1[0][i].shape[1])
             Edata.append(np.array([ErrE,E_v2]))
         Edata = np.stack(Edata)
 
@@ -353,7 +353,7 @@ class ANITesterTool:
         f = np.poly1d(np.polyfit(Fdata[:,0],Fdata[:,1],1))
         ErrNth = np.percentile(Fdata[:,0], percentile)
         Fuqmax = f(ErrNth)
-        return Euqmax,Fuqmax
+        return (Euqmax,Fuqmax)
  
     def build_ind_error_dataframe(self):
         d = {'Emae':[],'Erms':[],'Fmae':[],'Frms':[],}
