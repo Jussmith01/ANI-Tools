@@ -1216,6 +1216,7 @@ class alaniensembletrainer():
                                          forces=True, grad=False, Fkey='forces', forces_unit=1.0,
                                          dipole=False, dipole_unit=1.0, Dkey='dipoles',
                                          charge=False, charge_unit=1.0, Ckey='charges',
+                                         solvent=False,
                                          pbc=False,
                                          Eax0sum=False, rmhighe=True,rmhighf=False,force_exact_split=False):
         np.random.seed(rseed)
