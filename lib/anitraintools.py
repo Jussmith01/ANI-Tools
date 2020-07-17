@@ -127,18 +127,23 @@ def get_train_stats_ind(index,train_root):
 
 class ANITesterTool:
     
-    def load_models(self):
+    def load_models_molecule(self):
         self.ncl = [pync.molecule(self.cnstfile, self.saefile, self.model_path + 'train' + str(i) + '/networks/', self.gpuid, False) for i in range(self.ens_size)]
 
+    def load_models_conformer(self):
+        self.ncl = [pync.conformers(self.cnstfile, self.saefile, self.model_path + 'train' + str(i) + '/networks/', self.gpuid, False) for i in range(self.ens_size)]
     
-    def __init__(self,model_path,ens_size,gpuid):
+    def __init__(self,model_path,ens_size,gpuid,confs=False):
         self.model_path = model_path
         self.ens_size = ens_size
         self.gpuid = gpuid
         self.cnstfile = model_path+[f for f in os.listdir(self.model_path) if f[-7:] == '.params'][0]
         self.saefile  = model_path+[f for f in os.listdir(self.model_path) if f[-4:] == '.dat'][0]
         
-        self.load_models()
+        if confs:
+            self.load_models_conformer()
+        else:
+            self.load_models_molecule()
         
     def evaluate_individual_testset(self,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True):
         self.Evals = []
@@ -168,7 +173,7 @@ class ANITesterTool:
                 
                 for x,c,e,f in zip(X,C,E,F):
                     Nall += 1
-                    if np.min(np.sum(c,axis=0)) < 6.0:
+                    if np.min(np.sum(c,axis=0)) < 6.0 and pbc is True:
                         Ndrp += 1
                         #print(np.sum(c,axis=0))
                     else:
@@ -198,6 +203,62 @@ class ANITesterTool:
             self.Fvals.append(np.vstack(Fvals_ind))
 
         print('Counts:',Nall,Ndrp)
+        return self.Evals,self.Fvals
+
+    def evaluate_individual_conformers_testset(self,energy_key='energies',force_key='forces',forces=False,remove_sae=True):
+        self.Evals = []
+        self.Fvals = []
+        self.min_box_size = []
+
+        Nall = 0
+        Ndrp = 0
+        for i,nc in enumerate(self.ncl):
+            adl = pyt.anidataloader(self.model_path+'/testset/testset'+str(i)+'.h5')
+
+            Evals_ind = []
+            Fvals_ind = []
+            for data in adl:
+                S = data['species']
+
+                X = data['coordinates']
+                C = data['cell']
+
+                E = conv_au_ev*data[energy_key]
+                F = conv_au_ev*data[force_key]
+
+                if remove_sae:
+                    Esae = conv_au_ev*hdt.compute_sae(self.saefile,S)
+                else:
+                    Esae = 0.0
+
+                nc.setConformers(confs=np.array(X, dtype=np.float64), types=list(S))
+                Eani = conv_au_ev*nc.energy().copy()
+
+                if forces:
+                    Fani = conv_au_ev*nc.force().copy()
+                else:
+                    Fani = F
+               
+                Evals_ind.append(np.stack([Eani-Esae,E-Esae]).T)
+                Fvals_ind.append(np.stack([Fani.flatten(),F.flatten()]).T)
+ 
+                #print('E:',Eani)
+                #for x,c,e,f in zip(X,C,E,F):
+                #    nc.setMolecule(coords=np.array(x, dtype=np.float64), types=list(S))
+
+                #    Eani = conv_au_ev*nc.energy().copy()[0]
+                #    if forces:
+                #        Fani = conv_au_ev*nc.force().copy()
+                #    else:
+                #        Fani = f
+
+                #    Evals_ind.append(np.array([Eani-Esae,e-Esae]))
+                #    Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
+
+            self.Evals.append(np.vstack(Evals_ind))
+            self.Fvals.append(np.vstack(Fvals_ind))
+
+        #print('Counts:',Nall,Ndrp)
         return self.Evals,self.Fvals
 
     def evaluate_individual_dataset(self,dataset_file,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True):
@@ -905,7 +966,7 @@ class alaniensembletrainer():
 
         print('Linear fitting complete.')
 
-    def build_strided_training_cache(self, Nblocks, Nvalid, Ntest, build_test=True,
+    def build_strided_training_cache(self, Nblocks, Nvalid, Ntest, build_test=True, hold_out=0.0,
                                      Ekey='energies', energy_unit=1.0,
                                      forces=True, grad=False, Fkey='forces', forces_unit=1.0,
                                      dipole=False, dipole_unit=1.0, Dkey='dipoles',
@@ -943,6 +1004,9 @@ class alaniensembletrainer():
 
         if build_test:
             testh5 = [pyt.datapacker(store_dir + str(r) + '/../testset/testset' + str(r) + '.h5') for r in range(N)]
+
+        if hold_out > 0.0:
+            holdh5 = pyt.datapacker(self.train_root + 'holdout.h5')
 
         if rmhighe:
             dE = []
@@ -1052,6 +1116,12 @@ class alaniensembletrainer():
 
                     # Build random split index
                     ridx = np.random.randint(0, Nblocks, size=E.size)
+                    if hold_out > 0.0:
+                        rand_hold = np.where(np.random.uniform(0.0,1.0,size=E.size) < hold_out)
+                        if rand_hold[0].size > 0:
+                            ridx[rand_hold] = -1
+                            holdh5.store_data(f + data['path'], coordinates=X[rand_hold], forces=F[rand_hold], charges=C[rand_hold], dipoles=D[rand_hold], cell=P[rand_hold],energies=E[rand_hold],solvent=Sv[rand_hold], species=list(S))
+
                     Didx = [np.argsort(ridx)[np.where(ridx == i)] for i in range(Nblocks)]
 
                     # Build training cache
@@ -1097,11 +1167,14 @@ class alaniensembletrainer():
             for th in testh5:
                 th.cleanup()
 
+        if hold_out > 0.0:
+            holdh5.cleanup()
+
         print(' Train ', ' Valid ', ' Test ')
         print(data_count)
         print('Training set built.')
 
-    def build_strided_training_cache_ind(self, ids, rseed, Nblocks, Nvalid, Ntest, build_test=True,
+    def build_strided_training_cache_ind(self, ids, rseed, Nblocks, Nvalid, Ntest, build_test=True, hold_out=0.0
                                          Ekey='energies', energy_unit=1.0,
                                          forces=True, grad=False, Fkey='forces', forces_unit=1.0,
                                          dipole=False, dipole_unit=1.0, Dkey='dipoles',
@@ -1139,6 +1212,9 @@ class alaniensembletrainer():
 
         if build_test:
             testh5 = pyt.datapacker(store_dir + str(ids) + '/../testset/testset' + str(ids) + '.h5')
+
+        if hold_out > 0.0 and ids == 0:
+            holdh5 = pyt.datapacker(self.train_root + 'holdout.h5')
 
         if rmhighe:
             dE = []
@@ -1248,6 +1324,15 @@ class alaniensembletrainer():
 
                     # Build random split index
                     ridx = np.random.randint(0, Nblocks, size=E.size)
+
+                    # Select holdout data
+                    if hold_out > 0.0 and ids == 0:
+                        rand_hold = np.where(np.random.uniform(0.0,1.0,size=E.size) < hold_out)
+                        if rand_hold[0].size > 0:
+                            ridx[rand_hold] = -1
+                            holdh5.store_data(f + data['path'], coordinates=X[rand_hold], forces=F[rand_hold], charges=C[rand_hold], dipoles=D[rand_hold], cell=P[rand_hold],energies=E[rand_hold],solvent=Sv[rand_hold], species=list(S))
+
+                    # Build block index
                     Didx = [np.argsort(ridx)[np.where(ridx == i)] for i in range(Nblocks)]
 
                     # Build training cache
@@ -1282,6 +1367,9 @@ class alaniensembletrainer():
 
         if build_test:
             testh5.cleanup()
+
+        if hold_out > 0.0 and ids == 0:
+            holdh5.cleanup()
 
         #print(' Train ', ' Valid ', ' Test ')
         #print(data_count[ids])
