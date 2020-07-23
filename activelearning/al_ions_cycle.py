@@ -20,6 +20,8 @@ datdir = 'ANI-AL-smallions-'
 
 h5stor = root_dir + 'h5files/'# h5store location
 
+strucsfolder = root_dir + 'strucs/'# strucs locations
+
 optlfile = root_dir + 'optimized_input_files.dat'
 
 #Comet
@@ -58,9 +60,58 @@ aevsize = 1008
 root = '/home/jsmith48/scratch/auto_ion_al'
 
 wkdir   = root+'/modelions/ANI-AL-smallions/'
-iptfile = root+'/modelions/inputtrain.ipt'
+#iptfile = root+'/modelions/inputtrain.ipt'
 saefile = root+'/modelions/sae_linfit.dat'
 cstfile = root+'/modelions/rHCNOSFCl-5.2R_16-3.8A_a4-8.params'
+
+ipt = alt.anitrainerinputdesigner()
+
+ipt.set_parameter('atomEnergyFile','sae_linfit.dat')
+ipt.set_parameter('sflparamsfile','rHCNOSFCl-5.2R_16-3.8A_a4-8.params')
+ipt.set_parameter('eta','0.001')
+ipt.set_parameter('energy','1')
+ipt.set_parameter('force','0')
+ipt.set_parameter('fmult','1.0')
+ipt.set_parameter('feps','0.001')
+ipt.set_parameter('dipole','0')
+ipt.set_parameter('charge','0')
+ipt.set_parameter('cdweight','2.0')
+ipt.set_parameter('tolr','100')
+ipt.set_parameter('tbtchsz','2560')
+ipt.set_parameter('vbtchsz','2560')
+ipt.set_parameter('nkde','2')
+
+
+# Set network layers
+ipt.add_layer('H',{"nodes":320,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('H',{"nodes":64 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('H',{"nodes":128,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('C',{"nodes":288,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('C',{"nodes":96 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('C',{"nodes":128,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('N',{"nodes":256,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('N',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('N',{"nodes":96 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('O',{"nodes":256,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('O',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('O',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('S',{"nodes":192,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('S',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('S',{"nodes":80 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('F',{"nodes":192,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('F',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('F',{"nodes":80 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.add_layer('Cl',{"nodes":192,"activation":9,"type":0,"l2norm":1,"l2valu":5.000e-3})
+ipt.add_layer('Cl',{"nodes":48 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+ipt.add_layer('Cl',{"nodes":80 ,"activation":9,"type":0,"l2norm":1,"l2valu":1.000e-6})
+
+ipt.print_layer_parameters()
 
 #-----------0---------
 
@@ -73,6 +124,10 @@ nmsparams = {'T': 600.0, # Temperature
              'maxd': 0.5, # Diverse confs to keep
              'sig' : M,
              }
+
+strucsparams = {'N': 40, # number of maximum structures to select before QBC from each XYZ file
+                'sig': M,
+               }
 
 mdsparams = {'N': 1, # trajectories to run
              'T1': 300,
@@ -92,7 +147,7 @@ tsparams = {'T':200, # trajectories to run
              'tsfiles': ['/home/jsmith48/scratch/auto_rxn_al/rxns/'],
              'nmfile':None,                          #path to gaussian log file containing the data
              'nm':0,                                 #id of normal mode
-             'perc':0,                               #Move the molecules initial coordiantes along the mode by this amount. Negative numbers are ok. 
+             'perc':0,                               #Move the molecules initial coordiantes along the mode by this amount. Negative numbers are ok.
              }
 
 dhparams = { 'Nmol': 250,
@@ -109,9 +164,9 @@ dmrparams = {'mdselect' : [(4000,0),(1600,1),(400,2),(100,3),(25,4),(10,5),(1,6)
              #'mdselect' : [(10,0), (1,11)],
              #'N' : 20,
              'maxNa' : 15, # Largest molecule to consider (for dimers max size is 2x maxNa)
-             'T' : 400.0, # running temp 
+             'T' : 400.0, # running temp
              'L' : 25.0, # box length
-             'V' : 0.04, # Random init velocities 
+             'V' : 0.04, # Random init velocities
              'dt' : 0.25, # MD time step
              'Nm' : 100, # Molecules to embed
              #'Nm' : 160, # Molecules to embed
@@ -144,7 +199,7 @@ gcmddict = {'edgepad': 0.8, # padding on the box edge
 
 ### BEGIN CONFORMATIONAL REFINEMENT LOOP HERE ###
 #N = [20]
-N = [1]
+N = [2]
 
 for i in N:
     #netdir = wkdir+'ANI-1x-RXN-0000.00'+str(i).zfill(2)+'/'
@@ -156,9 +211,9 @@ for i in N:
 
     nnfprefix   = netdir + 'train'
 
-    netdict = {'iptfile' : iptfile,
-               'cnstfile' : cstfile,
+    netdict = {'cnstfile' : cstfile,
                'saefile': saefile,
+               'iptsize': 1008,
                'nnfprefix': netdir+'train',
                'aevsize': aevsize,
                'num_nets': Nnets,
@@ -166,23 +221,22 @@ for i in N:
                }
 
     ## Train the ensemble ##
-    aln = att.alaniensembletrainer(netdir, netdict, h5stor, Nnets)
-    aln.build_strided_training_cache(Nblock,Nbvald,Nbtest,False)
+    aln = att.alaniensembletrainer(netdir, netdict, ipt, h5stor, Nnets)
+    aln.build_strided_training_cache(Nblock,Nbvald,Nbtest,Ekey='energy',forces=False,dipole=False,rmhighe=True)
     aln.train_ensemble(GPU)
 
     if not os.path.exists(root_dir + datdir + str(i+1).zfill(2)):
         os.mkdir(root_dir + datdir + str(i+1).zfill(2))
 
     ## Run active learning sampling ##
-    acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, fpatoms+['H'], netdict)
+    acs = alt.alconformationalsampler(ldtdir, datdir + str(i+1).zfill(2), optlfile, strucsfolder, fpatoms+['H'], netdict)
     #acs.run_sampling_cluster(gcmddict, GPU)
     #acs.run_sampling_dimer(dmrparams, GPU)
     acs.run_sampling_nms(nmsparams, GPU)
-    #acs.run_sampling_md(mdsparams, perc=0.25, gpus=GPU+GPU+GPU)
+    #acs.run_sampling_strucs(strucsparams, GPU)
+    acs.run_sampling_md(mdsparams, perc=0.25, gpus=GPU+GPU+GPU)
     #acs.run_sampling_dhl(dhparams, gpus=GPU+GPU)
     #acs.run_sampling_TS(tsparams, gpus=GPU)
 
     ## Submit jobs, return and pack data
     ast.generateQMdata(hostname, username, swkdir, ldtdir, datdir + str(i+1).zfill(2), h5stor, mae, jtime,max_jobs=50)
-
-
