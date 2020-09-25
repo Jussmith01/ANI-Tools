@@ -128,7 +128,7 @@ def get_train_stats_ind(index,train_root):
 class ANITesterTool:
     
     def load_models_molecule(self):
-        self.ncl = [pync.molecule(self.cnstfile, self.saefile, self.model_path + 'train' + str(i) + '/networks/', self.gpuid, False) for i in range(self.ens_size)]
+        self.ncl = [pync.molecule(self.cnstfile, self.saefile, self.model_path + 'train' + str(i) + '/networks/', 1, self.gpuid, False) for i in range(self.ens_size)]
 
     def load_models_conformer(self):
         self.ncl = [pync.conformers(self.cnstfile, self.saefile, self.model_path + 'train' + str(i) + '/networks/', self.gpuid, False) for i in range(self.ens_size)]
@@ -261,7 +261,7 @@ class ANITesterTool:
         #print('Counts:',Nall,Ndrp)
         return self.Evals,self.Fvals
 
-    def evaluate_individual_dataset(self,dataset_file,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True):
+    def evaluate_individual_dataset(self,dataset_file,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True, ens_mean=False):
         self.Evals = []
         self.Fvals = []
         for i,nc in enumerate(self.ncl):
@@ -300,8 +300,16 @@ class ANITesterTool:
                         nc.setCell(np.array(c,dtype=np.float64),pbc_inv)
                     else:
                         nc.setMolecule(coords=np.array(x, dtype=np.float64), types=list(S))
+                    
+                    if ens_mean:
+                        Eani = conv_au_ev*np.sum(nc.energy().copy())/self.ens_size
+                        #fil=open('/home/maxim/Downloads/test_MD/EE.dat','w')
+                        #fil.write(str(nc.energy().copy()) + '\n')
+                        #fil.close()
+                        print(nc.energy().copy())
+                    else:
+                        Eani = conv_au_ev*nc.energy().copy()[0]
 
-                    Eani = conv_au_ev*nc.energy().copy()[0]
                     if forces:
                         Fani = conv_au_ev*nc.force().copy()
                     else:
