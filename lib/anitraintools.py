@@ -261,7 +261,7 @@ class ANITesterTool:
         #print('Counts:',Nall,Ndrp)
         return self.Evals,self.Fvals
 
-    def evaluate_individual_dataset(self,dataset_file,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True):
+    def evaluate_individual_dataset(self,dataset_file,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True, ens_mean=False):
         self.Evals = []
         self.Fvals = []
         for i,nc in enumerate(self.ncl):
@@ -300,8 +300,16 @@ class ANITesterTool:
                         nc.setCell(np.array(c,dtype=np.float64),pbc_inv)
                     else:
                         nc.setMolecule(coords=np.array(x, dtype=np.float64), types=list(S))
+                    
+                    if ens_mean:
+                        Eani = conv_au_ev*np.sum(nc.energy().copy())/self.ens_size
+                        #fil=open('/home/maxim/Downloads/test_MD/EE.dat','w')
+                        #fil.write(str(nc.energy().copy()) + '\n')
+                        #fil.close()
+                        print(nc.energy().copy())
+                    else:
+                        Eani = conv_au_ev*nc.energy().copy()[0]
 
-                    Eani = conv_au_ev*nc.energy().copy()[0]
                     if forces:
                         Fani = conv_au_ev*nc.force().copy()
                     else:
@@ -1216,6 +1224,7 @@ class alaniensembletrainer():
                                          forces=True, grad=False, Fkey='forces', forces_unit=1.0,
                                          dipole=False, dipole_unit=1.0, Dkey='dipoles',
                                          charge=False, charge_unit=1.0, Ckey='charges',
+                                         solvent=False,
                                          pbc=False,
                                          Eax0sum=False, rmhighe=True,rmhighf=False,force_exact_split=False):
         np.random.seed(rseed)
