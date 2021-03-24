@@ -128,7 +128,7 @@ def get_train_stats_ind(index,train_root):
 class ANITesterTool:
     
     def load_models_molecule(self):
-        self.ncl = [pync.molecule(self.cnstfile, self.saefile, self.model_path + 'train' + str(i) + '/networks/', self.gpuid, False) for i in range(self.ens_size)]
+        self.ncl = [pync.molecule(self.cnstfile, self.saefile, self.model_path + 'train' + str(i) + '/networks/', 1, self.gpuid, False) for i in range(self.ens_size)]
 
     def load_models_conformer(self):
         self.ncl = [pync.conformers(self.cnstfile, self.saefile, self.model_path + 'train' + str(i) + '/networks/', self.gpuid, False) for i in range(self.ens_size)]
@@ -173,7 +173,7 @@ class ANITesterTool:
                 
                 for x,c,e,f in zip(X,C,E,F):
                     Nall += 1
-                    if np.min(np.sum(c,axis=0)) < 6.0 and pbc is True:
+                    if np.min(np.sum(c,axis=0)) < 2.0 and pbc is True:
                         Ndrp += 1
                         #print(np.sum(c,axis=0))
                     else:
@@ -198,7 +198,7 @@ class ANITesterTool:
                         else:
                             Evals_ind.append(np.array([Eani-Esae,e-Esae]))
                         Fvals_ind.append(np.stack([Fani.flatten(),f.flatten()]).T)
-
+            print(len(Evals_ind))
             self.Evals.append(np.stack(Evals_ind))
             self.Fvals.append(np.vstack(Fvals_ind))
 
