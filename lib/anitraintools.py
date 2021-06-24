@@ -498,7 +498,7 @@ def plot_corr_dist_ax(ax, Xa, Xp, errors=False,linfit=True):
     #    plt.vlines(x=0.0,ymin=130,ymax=300,linestyle='--',color='red')        
  
 class anitrainerparamsdesigner():
-    def __init__(self, elements, Nrr, Rcr, Nar=0, Nzt=0, Rca=3.5, Xst=0.7, Charge=False, Repuls=False, ACA=False, descriptor="ANI_NORMAL"):
+    def __init__(self, elements, Nrr, Rcr, Nar=0, Nzt=0, Rca=3.5, Xst=0.7, Charge=False, Repuls=False, ACA=False, LongRange=False, descriptor="ANI_NORMAL"):
         self.params = {"elm":elements,
                        "Nrr":Nrr,
                        "Rcr":Rcr,
@@ -506,9 +506,10 @@ class anitrainerparamsdesigner():
                        "Nzt":Nzt,
                        "Rca":Rca,
                        "Xst":Xst,
-                       "ACA":ACA,
                        "Crg":Charge,
                        "Rps":Repuls,
+                       "ACA":ACA,
+                       "LRI":LongRange,
                        "Dsc":descriptor
                       }
 
@@ -692,6 +693,7 @@ class anitrainerparamsdesigner():
         f.write('CG = ' + str(1 if self.params['Crg'] else 0) + '\n')
         f.write('RP = ' + str(1 if self.params['Rps'] else 0) + '\n')
         f.write('AC = ' + str(1 if self.params['ACA'] else 0) + '\n')
+        f.write('LR = ' + str(1 if self.params['LRI'] else 0) + '\n')
         f.write('Rcr = ' + "{:.4e}".format(Rcr) + '\n')
         f.write('Rca = ' + "{:.4e}".format(Rca) + '\n')
         self.printdatatofile(f, 'EtaR', [EtaR], 1)
@@ -728,6 +730,7 @@ class anitrainerinputdesigner:
                        "dipole": 0,  # Enable/disable dipole training
                        "charge": 0,  # Enable/disable charge training
                        "acachg": 0,  # Enable/disable ACA charge training
+                       "lngrng": 0,  # Enable/disable long range training
                        "fmult": 1.0,  # Multiplier of force cost
                        "pbc": 0,  # Use PBC in training (Warning, this only works for data with a single rect. box size)
                        "cmult": 1.0,  # Charge cost multiplier (CHARGE TRAINING BROKEN IN CURRENT VERSION)
