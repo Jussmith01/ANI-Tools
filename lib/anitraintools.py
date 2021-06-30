@@ -149,7 +149,8 @@ class ANITesterTool:
         self.Evals = []
         self.Fvals = []
         self.min_box_size = []
-
+        print('MinCell:',min_cell_length)
+        
         Nall = 0
         Ndrp = 0
         for i,nc in enumerate(self.ncl):
