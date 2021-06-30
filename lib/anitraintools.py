@@ -145,7 +145,7 @@ class ANITesterTool:
         else:
             self.load_models_molecule()
         
-    def evaluate_individual_testset(self,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True):
+    def evaluate_individual_testset(self,energy_key='energies',force_key='forces',forces=False,pbc=True,remove_sae=True,min_cell_length=2.0):
         self.Evals = []
         self.Fvals = []
         self.min_box_size = []
@@ -173,7 +173,7 @@ class ANITesterTool:
                 
                 for x,c,e,f in zip(X,C,E,F):
                     Nall += 1
-                    if np.min(np.sum(c,axis=0)) < 2.0 and pbc is True:
+                    if np.min(np.sum(c,axis=0)) < min_cell_length and pbc is True:
                         Ndrp += 1
                         #print(np.sum(c,axis=0))
                     else:
