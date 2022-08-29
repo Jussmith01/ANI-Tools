@@ -61,7 +61,7 @@ class anidataloader(object):
 
                         if type(dataset) is np.ndarray:
                             if dataset.size != 0:
-                                if type(dataset[0]) is np.bytes_:
+                                if type(dataset[0]) is np.bytes_ or type(dataset[0]) is bytes:
                                     dataset = [a.decode('ascii') for a in dataset]
 
                         data.update({k:dataset})
